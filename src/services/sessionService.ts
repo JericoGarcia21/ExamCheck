@@ -21,6 +21,11 @@ export async function getSession(id: string): Promise<SessionRow> {
   return data
 }
 
+export async function deleteSession(id: string): Promise<void> {
+  const { error } = await supabase.from('checking_sessions').delete().eq('id', id)
+  if (error) throw error
+}
+
 export async function createSession(
   classId: string,
   sessionName: string,

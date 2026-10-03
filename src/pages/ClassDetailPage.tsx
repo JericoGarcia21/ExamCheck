@@ -5,7 +5,11 @@ import * as XLSX from 'xlsx'
 import { getClass } from '../services/classService'
 import { addStudents, deleteStudent, listStudents, renameStudent } from '../services/studentService'
 import { buildStudentSeeds, formatStudentNumber, parseStudentNames } from '../lib/students'
-import { createSession, listSessions } from '../services/sessionService'
+import {
+  createSession,
+  deleteSession,
+  listSessions,
+} from '../services/sessionService'
 
 export default function ClassDetailPage() {
   const { classId } = useParams<{ classId: string }>()
@@ -54,6 +58,11 @@ export default function ClassDetailPage() {
 
   const sessionMutation = useMutation({
     mutationFn: (name: string) => createSession(classId!, name),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sessions', classId] }),
+  })
+
+  const deleteSessionMutation = useMutation({
+    mutationFn: deleteSession,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sessions', classId] }),
   })
 
@@ -168,7 +177,8 @@ export default function ClassDetailPage() {
           <button
             className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white"
             onClick={() => {
-              const name = window.prompt('Session name (e.g. Midterm Examination)') ?? ''
+              const name = window.prompt('Session name (e.g. Midterm Examination)')
+              if (name === null || name.trim() === '') return
               sessionMutation.mutate(name.trim())
             }}
           >
@@ -183,7 +193,20 @@ export default function ClassDetailPage() {
                 className="flex items-center justify-between py-2 text-sm hover:bg-gray-50"
               >
                 <span className="font-medium">{s.session_name || 'Untitled session'}</span>
-                <span className="text-gray-500">{s.answer_key_confirmed ? 'Key confirmed ✓' : s.status}</span>
+                <span className="flex items-center gap-3">
+                  <span className="text-gray-500">{s.answer_key_confirmed ? 'Key confirmed ✓' : s.status}</span>
+                  <button
+                    className="text-xs text-red-600"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      if (window.confirm(`Delete session "${s.session_name || 'Untitled'}"?`)) {
+                        deleteSessionMutation.mutate(s.id)
+                      }
+                    }}
+                  >
+                    Delete
+                  </button>
+                </span>
               </Link>
             </li>
           ))}
