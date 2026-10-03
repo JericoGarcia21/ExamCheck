@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx'
 import { getClass } from '../services/classService'
 import { addStudents, deleteStudent, listStudents, renameStudent } from '../services/studentService'
 import { buildStudentSeeds, formatStudentNumber, parseStudentNames } from '../lib/students'
+import { createSession, listSessions } from '../services/sessionService'
 
 export default function ClassDetailPage() {
   const { classId } = useParams<{ classId: string }>()
@@ -43,6 +44,17 @@ export default function ClassDetailPage() {
   const renameMutation = useMutation({
     mutationFn: ({ id, name }: { id: string; name: string }) => renameStudent(id, name),
     onSuccess: invalidate,
+  })
+
+  const { data: sessions } = useQuery({
+    queryKey: ['sessions', classId],
+    queryFn: () => listSessions(classId!),
+    enabled: !!classId,
+  })
+
+  const sessionMutation = useMutation({
+    mutationFn: (name: string) => createSession(classId!, name),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sessions', classId] }),
   })
 
   function handlePasteSubmit() {
@@ -149,6 +161,37 @@ export default function ClassDetailPage() {
           <li className="px-4 py-6 text-center text-sm text-gray-500">No students yet.</li>
         )}
       </ul>
+
+      <div className="rounded-lg border bg-white p-4">
+        <h3 className="text-sm font-semibold">Checking sessions</h3>
+        <div className="mt-2 flex items-center gap-3">
+          <button
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white"
+            onClick={() => {
+              const name = window.prompt('Session name (e.g. Midterm Examination)') ?? ''
+              sessionMutation.mutate(name.trim())
+            }}
+          >
+            + New session
+          </button>
+        </div>
+        <ul className="mt-3 divide-y">
+          {sessions?.map((s) => (
+            <li key={s.id}>
+              <Link
+                to={`/sessions/${s.id}`}
+                className="flex items-center justify-between py-2 text-sm hover:bg-gray-50"
+              >
+                <span className="font-medium">{s.session_name || 'Untitled session'}</span>
+                <span className="text-gray-500">{s.answer_key_confirmed ? 'Key confirmed ✓' : s.status}</span>
+              </Link>
+            </li>
+          ))}
+          {sessions?.length === 0 && (
+            <li className="py-4 text-center text-sm text-gray-500">No sessions yet.</li>
+          )}
+        </ul>
+      </div>
     </section>
   )
 }

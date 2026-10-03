@@ -8,6 +8,7 @@ import CheckingPage from './pages/CheckingPage'
 import ResultsPage from './pages/ResultsPage'
 import LoginPage from './pages/LoginPage'
 import ClassDetailPage from './pages/ClassDetailPage'
+import SessionPage from './pages/SessionPage'
 
 const queryClient = new QueryClient()
 
@@ -27,6 +28,7 @@ export default function App() {
             <Route path="/" element={<DashboardPage />} />
             <Route path="/classes" element={<ClassesPage />} />
             <Route path="/classes/:classId" element={<ClassDetailPage />} />
+            <Route path="/sessions/:sessionId" element={<SessionPage />} />
             <Route path="/checking" element={<CheckingPage />} />
             <Route path="/results" element={<ResultsPage />} />
           </Route>
