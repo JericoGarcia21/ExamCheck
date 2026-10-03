@@ -2,18 +2,20 @@
 
 Develop slowly but surely: finish and test one phase before starting the next. Every phase has clear deliverables.
 
-## Phase 0 — Project Setup (Foundation before features)
+## Phase 0 — Project Setup (Foundation before features) — ✅ DONE
 
-- [ ] Init Vite + React + TypeScript project
-- [ ] Install & configure Tailwind CSS + shadcn/ui
-- [ ] Set up Supabase project + Supabase CLI
-- [ ] Configure `.env.example`, Supabase client, protected routes
-- [ ] Basic layout shell (Dashboard / Classes / Checking / Results pages)
-- [ ] Git repo + GitHub remote
+- [x] Init Vite + React + TypeScript project
+- [x] Install & configure Tailwind CSS + shadcn/ui
+- [x] Set up Supabase project + Supabase CLI
+- [x] Configure `.env.example`, Supabase client, protected routes
+- [x] Basic layout shell (Dashboard / Classes / Checking / Results pages)
+- [x] Git repo + GitHub remote
+
+**Status:** ✅ DONE (Supabase connection verified, build + typecheck PASS)
 
 **Deliverables:** Running app, `npm run dev`, Supabase connection verified.
 
-## Phase 1 — Auth + Class/Student Management
+## Phase 1 — Auth + Class/Student Management — 🔵 CURRENT
 
 - [ ] Teacher signup/login (Supabase Auth)
 - [ ] Protected routes + RLS policies (teacher sees only own data)
