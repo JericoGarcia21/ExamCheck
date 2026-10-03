@@ -138,7 +138,7 @@ export default function SessionPage() {
           onChange={(e) => setPasteText(e.target.value)}
           rows={6}
           disabled={locked}
-          placeholder={'1. B\n2. C\n3. A\n4. D\n5. Encapsulation'}
+          placeholder={'B\nC\nA\nD\nTrue\nEncapsulation'}
           className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
         />
         <button
@@ -147,7 +147,7 @@ export default function SessionPage() {
           onClick={() => {
             const parsed = parseAnswerKeyText(pasteText)
             if (parsed.length === 0) {
-              setError('No answers found. Use format: "1. B" (one per line).')
+              setError('No answers found. Use one answer per line, e.g. "B", "True", "Encapsulation".')
               return
             }
             setDraft(parsed)
@@ -172,16 +172,7 @@ export default function SessionPage() {
           <tbody>
             {rows.map((row, i) => (
               <tr key={i} className="border-t">
-                <td className="py-1 pr-3">
-                  <input
-                    type="number"
-                    min={1}
-                    value={row.question_number}
-                    disabled={locked}
-                    onChange={(e) => updateRow(i, { question_number: Number(e.target.value) })}
-                    className="w-16 rounded border px-2 py-1"
-                  />
-                </td>
+                <td className="py-1 pr-3 text-gray-500">{row.question_number}</td>
                 <td className="py-1 pr-3">
                   <input
                     value={row.correct_answer}
