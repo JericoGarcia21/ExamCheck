@@ -101,13 +101,13 @@ export default function SessionPage() {
         <div className="rounded-lg border bg-white p-4">
           <h3 className="text-sm font-semibold">Answer key</h3>
           <p className="mt-1 text-xs text-gray-500">
-            Paste your answer key, one answer per line. The order is the question number.
+            Paste your answer key, one answer per line (with or without numbers). The order is the question number.
           </p>
           <textarea
             value={pasteText}
             onChange={(e) => setPasteText(e.target.value)}
             rows={8}
-            placeholder={'B\nC\nA\nD\nTrue\nEncapsulation'}
+            placeholder={'1. B\n2. C\n3. A\n4. D\n5. True\n6. Encapsulation'}
             className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
           />
           <div className="mt-3 flex flex-wrap gap-3">
