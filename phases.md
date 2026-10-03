@@ -15,14 +15,18 @@ Develop slowly but surely: finish and test one phase before starting the next. E
 
 **Deliverables:** Running app, `npm run dev`, Supabase connection verified.
 
-## Phase 1 — Auth + Class/Student Management — 🔵 CURRENT
+## Phase 1 — Auth + Class/Student Management — ✅ DONE
 
-- [ ] Teacher signup/login (Supabase Auth)
-- [ ] Protected routes + RLS policies (teacher sees only own data)
-- [ ] Create class/block (name, school year)
-- [ ] Import students via Excel (SheetJS) / CSV / paste names
-- [ ] Alphabetical sorting, student_number formatting (`01`, `02`, ...)
-- [ ] Edit/delete students, class list view
+- [x] Teacher signup/login (Supabase Auth) — Google OAuth
+- [x] Protected routes + RLS policies (teacher sees only own data)
+- [x] Create class/block (name, school year)
+- [x] Import students via Excel (SheetJS) / CSV / paste names
+- [x] Alphabetical sorting, student_number formatting (`01`, `02`, ...)
+- [x] Edit/delete students, class list view
+
+**Status:** ✅ DONE (Google login + class creation + RLS verified working)
+
+## Phase 2 — Answer Key — 🔵 CURRENT
 
 **Deliverables:** Teacher can log in, create 21-ITEW-01 with 50 imported students.
 
