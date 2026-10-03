@@ -14,10 +14,35 @@ interface Row {
   question_type: string
 }
 
+export function parseAnswerKeyText(text: string): Row[] {
+  const rows: Row[] = []
+  let autoNumber = 0
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.trim()
+    if (!line) continue
+    const match = line.match(/^(?:(\d+)[.):-]?\s*)?(.+)$/)
+    if (!match) continue
+    const answer = match[2].trim()
+    if (!answer) continue
+    autoNumber += 1
+    const questionNumber = match[1] ? Number(match[1]) : autoNumber
+    const normalized = answer.toLowerCase()
+    const questionType =
+      normalized === 'true' || normalized === 'false'
+        ? 'true_false'
+        : /^[a-e]$/i.test(answer)
+          ? 'multiple_choice'
+          : 'identification'
+    rows.push({ question_number: questionNumber, correct_answer: answer, question_type: questionType })
+  }
+  return rows.sort((a, b) => a.question_number - b.question_number)
+}
+
 export default function SessionPage() {
   const { sessionId } = useParams<{ sessionId: string }>()
   const queryClient = useQueryClient()
   const [draft, setDraft] = useState<Row[] | null>(null)
+  const [pasteText, setPasteText] = useState('')
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -104,6 +129,33 @@ export default function SessionPage() {
         <p className="mt-2 text-xs text-gray-500">
           OCR extraction will be added later. For now, type the answers below manually.
         </p>
+      </div>
+
+      <div className="rounded-lg border bg-white p-4">
+        <h3 className="text-sm font-semibold">Paste answer key</h3>
+        <textarea
+          value={pasteText}
+          onChange={(e) => setPasteText(e.target.value)}
+          rows={6}
+          disabled={locked}
+          placeholder={'1. B\n2. C\n3. A\n4. D\n5. Encapsulation'}
+          className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+        />
+        <button
+          disabled={locked}
+          className="mt-2 rounded-md bg-gray-800 px-4 py-2 text-sm text-white disabled:opacity-50"
+          onClick={() => {
+            const parsed = parseAnswerKeyText(pasteText)
+            if (parsed.length === 0) {
+              setError('No answers found. Use format: "1. B" (one per line).')
+              return
+            }
+            setDraft(parsed)
+            setError(null)
+          }}
+        >
+          Load into table
+        </button>
       </div>
 
       <div className="rounded-lg border bg-white p-4">
