@@ -72,6 +72,7 @@ export default function SessionPage() {
   const [identified, setIdentified] = useState<string | null>(null)
   const [ocrError, setOcrError] = useState<string | null>(null)
   const [ocrLoading, setOcrLoading] = useState(false)
+  const [hasTried, setHasTried] = useState(false)
 
   async function handleNameBase64(base64: string, mimeType: string) {
     setOcrError(null)
@@ -79,6 +80,7 @@ export default function SessionPage() {
     setMatches([])
     setIdentified(null)
     setOcrLoading(true)
+    setHasTried(true)
     try {
       const { data, error } = await supabase.functions.invoke('recognize-name', {
         body: { imageBase64: base64, mimeType },
@@ -236,7 +238,7 @@ export default function SessionPage() {
               Detected: <span className="font-medium">{detectedName}</span>
             </p>
           ) : (
-            !ocrLoading && !ocrError && (
+            hasTried && !ocrLoading && !ocrError && (
               <p className="mt-3 text-sm text-amber-700">
                 No name detected in the photo. Try capturing again with better light and a clearer view.
               </p>
