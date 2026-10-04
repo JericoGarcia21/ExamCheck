@@ -136,7 +136,7 @@ export default function SessionPage() {
             <div className="flex flex-col gap-2">
               <div>
                 <Label htmlFor="style">Expected answer style</Label>
-                <Select value={expectedStyle} onValueChange={setExpectedStyle}>
+                <Select value={expectedStyle} onValueChange={(v) => setExpectedStyle(v ?? 'any')}>
                   <SelectTrigger id="style">
                     <SelectValue placeholder="Any" />
                   </SelectTrigger>
