@@ -11,6 +11,7 @@ import {
 import { listStudents } from '../services/studentService'
 import { Button } from '../components/ui/button'
 import { Textarea } from '../components/ui/textarea'
+import { Label } from '../components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
@@ -51,6 +52,8 @@ export default function SessionPage() {
   const [draft, setDraft] = useState<Row[] | null>(null)
   const [pasteText, setPasteText] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [expectedStyle, setExpectedStyle] = useState('any')
+  const [checkResult, setCheckResult] = useState<string[] | null>(null)
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
   const [selectedStudentName, setSelectedStudentName] = useState<string | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
@@ -131,6 +134,58 @@ export default function SessionPage() {
               placeholder={'1. B\n2. C\n3. A\n4. D\n5. True\n6. Encapsulation'}
             />
             <div className="flex flex-col gap-2">
+              <div>
+                <Label htmlFor="style">Expected answer style</Label>
+                <Select value={expectedStyle} onValueChange={setExpectedStyle}>
+                  <SelectTrigger id="style">
+                    <SelectValue placeholder="Any" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="any">Any</SelectItem>
+                    <SelectItem value="multiple_choice">Multiple choice (A, B, C...)</SelectItem>
+                    <SelectItem value="true_false">True / False only</SelectItem>
+                    <SelectItem value="identification">Identification (text)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const parsed = parseAnswerKeyText(pasteText)
+                  const problems: string[] = []
+                  if (parsed.length === 0) problems.push('No answers found in the paste.')
+                  if (expectedStyle === 'multiple_choice') {
+                    parsed.forEach((r) => {
+                      if (!/^[A-Za-z]$/.test(r.correct_answer)) problems.push(`Q${r.question_number}: "${r.correct_answer}" is not a single letter.`)
+                    })
+                  }
+                  if (expectedStyle === 'true_false') {
+                    parsed.forEach((r) => {
+                      if (!/^(true|false)$/i.test(r.correct_answer)) problems.push(`Q${r.question_number}: "${r.correct_answer}" is not True/False.`)
+                    })
+                  }
+                  if (expectedStyle === 'identification') {
+                    parsed.forEach((r) => {
+                      if (/^[A-Za-z]$/.test(r.correct_answer)) problems.push(`Q${r.question_number}: "${r.correct_answer}" looks like multiple choice, not text.`)
+                    })
+                  }
+                  for (let i = 1; i < parsed.length; i++) {
+                    if (parsed[i].question_number !== parsed[i - 1].question_number + 1) {
+                      problems.push(`Question numbers are not sequential around Q${parsed[i].question_number}.`)
+                    }
+                  }
+                  setCheckResult(problems.length === 0 ? ['✓ Answer key looks good.'] : problems)
+                }}
+              >
+                Check answer key
+              </Button>
+              {checkResult && (
+                <ul className="rounded-md border p-2 text-xs">
+                  {checkResult.map((p, i) => (
+                    <li key={i} className={p.startsWith('✓') ? 'text-green-700' : 'text-destructive'}>{p}</li>
+                  ))}
+                </ul>
+              )}
               <Button
                 variant="secondary"
                 onClick={() => {
