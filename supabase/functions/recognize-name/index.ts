@@ -25,7 +25,8 @@ serve(async (req) => {
     }
 
     const prompt =
-      'Read the student name written next to the "Name:" label. Return only the name, or EMPTY.'
+      'This is an exam paper photo. Find the student\'s name — it is usually next to a "Name:" label near the top, ' +
+      'but it may also be any clearly written name at the top of the page. Return ONLY the name text. If you really cannot find any name, return EMPTY.'
 
     let response: Response | null = null
     let lastStatus = 0
