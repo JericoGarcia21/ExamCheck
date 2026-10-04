@@ -59,8 +59,17 @@ export async function saveAnswerKeys(
     .eq('checking_session_id', sessionId)
   if (deleteError) throw deleteError
 
-  if (keys.length === 0) return
-  const rows = keys.map((k) => ({ ...k, checking_session_id: sessionId }))
+  // deduplicate by question_number, keep the last one entered
+  const byNumber = new Map<number, (typeof keys)[number]>()
+  for (const k of keys) {
+    if (k.question_number > 0) byNumber.set(k.question_number, k)
+  }
+
+  const rows = [...byNumber.values()]
+    .sort((a, b) => a.question_number - b.question_number)
+    .map((k) => ({ ...k, checking_session_id: sessionId }))
+
+  if (rows.length === 0) return
   const { error } = await supabase.from('answer_keys').insert(rows)
   if (error) throw error
 }
