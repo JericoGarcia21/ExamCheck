@@ -98,7 +98,7 @@ export default function SessionPage() {
   return (
     <section className="space-y-6">
       <div>
-        <Link to={session ? `/classes/${session.class_id}` : '/classes'} className="text-sm text-blue-600">
+        <Link to={session ? `/classes/${session.class_id}` : '/classes'} className="text-sm text-primary">
           &larr; Back to class
         </Link>
         <h2 className="mt-1 text-xl font-semibold">
@@ -124,7 +124,7 @@ export default function SessionPage() {
           />
           <div className="mt-3 flex flex-wrap gap-3">
             <button
-              className="rounded-md bg-gray-800 px-4 py-2 text-sm text-white"
+              className="rounded-md bg-primary px-4 py-2 text-sm text-white"
               onClick={() => {
                 const parsed = parseAnswerKeyText(pasteText)
                 if (parsed.length === 0) {
@@ -157,7 +157,7 @@ export default function SessionPage() {
                   .catch((e) => setError(e.message))
               }}
               disabled={confirmMutation.isPending}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
               Confirm answer key
             </button>

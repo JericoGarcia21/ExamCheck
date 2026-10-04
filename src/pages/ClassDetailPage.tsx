@@ -105,7 +105,7 @@ export default function ClassDetailPage() {
   return (
     <section className="space-y-6">
       <div>
-        <Link to="/classes" className="text-sm text-blue-600">&larr; Back to classes</Link>
+        <Link to="/classes" className="text-sm text-primary">&larr; Back to classes</Link>
         <h2 className="mt-1 text-xl font-semibold">
           {classRow ? `${classRow.block_name} · ${classRow.school_year}` : 'Loading…'}
         </h2>
@@ -125,7 +125,7 @@ export default function ClassDetailPage() {
           <button
             onClick={handlePasteSubmit}
             disabled={addMutation.isPending}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
           >
             Add from pasted names
           </button>
@@ -148,7 +148,7 @@ export default function ClassDetailPage() {
             <span className="w-8 text-sm text-gray-400">{s.student_number ?? formatStudentNumber(i)}</span>
             <span className="flex-1 text-sm">{s.name}</span>
             <button
-              className="text-xs text-blue-600"
+              className="text-xs text-primary"
               onClick={() => {
                 const name = window.prompt('Edit student name', s.name)
                 if (name && name.trim() && name !== s.name) renameMutation.mutate({ id: s.id, name: name.trim() })
@@ -175,7 +175,7 @@ export default function ClassDetailPage() {
         <h3 className="text-sm font-semibold">Checking sessions</h3>
         <div className="mt-2 flex items-center gap-3">
           <button
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white"
+            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white"
             onClick={() => {
               const name = window.prompt('Session name (e.g. Midterm Examination)')
               if (name === null || name.trim() === '') return

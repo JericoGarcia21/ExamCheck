@@ -32,7 +32,7 @@ export default function AppLayout() {
               end={link.to === '/'}
               className={({ isActive }) =>
                 isActive
-                  ? 'whitespace-nowrap font-medium text-blue-600'
+                  ? 'whitespace-nowrap font-medium text-primary'
                   : 'whitespace-nowrap text-gray-600 hover:text-gray-900'
               }
             >
