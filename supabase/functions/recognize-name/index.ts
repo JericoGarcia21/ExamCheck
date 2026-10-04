@@ -25,9 +25,7 @@ serve(async (req) => {
     }
 
     const prompt =
-      'This image shows an exam paper. It has a labeled field such as "Name:", "Student Name:", or similar near the top. ' +
-      'Find that label and extract ONLY the student name written next to or under it. ' +
-      'Return just the name text, nothing else. If no labeled name field is readable, return EMPTY.'
+      'Read the student name written next to the "Name:" label. Return only the name, or EMPTY.'
 
     let response: Response | null = null
     let lastStatus = 0

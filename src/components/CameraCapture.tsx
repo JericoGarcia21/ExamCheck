@@ -45,7 +45,7 @@ export default function CameraCapture({
   function capture() {
     const video = videoRef.current
     if (!video) return
-    const MAX = 1280
+    const MAX = 896
     const scale = Math.min(1, MAX / video.videoWidth)
     const canvas = document.createElement('canvas')
     canvas.width = Math.round(video.videoWidth * scale)
@@ -54,7 +54,7 @@ export default function CameraCapture({
     if (!ctx) return
     ctx.filter = 'contrast(1.15) brightness(1.05)'
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.8)
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.7)
     onCapture(dataUrl.split(',')[1], 'image/jpeg')
     stop()
   }
