@@ -26,29 +26,25 @@ Develop slowly but surely: finish and test one phase before starting the next. E
 
 **Status:** ✅ DONE (Google login + class creation + RLS verified working)
 
-## Phase 2 — Answer Key — 🔵 CURRENT
+## Phase 2 — Answer Key — ✅ DONE
 
-**Deliverables:** Teacher can log in, create 21-ITEW-01 with 50 imported students.
+- [x] Answer key paste (simplified, no upload/OCR)
+- [x] Editable preview + Save draft
+- [x] Confirm answer key → locked per session
+- [ ] ~~Edge Function → OCR/vision extraction~~ (deferred: OCR costs credits)
 
-## Phase 2 — Answer Key
+**Status:** ✅ DONE (via text paste; migration 0002 run; confirm flow verified)
 
-- [ ] Upload answer key (JPG/PNG/PDF)
-- [ ] Edge Function → OCR/vision extraction of answers
-- [ ] Answer key review table (editable)
-- [ ] Confirm answer key → locked per session
+## Phase 3 — Student Identification — ✅ DONE (simplified)
 
-**Deliverables:** Confirmed answer key stored in DB, editable before confirm.
+- [x] Student selected from class dropdown (no OCR needed, no credits used)
+- [x] Camera capture still available for reference photo
+- [ ] ~~Name OCR via Edge Function~~ (removed — teacher selects student manually since papers are randomly arranged)
+- [ ] ~~Roster matching: exact → fuzzy → possible matches~~
 
-## Phase 3 — Student Identification
+**Status:** ✅ DONE (manual selection; teacher controls who is being checked)
 
-- [ ] Camera capture (Browser Camera API) / photo upload
-- [ ] Name OCR via Edge Function
-- [ ] Roster matching: exact → fuzzy → possible matches
-- [ ] Teacher confirmation / manual selection fallback
-
-**Deliverables:** `GARCIA, JERICO B.` detected → matched to roster with confidence.
-
-## Phase 4 — Paper Checking + Scoring
+## Phase 4 — Paper Checking + Scoring — 🔵 CURRENT
 
 - [ ] Capture/upload test paper image
 - [ ] Edge Function: preprocessing → detect questions → read answers
