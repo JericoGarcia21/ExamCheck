@@ -82,9 +82,10 @@ export default function ClassDetailPage() {
   })
 
   function handlePasteSubmit() {
-    const names = parseStudentNames(pasteText)
+    const existingNames = new Set((students ?? []).map((s) => s.name.toLowerCase().trim()))
+    const names = parseStudentNames(pasteText).filter((n) => !existingNames.has(n.toLowerCase().trim()))
     if (names.length === 0) {
-      setError('No student names found.')
+      setError('No new student names found (duplicates are skipped).')
       return
     }
     addMutation.mutate(names)

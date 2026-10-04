@@ -1,15 +1,28 @@
 export function parseStudentNames(input: string): string[] {
   const seen = new Set<string>()
-  return input
-    .split(/\r?\n|,/)
-    .map((line) => line.replace(/^\s*\d+[.)-]?\s*/, '').trim())
-    .filter((line) => line.length > 0)
-    .filter((name) => {
-      const key = name.toLowerCase()
-      if (seen.has(key)) return false
-      seen.add(key)
-      return true
-    })
+  const lines = input.split(/\r?\n/)
+  const merged: string[] = []
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i].trim()
+    if (!line) continue
+
+    // join lines that were split right after a comma (e.g. "GARCIA,\nJERICO B.")
+    while (line.endsWith(',') && i + 1 < lines.length && lines[i + 1].trim()) {
+      i++
+      line = `${line} ${lines[i].trim()}`
+    }
+
+    const cleaned = line.replace(/^\s*\d+[.)-]?\s*/, '').trim()
+    if (!cleaned) continue
+
+    const key = cleaned.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    merged.push(cleaned)
+  }
+
+  return merged
 }
 
 export function sortStudentNames(names: string[]): string[] {
