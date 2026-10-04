@@ -18,7 +18,7 @@ import { Textarea } from '../components/ui/textarea'
 import { Label } from '../components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
+import { Input } from '../components/ui/input'
 
 interface Row {
   question_number: number
@@ -66,6 +66,7 @@ export default function SessionPage() {
   const [paperError, setPaperError] = useState<string | null>(null)
   const [paperLoading, setPaperLoading] = useState(false)
   const [ruleViolations, setRuleViolations] = useState<{ question_number: number | null; violation: string }[]>([])
+  const [studentSearch, setStudentSearch] = useState('')
 
   const { data: session } = useQuery({
     queryKey: ['session', sessionId],
@@ -284,24 +285,33 @@ export default function SessionPage() {
             <CardTitle>Who are you checking?</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Select
-              value={selectedStudent ?? ''}
-              onValueChange={(id) => {
-                setSelectedStudent(id || null)
-                setSelectedStudentName(students?.find((s) => s.id === id)?.name ?? null)
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select student" />
-              </SelectTrigger>
-              <SelectContent>
-                {students?.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
+            <Input
+              placeholder="Search student name..."
+              value={studentSearch}
+              onChange={(e) => setStudentSearch(e.target.value)}
+            />
+            <div className="max-h-64 divide-y overflow-y-auto rounded-md border">
+              {students
+                ?.filter((s) => s.name.toLowerCase().includes(studentSearch.toLowerCase()))
+                .map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className={`block w-full px-3 py-2 text-left text-sm hover:bg-muted/50 ${
+                      selectedStudent === s.id ? 'bg-primary/10 font-medium text-primary' : ''
+                    }`}
+                    onClick={() => {
+                      setSelectedStudent(s.id)
+                      setSelectedStudentName(s.name)
+                    }}
+                  >
                     {s.name}
-                  </SelectItem>
+                  </button>
                 ))}
-              </SelectContent>
-            </Select>
+              {students?.filter((s) => s.name.toLowerCase().includes(studentSearch.toLowerCase())).length === 0 && (
+                <p className="px-3 py-4 text-center text-sm text-muted-foreground">No students found.</p>
+              )}
+            </div>
 
             {selectedStudentName && (
               <>
