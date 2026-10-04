@@ -1,9 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
-import { matchStudents } from '../lib/nameMatching'
-import CameraCapture from '../components/CameraCapture'
 import {
   confirmAnswerKey,
   getSession,
@@ -67,44 +64,8 @@ export default function SessionPage() {
     enabled: !!session?.class_id,
   })
 
-  const [detectedName, setDetectedName] = useState('')
-  const [matches, setMatches] = useState<{ studentId: string; name: string; confidence: number }[]>([])
-  const [identified, setIdentified] = useState<string | null>(null)
-  const [ocrError, setOcrError] = useState<string | null>(null)
-  const [ocrLoading, setOcrLoading] = useState(false)
-  const [hasTried, setHasTried] = useState(false)
-
-  async function handleNameBase64(base64: string, mimeType: string) {
-    setOcrError(null)
-    setDetectedName('')
-    setMatches([])
-    setIdentified(null)
-    setOcrLoading(true)
-    setHasTried(true)
-    try {
-      const { data, error } = await supabase.functions.invoke('recognize-name', {
-        body: { imageBase64: base64, mimeType },
-      })
-      if (error) throw error
-      if (data?.error) throw new Error(data.error)
-      const name = (data?.detectedName ?? '').trim()
-      setDetectedName(name)
-      setMatches(matchStudents(name, (students ?? []).map((s) => ({ id: s.id, name: s.name }))))
-    } catch (e) {
-      let message = e instanceof Error ? e.message : String(e)
-      if (e && typeof e === 'object' && 'context' in e) {
-        try {
-          const body = await (e as { context: Response }).context.json()
-          if (body?.error) message = body.error
-        } catch {
-          // ignore parse errors
-        }
-      }
-      setOcrError(message)
-    } finally {
-      setOcrLoading(false)
-    }
-  }
+  const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
+  const [selectedStudentName, setSelectedStudentName] = useState<string | null>(null)
 
   const rows =
     draft ??
@@ -225,53 +186,30 @@ export default function SessionPage() {
 
       {locked && (
         <div className="rounded-lg border bg-white p-4">
-          <h3 className="text-sm font-semibold">Identify student (name photo)</h3>
+          <h3 className="text-sm font-semibold">Select student</h3>
           <p className="mt-1 text-xs text-gray-500">
-            Capture the photo so the "Name:" label and the student's name are both visible.
+            Pick the student whose paper you are checking. No photo needed.
           </p>
-          <CameraCapture onCapture={handleNameBase64} disabled={ocrLoading} />
-          {ocrLoading && <p className="mt-2 text-sm text-gray-500">Reading name…</p>}
-          {ocrError && <p className="mt-2 text-sm text-red-600">{ocrError}</p>}
-
-          {detectedName ? (
-            <p className="mt-3 text-sm">
-              Detected: <span className="font-medium">{detectedName}</span>
-            </p>
-          ) : (
-            hasTried && !ocrLoading && !ocrError && (
-              <p className="mt-3 text-sm text-amber-700">
-                No name detected in the photo. Try capturing again with better light and a clearer view.
-              </p>
-            )
-          )}
-
-          {matches.length > 0 && (
-            <ul className="mt-3 divide-y rounded-md border">
-              {matches.map((m) => (
-                <li key={m.studentId} className="flex items-center justify-between px-3 py-2">
-                  <span className="text-sm font-medium">{m.name}</span>
-                  <span className="flex items-center gap-3">
-                    <span className="text-xs text-gray-500">{Math.round(m.confidence * 100)}%</span>
-                    <button
-                      className="rounded-md bg-blue-600 px-3 py-1 text-xs text-white"
-                      onClick={() => setIdentified(m.name)}
-                    >
-                      Confirm
-                    </button>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {detectedName && matches.length === 0 && (
-            <p className="mt-2 text-sm text-amber-700">
-              No roster match found. Check the spelling or pick the student manually in the class roster (Coming in Phase 4).
-            </p>
-          )}
-
-          {identified && (
-            <p className="mt-3 text-sm text-green-700">✓ Student identified: {identified}</p>
+          <ul className="mt-3 divide-y rounded-md border">
+            {students?.map((s) => (
+              <li key={s.id} className="flex items-center justify-between px-3 py-2">
+                <span className="text-sm font-medium">{s.name}</span>
+                <button
+                  className={`rounded-md px-3 py-1 text-xs text-white ${
+                    selectedStudent === s.id ? 'bg-green-600' : 'bg-blue-600'
+                  }`}
+                  onClick={() => {
+                    setSelectedStudent(s.id)
+                    setSelectedStudentName(s.name)
+                  }}
+                >
+                  {selectedStudent === s.id ? 'Selected ✓' : 'Select'}
+                </button>
+              </li>
+            ))}
+          </ul>
+          {selectedStudentName && (
+            <p className="mt-3 text-sm text-green-700">✓ Now checking: {selectedStudentName}</p>
           )}
         </div>
       )}
