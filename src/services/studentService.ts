@@ -31,3 +31,8 @@ export async function deleteStudent(id: string): Promise<void> {
   const { error } = await supabase.from('students').delete().eq('id', id)
   if (error) throw error
 }
+
+export async function deleteAllStudents(classId: string): Promise<void> {
+  const { error } = await supabase.from('students').delete().eq('class_id', classId)
+  if (error) throw error
+}

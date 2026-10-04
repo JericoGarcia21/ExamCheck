@@ -3,7 +3,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import * as XLSX from 'xlsx'
 import { getClass } from '../services/classService'
-import { addStudents, deleteStudent, listStudents, renameStudent } from '../services/studentService'
+import {
+  addStudents,
+  deleteAllStudents,
+  deleteStudent,
+  listStudents,
+  renameStudent,
+} from '../services/studentService'
 import { buildStudentSeeds, formatStudentNumber, parseStudentNames } from '../lib/students'
 import { createSession, deleteSession, listSessions } from '../services/sessionService'
 import { Button } from '../components/ui/button'
@@ -56,6 +62,10 @@ export default function ClassDetailPage() {
   })
 
   const deleteMutation = useMutation({ mutationFn: deleteStudent, onSuccess: invalidate })
+  const deleteAllMutation = useMutation({
+    mutationFn: () => deleteAllStudents(classId!),
+    onSuccess: invalidate,
+  })
   const renameMutation = useMutation({
     mutationFn: ({ id, name }: { id: string; name: string }) => renameStudent(id, name),
     onSuccess: invalidate,
@@ -148,7 +158,21 @@ export default function ClassDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Students</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Students</CardTitle>
+            {students && students.length > 0 && (
+              <button
+                className="text-xs text-destructive"
+                onClick={() => {
+                  if (window.confirm(`Delete ALL ${students.length} students in this class?`)) {
+                    deleteAllMutation.mutate()
+                  }
+                }}
+              >
+                Delete all
+              </button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="divide-y p-0">
           {students?.length === 0 && (
