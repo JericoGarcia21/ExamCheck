@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { matchStudents } from '../lib/nameMatching'
+import CameraCapture from '../components/CameraCapture'
 import {
   confirmAnswerKey,
   getSession,
@@ -72,17 +73,15 @@ export default function SessionPage() {
   const [ocrError, setOcrError] = useState<string | null>(null)
   const [ocrLoading, setOcrLoading] = useState(false)
 
-  async function handleNamePhoto(file: File) {
+  async function handleNameBase64(base64: string, mimeType: string) {
     setOcrError(null)
     setDetectedName('')
     setMatches([])
     setIdentified(null)
     setOcrLoading(true)
     try {
-      const buffer = await file.arrayBuffer()
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)))
       const { data, error } = await supabase.functions.invoke('recognize-name', {
-        body: { imageBase64: base64, mimeType: file.type },
+        body: { imageBase64: base64, mimeType },
       })
       if (error) throw error
       if (data?.error) throw new Error(data.error)
@@ -219,13 +218,7 @@ export default function SessionPage() {
           <p className="mt-1 text-xs text-gray-500">
             Take a photo of the student's name on the paper, or upload one.
           </p>
-          <input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="mt-3 text-sm"
-            onChange={(e) => e.target.files?.[0] && handleNamePhoto(e.target.files[0])}
-          />
+          <CameraCapture onCapture={handleNameBase64} disabled={ocrLoading} />
           {ocrLoading && <p className="mt-2 text-sm text-gray-500">Reading name…</p>}
           {ocrError && <p className="mt-2 text-sm text-red-600">{ocrError}</p>}
 
