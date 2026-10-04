@@ -42,7 +42,7 @@ export default function ClassesPage() {
 
   return (
     <section className="space-y-4">
-      <h2 className="text-xl font-semibold">Classes</h2>
+      <h2 className="text-2xl font-semibold tracking-tight">Classes</h2>
 
       {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
       {error && <p className="text-sm text-destructive">{error.message}</p>}

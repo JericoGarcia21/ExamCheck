@@ -122,7 +122,7 @@ export default function ClassDetailPage() {
     <section className="space-y-4">
       <div>
         <Link to="/classes" className="text-sm text-primary">&larr; Back to classes</Link>
-        <h2 className="mt-1 text-xl font-semibold">
+        <h2 className="mt-1 text-2xl font-semibold tracking-tight">
           {classRow ? `${classRow.block_name} · ${classRow.school_year}` : 'Loading…'}
         </h2>
         <p className="text-sm text-muted-foreground">{students?.length ?? 0} students</p>

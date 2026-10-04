@@ -18,7 +18,7 @@ export default function CheckingPage() {
 
   return (
     <section className="space-y-4">
-      <h2 className="text-xl font-semibold">Checking sessions</h2>
+      <h2 className="text-2xl font-semibold tracking-tight">Checking sessions</h2>
       <p className="text-sm text-muted-foreground">
         All checking sessions across your classes. Tap one to continue grading.
       </p>

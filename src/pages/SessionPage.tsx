@@ -140,7 +140,7 @@ export default function SessionPage() {
           &larr; Back to class
         </Link>
         <div className="mt-1 flex items-center justify-between">
-          <h2 className="text-xl font-semibold">{session?.session_name ?? 'Checking session'}</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">{session?.session_name ?? 'Checking session'}</h2>
           <Badge variant={locked ? 'default' : 'secondary'}>
             {locked ? 'Key confirmed' : 'Draft'}
           </Badge>
