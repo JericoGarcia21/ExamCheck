@@ -9,6 +9,11 @@ import {
   saveAnswerKeys,
 } from '../services/sessionService'
 import { listStudents } from '../services/studentService'
+import { Button } from '../components/ui/button'
+import { Textarea } from '../components/ui/textarea'
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { Badge } from '../components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 
 interface Row {
   question_number: number
@@ -46,6 +51,9 @@ export default function SessionPage() {
   const [draft, setDraft] = useState<Row[] | null>(null)
   const [pasteText, setPasteText] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
+  const [selectedStudentName, setSelectedStudentName] = useState<string | null>(null)
+  const [preview, setPreview] = useState<string | null>(null)
 
   const { data: session } = useQuery({
     queryKey: ['session', sessionId],
@@ -64,10 +72,6 @@ export default function SessionPage() {
     queryFn: () => listStudents(session!.class_id),
     enabled: !!session?.class_id,
   })
-
-  const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
-  const [selectedStudentName, setSelectedStudentName] = useState<string | null>(null)
-  const [preview, setPreview] = useState<string | null>(null)
 
   const rows =
     draft ??
@@ -96,134 +100,131 @@ export default function SessionPage() {
   const locked = session?.answer_key_confirmed === true
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-4">
       <div>
         <Link to={session ? `/classes/${session.class_id}` : '/classes'} className="text-sm text-primary">
           &larr; Back to class
         </Link>
-        <h2 className="mt-1 text-xl font-semibold">
-          {session?.session_name ?? 'Checking session'}
-        </h2>
-        <p className="text-sm text-gray-500">
-          {session?.session_date} · {locked ? 'Answer key CONFIRMED ✓' : 'Not confirmed yet'}
-        </p>
+        <div className="mt-1 flex items-center justify-between">
+          <h2 className="text-xl font-semibold">{session?.session_name ?? 'Checking session'}</h2>
+          <Badge variant={locked ? 'default' : 'secondary'}>
+            {locked ? 'Key confirmed' : 'Draft'}
+          </Badge>
+        </div>
+        <p className="text-sm text-muted-foreground">{session?.session_date}</p>
       </div>
 
       {!locked && (
-        <div className="rounded-lg border bg-white p-4">
-          <h3 className="text-sm font-semibold">Answer key</h3>
-          <p className="mt-1 text-xs text-gray-500">
-            Paste your answer key, one answer per line (with or without numbers). The order is the question number.
-          </p>
-          <textarea
-            value={pasteText}
-            onChange={(e) => setPasteText(e.target.value)}
-            rows={8}
-            placeholder={'1. B\n2. C\n3. A\n4. D\n5. True\n6. Encapsulation'}
-            className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-          />
-          <div className="mt-3 flex flex-wrap gap-3">
-            <button
-              className="rounded-md bg-primary px-4 py-2 text-sm text-white"
-              onClick={() => {
-                const parsed = parseAnswerKeyText(pasteText)
-                if (parsed.length === 0) {
-                  setError('No answers found. Use one answer per line, e.g. "B", "True", "Encapsulation".')
-                  return
-                }
-                setDraft(parsed)
-                setError(null)
-              }}
-            >
-              Preview
-            </button>
-            <button
-              onClick={() => saveMutation.mutate()}
-              disabled={saveMutation.isPending}
-              className="rounded-md border px-4 py-2 text-sm disabled:opacity-50"
-            >
-              Save draft
-            </button>
-            <button
-              onClick={() => {
-                const parsed = draft ?? parseAnswerKeyText(pasteText)
-                if (parsed.length === 0) {
-                  setError('Paste the answer key before confirming.')
-                  return
-                }
-                setDraft(parsed)
-                saveAnswerKeys(sessionId!, parsed)
-                  .then(() => confirmMutation.mutate())
-                  .catch((e) => setError(e.message))
-              }}
-              disabled={confirmMutation.isPending}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-            >
-              Confirm answer key
-            </button>
-          </div>
-          {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Answer key</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Paste your answer key, one answer per line (with or without numbers). The order is the question number.
+            </p>
+            <Textarea
+              value={pasteText}
+              onChange={(e) => setPasteText(e.target.value)}
+              rows={8}
+              placeholder={'1. B\n2. C\n3. A\n4. D\n5. True\n6. Encapsulation'}
+            />
+            <div className="flex flex-col gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  const parsed = parseAnswerKeyText(pasteText)
+                  if (parsed.length === 0) {
+                    setError('No answers found. Use one answer per line, e.g. "B", "True", "Encapsulation".')
+                    return
+                  }
+                  setDraft(parsed)
+                  setError(null)
+                }}
+              >
+                Preview
+              </Button>
+              <Button variant="outline" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+                Save draft
+              </Button>
+              <Button
+                onClick={() => {
+                  const parsed = draft ?? parseAnswerKeyText(pasteText)
+                  if (parsed.length === 0) {
+                    setError('Paste the answer key before confirming.')
+                    return
+                  }
+                  setDraft(parsed)
+                  saveAnswerKeys(sessionId!, parsed)
+                    .then(() => confirmMutation.mutate())
+                    .catch((e) => setError(e.message))
+                }}
+                disabled={confirmMutation.isPending}
+              >
+                Confirm answer key
+              </Button>
+            </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+          </CardContent>
+        </Card>
       )}
 
-      <div className="rounded-lg border bg-white p-4">
-        <h3 className="text-sm font-semibold">
-          Answer key {locked ? '(confirmed ✓)' : 'preview'}
-        </h3>
-        {rows.length === 0 ? (
-          <p className="mt-2 text-sm text-gray-500">No answer key yet.</p>
-        ) : (
-          <ol className="mt-3 divide-y text-sm">
-            {rows.map((row) => (
-              <li key={row.question_number} className="flex items-center gap-3 py-1.5">
-                <span className="w-8 text-right text-gray-400">{row.question_number}.</span>
-                <span className="flex-1 font-medium">{row.correct_answer}</span>
-                <span className="text-xs text-gray-400">{row.question_type}</span>
-              </li>
-            ))}
-          </ol>
-        )}
-        {locked && <p className="mt-3 text-sm text-green-700">✓ Locked. Ready to check student papers.</p>}
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Answer key {locked ? '(confirmed ✓)' : 'preview'}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {rows.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No answer key yet.</p>
+          ) : (
+            <ol className="divide-y text-sm">
+              {rows.map((row) => (
+                <li key={row.question_number} className="flex items-center gap-3 py-1.5">
+                  <span className="w-8 text-right text-muted-foreground">{row.question_number}.</span>
+                  <span className="flex-1 font-medium">{row.correct_answer}</span>
+                  <Badge variant="outline">{row.question_type}</Badge>
+                </li>
+              ))}
+            </ol>
+          )}
+          {locked && <p className="mt-3 text-sm text-green-700">✓ Locked. Ready to check student papers.</p>}
+        </CardContent>
+      </Card>
 
       {locked && (
-        <div className="rounded-lg border bg-white p-4">
-          <h3 className="text-sm font-semibold">Who are you checking?</h3>
-          <select
-            className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            value={selectedStudent ?? ''}
-            onChange={(e) => {
-              const id = e.target.value
-              setSelectedStudent(id || null)
-              setSelectedStudentName(
-                students?.find((s) => s.id === id)?.name ?? null,
-              )
-            }}
-          >
-            <option value="">— Select student —</option>
-            {students?.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+        <Card>
+          <CardHeader>
+            <CardTitle>Who are you checking?</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Select
+              value={selectedStudent ?? ''}
+              onValueChange={(id) => {
+                setSelectedStudent(id || null)
+                setSelectedStudentName(students?.find((s) => s.id === id)?.name ?? null)
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select student" />
+              </SelectTrigger>
+              <SelectContent>
+                {students?.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          {selectedStudentName && (
-            <>
-              <p className="mt-3 text-sm text-green-700">✓ Now checking: {selectedStudentName}</p>
-              <div className="mt-3">
-                <CameraCapture
-                  onCapture={(b64) => {
-                    setPreview(`data:image/jpeg;base64,${b64}`)
-                  }}
-                />
-              </div>
-              {preview && (
-                <img src={preview} alt="Captured" className="mt-3 max-h-48 rounded-md border" />
-              )}
-            </>
-          )}
-        </div>
+            {selectedStudentName && (
+              <>
+                <p className="text-sm text-green-700">✓ Now checking: {selectedStudentName}</p>
+                <CameraCapture onCapture={(b64) => setPreview(`data:image/jpeg;base64,${b64}`)} />
+                {preview && <img src={preview} alt="Captured" className="max-h-48 rounded-md border" />}
+              </>
+            )}
+          </CardContent>
+        </Card>
       )}
     </section>
   )
