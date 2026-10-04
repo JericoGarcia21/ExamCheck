@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
+import CameraCapture from '../components/CameraCapture'
 import {
   confirmAnswerKey,
   getSession,
@@ -66,6 +67,7 @@ export default function SessionPage() {
 
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
   const [selectedStudentName, setSelectedStudentName] = useState<string | null>(null)
+  const [preview, setPreview] = useState<string | null>(null)
 
   const rows =
     draft ??
@@ -186,30 +188,40 @@ export default function SessionPage() {
 
       {locked && (
         <div className="rounded-lg border bg-white p-4">
-          <h3 className="text-sm font-semibold">Select student</h3>
-          <p className="mt-1 text-xs text-gray-500">
-            Pick the student whose paper you are checking. No photo needed.
-          </p>
-          <ul className="mt-3 divide-y rounded-md border">
+          <h3 className="text-sm font-semibold">Who are you checking?</h3>
+          <select
+            className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            value={selectedStudent ?? ''}
+            onChange={(e) => {
+              const id = e.target.value
+              setSelectedStudent(id || null)
+              setSelectedStudentName(
+                students?.find((s) => s.id === id)?.name ?? null,
+              )
+            }}
+          >
+            <option value="">— Select student —</option>
             {students?.map((s) => (
-              <li key={s.id} className="flex items-center justify-between px-3 py-2">
-                <span className="text-sm font-medium">{s.name}</span>
-                <button
-                  className={`rounded-md px-3 py-1 text-xs text-white ${
-                    selectedStudent === s.id ? 'bg-green-600' : 'bg-blue-600'
-                  }`}
-                  onClick={() => {
-                    setSelectedStudent(s.id)
-                    setSelectedStudentName(s.name)
-                  }}
-                >
-                  {selectedStudent === s.id ? 'Selected ✓' : 'Select'}
-                </button>
-              </li>
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
             ))}
-          </ul>
+          </select>
+
           {selectedStudentName && (
-            <p className="mt-3 text-sm text-green-700">✓ Now checking: {selectedStudentName}</p>
+            <>
+              <p className="mt-3 text-sm text-green-700">✓ Now checking: {selectedStudentName}</p>
+              <div className="mt-3">
+                <CameraCapture
+                  onCapture={(b64) => {
+                    setPreview(`data:image/jpeg;base64,${b64}`)
+                  }}
+                />
+              </div>
+              {preview && (
+                <img src={preview} alt="Captured" className="mt-3 max-h-48 rounded-md border" />
+              )}
+            </>
           )}
         </div>
       )}
