@@ -1,18 +1,19 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { Home, BookOpen, ClipboardCheck, BarChart3 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 const links = [
-  { to: '/', label: 'Home', icon: '🏠' },
-  { to: '/classes', label: 'Classes', icon: '📚' },
-  { to: '/checking', label: 'Checking', icon: '📝' },
-  { to: '/results', label: 'Results', icon: '📊' },
+  { to: '/', label: 'Home', icon: Home },
+  { to: '/classes', label: 'Classes', icon: BookOpen },
+  { to: '/checking', label: 'Checking', icon: ClipboardCheck },
+  { to: '/results', label: 'Results', icon: BarChart3 },
 ]
 
 export default function AppLayout() {
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
       <header className="sticky top-0 z-10 border-b bg-card">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+        <div className="mx-auto flex w-full max-w-md items-center justify-between px-4 py-3">
           <h1 className="text-lg font-semibold">ExamCheck</h1>
           <button
             onClick={async () => {
@@ -26,7 +27,7 @@ export default function AppLayout() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-6">
+      <main className="mx-auto w-full max-w-md px-4 py-6">
         <Outlet />
       </main>
 
@@ -43,7 +44,7 @@ export default function AppLayout() {
                 }`
               }
             >
-              <span className="text-lg leading-none">{link.icon}</span>
+              <link.icon className="h-5 w-5" />
               {link.label}
             </NavLink>
           ))}
