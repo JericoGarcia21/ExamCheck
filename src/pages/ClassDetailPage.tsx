@@ -16,6 +16,7 @@ import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Textarea } from '../components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { Badge } from '../components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog'
 import { Label } from '../components/ui/label'
 import { Plus } from 'lucide-react'
@@ -223,7 +224,9 @@ export default function ClassDetailPage() {
               >
                 <span className="font-medium">{s.session_name || 'Untitled session'}</span>
                 <span className="flex items-center gap-3">
-                  <span className="text-muted-foreground">{s.answer_key_confirmed ? 'Key confirmed ✓' : s.status}</span>
+                  <Badge variant={s.answer_key_confirmed ? 'default' : 'secondary'}>
+                    {s.answer_key_confirmed ? 'Key confirmed ✓' : s.status}
+                  </Badge>
                   <button
                     className="text-xs text-destructive"
                     onClick={(e) => {
