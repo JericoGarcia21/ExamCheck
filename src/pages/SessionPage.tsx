@@ -225,16 +225,22 @@ export default function SessionPage() {
         <div className="rounded-lg border bg-white p-4">
           <h3 className="text-sm font-semibold">Identify student (name photo)</h3>
           <p className="mt-1 text-xs text-gray-500">
-            Take a photo of the student's name on the paper, or upload one.
+            Capture the photo so the "Name:" label and the student's name are both visible.
           </p>
           <CameraCapture onCapture={handleNameBase64} disabled={ocrLoading} />
           {ocrLoading && <p className="mt-2 text-sm text-gray-500">Reading name…</p>}
           {ocrError && <p className="mt-2 text-sm text-red-600">{ocrError}</p>}
 
-          {detectedName && (
+          {detectedName ? (
             <p className="mt-3 text-sm">
               Detected: <span className="font-medium">{detectedName}</span>
             </p>
+          ) : (
+            !ocrLoading && !ocrError && (
+              <p className="mt-3 text-sm text-amber-700">
+                No name detected in the photo. Try capturing again with better light and a clearer view.
+              </p>
+            )
           )}
 
           {matches.length > 0 && (
