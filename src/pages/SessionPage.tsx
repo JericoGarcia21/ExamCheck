@@ -67,6 +67,7 @@ export default function SessionPage() {
   const [paperError, setPaperError] = useState<string | null>(null)
   const [paperLoading, setPaperLoading] = useState(false)
   const [paperProgress, setPaperProgress] = useState(0)
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set())
   const [ruleViolations, setRuleViolations] = useState<{ question_number: number | null; violation: string }[]>([])
   const [studentSearch, setStudentSearch] = useState('')
 
@@ -300,7 +301,11 @@ export default function SessionPage() {
                     key={s.id}
                     type="button"
                     className={`block w-full px-3 py-2 text-left text-sm hover:bg-muted/50 ${
-                      selectedStudent === s.id ? 'bg-primary/10 font-medium text-primary' : ''
+                      selectedStudent === s.id
+                        ? 'bg-primary/10 font-medium text-primary'
+                        : checkedIds.has(s.id)
+                          ? 'bg-green-50 text-green-800'
+                          : ''
                     }`}
                     onClick={() => {
                       setSelectedStudent(s.id)
@@ -308,6 +313,7 @@ export default function SessionPage() {
                     }}
                   >
                     {s.name}
+                    {checkedIds.has(s.id) && <span className="float-right text-green-600">✓ Checked</span>}
                   </button>
                 ))}
               {students?.filter((s) => s.name.toLowerCase().includes(studentSearch.toLowerCase())).length === 0 && (
@@ -424,6 +430,7 @@ export default function SessionPage() {
                                 is_correct: d.is_correct,
                               })),
                             })
+                            setCheckedIds((prev) => new Set(prev).add(selectedStudent!))
                             setPaperResult(null)
                             setPaperError(null)
                             setPreview(null)
