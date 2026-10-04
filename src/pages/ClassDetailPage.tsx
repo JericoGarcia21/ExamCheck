@@ -5,17 +5,22 @@ import * as XLSX from 'xlsx'
 import { getClass } from '../services/classService'
 import { addStudents, deleteStudent, listStudents, renameStudent } from '../services/studentService'
 import { buildStudentSeeds, formatStudentNumber, parseStudentNames } from '../lib/students'
-import {
-  createSession,
-  deleteSession,
-  listSessions,
-} from '../services/sessionService'
+import { createSession, deleteSession, listSessions } from '../services/sessionService'
+import { Button } from '../components/ui/button'
+import { Input } from '../components/ui/input'
+import { Textarea } from '../components/ui/textarea'
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog'
+import { Label } from '../components/ui/label'
+import { Plus } from 'lucide-react'
 
 export default function ClassDetailPage() {
   const { classId } = useParams<{ classId: string }>()
   const queryClient = useQueryClient()
   const [pasteText, setPasteText] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [sessionOpen, setSessionOpen] = useState(false)
+  const [newSessionName, setNewSessionName] = useState('')
 
   const { data: classRow } = useQuery({
     queryKey: ['class', classId],
@@ -26,6 +31,12 @@ export default function ClassDetailPage() {
   const { data: students } = useQuery({
     queryKey: ['students', classId],
     queryFn: () => listStudents(classId!),
+    enabled: !!classId,
+  })
+
+  const { data: sessions } = useQuery({
+    queryKey: ['sessions', classId],
+    queryFn: () => listSessions(classId!),
     enabled: !!classId,
   })
 
@@ -48,12 +59,6 @@ export default function ClassDetailPage() {
   const renameMutation = useMutation({
     mutationFn: ({ id, name }: { id: string; name: string }) => renameStudent(id, name),
     onSuccess: invalidate,
-  })
-
-  const { data: sessions } = useQuery({
-    queryKey: ['sessions', classId],
-    queryFn: () => listSessions(classId!),
-    enabled: !!classId,
   })
 
   const sessionMutation = useMutation({
@@ -103,100 +108,98 @@ export default function ClassDetailPage() {
   }
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-4">
       <div>
         <Link to="/classes" className="text-sm text-primary">&larr; Back to classes</Link>
         <h2 className="mt-1 text-xl font-semibold">
           {classRow ? `${classRow.block_name} · ${classRow.school_year}` : 'Loading…'}
         </h2>
-        <p className="text-sm text-gray-500">{students?.length ?? 0} students</p>
+        <p className="text-sm text-muted-foreground">{students?.length ?? 0} students</p>
       </div>
 
-      <div className="rounded-lg border bg-white p-4">
-        <h3 className="text-sm font-semibold">Add students</h3>
-        <textarea
-          value={pasteText}
-          onChange={(e) => setPasteText(e.target.value)}
-          rows={6}
-          placeholder={'GARCIA, JERICO B.\nCRUZ, JUAN D.\nAQUINO, PAOLO R.'}
-          className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-        />
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <button
-            onClick={handlePasteSubmit}
-            disabled={addMutation.isPending}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-          >
-            Add from pasted names
-          </button>
-          <label className="cursor-pointer rounded-md border px-4 py-2 text-sm font-medium hover:bg-gray-50">
-            Import Excel/CSV
-            <input
-              type="file"
-              accept=".xlsx,.xls,.csv"
-              className="hidden"
-              onChange={(e) => e.target.files?.[0] && handleExcel(e.target.files[0])}
-            />
-          </label>
-        </div>
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Add students</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Textarea
+            value={pasteText}
+            onChange={(e) => setPasteText(e.target.value)}
+            rows={6}
+            placeholder={'GARCIA, JERICO B.\nCRUZ, JUAN D.\nAQUINO, PAOLO R.'}
+          />
+          <div className="flex flex-col gap-2">
+            <Button onClick={handlePasteSubmit} disabled={addMutation.isPending}>
+              Add from pasted names
+            </Button>
+            <label className="cursor-pointer rounded-md border px-4 py-2 text-center text-sm font-medium hover:bg-muted/50">
+              Import Excel/CSV
+              <input
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                className="hidden"
+                onChange={(e) => e.target.files?.[0] && handleExcel(e.target.files[0])}
+              />
+            </label>
+          </div>
+          {error && <p className="text-sm text-destructive">{error}</p>}
+        </CardContent>
+      </Card>
 
-      <ul className="divide-y rounded-lg border bg-white">
-        {students?.map((s, i) => (
-          <li key={s.id} className="flex items-center gap-3 px-4 py-2">
-            <span className="w-8 text-sm text-gray-400">{s.student_number ?? formatStudentNumber(i)}</span>
-            <span className="flex-1 text-sm">{s.name}</span>
-            <button
-              className="text-xs text-primary"
-              onClick={() => {
-                const name = window.prompt('Edit student name', s.name)
-                if (name && name.trim() && name !== s.name) renameMutation.mutate({ id: s.id, name: name.trim() })
-              }}
-            >
-              Edit
-            </button>
-            <button
-              className="text-xs text-red-600"
-              onClick={() => {
-                if (window.confirm(`Delete ${s.name}?`)) deleteMutation.mutate(s.id)
-              }}
-            >
-              Delete
-            </button>
-          </li>
-        ))}
-        {students?.length === 0 && (
-          <li className="px-4 py-6 text-center text-sm text-gray-500">No students yet.</li>
-        )}
-      </ul>
+      <Card>
+        <CardHeader>
+          <CardTitle>Students</CardTitle>
+        </CardHeader>
+        <CardContent className="divide-y p-0">
+          {students?.length === 0 && (
+            <p className="px-4 py-6 text-center text-sm text-muted-foreground">No students yet.</p>
+          )}
+          {students?.map((s, i) => (
+            <div key={s.id} className="flex items-center gap-3 px-4 py-2">
+              <span className="w-8 text-sm text-muted-foreground">{s.student_number ?? formatStudentNumber(i)}</span>
+              <span className="flex-1 text-sm">{s.name}</span>
+              <button
+                className="text-xs text-primary"
+                onClick={() => {
+                  const name = window.prompt('Edit student name', s.name)
+                  if (name && name.trim() && name !== s.name) renameMutation.mutate({ id: s.id, name: name.trim() })
+                }}
+              >
+                Edit
+              </button>
+              <button
+                className="text-xs text-destructive"
+                onClick={() => {
+                  if (window.confirm(`Delete ${s.name}?`)) deleteMutation.mutate(s.id)
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
 
-      <div className="rounded-lg border bg-white p-4">
-        <h3 className="text-sm font-semibold">Checking sessions</h3>
-        <div className="mt-2 flex items-center gap-3">
-          <button
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white"
-            onClick={() => {
-              const name = window.prompt('Session name (e.g. Midterm Examination)')
-              if (name === null || name.trim() === '') return
-              sessionMutation.mutate(name.trim())
-            }}
-          >
-            + New session
-          </button>
-        </div>
-        <ul className="mt-3 divide-y">
-          {sessions?.map((s) => (
-            <li key={s.id}>
+      <Card>
+        <CardHeader>
+          <CardTitle>Checking sessions</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="divide-y">
+            {sessions?.length === 0 && (
+              <p className="py-4 text-center text-sm text-muted-foreground">No sessions yet.</p>
+            )}
+            {sessions?.map((s) => (
               <Link
+                key={s.id}
                 to={`/sessions/${s.id}`}
-                className="flex items-center justify-between py-2 text-sm hover:bg-gray-50"
+                className="flex items-center justify-between py-2 text-sm hover:bg-muted/50"
               >
                 <span className="font-medium">{s.session_name || 'Untitled session'}</span>
                 <span className="flex items-center gap-3">
-                  <span className="text-gray-500">{s.answer_key_confirmed ? 'Key confirmed ✓' : s.status}</span>
+                  <span className="text-muted-foreground">{s.answer_key_confirmed ? 'Key confirmed ✓' : s.status}</span>
                   <button
-                    className="text-xs text-red-600"
+                    className="text-xs text-destructive"
                     onClick={(e) => {
                       e.preventDefault()
                       if (window.confirm(`Delete session "${s.session_name || 'Untitled'}"?`)) {
@@ -208,13 +211,46 @@ export default function ClassDetailPage() {
                   </button>
                 </span>
               </Link>
-            </li>
-          ))}
-          {sessions?.length === 0 && (
-            <li className="py-4 text-center text-sm text-gray-500">No sessions yet.</li>
-          )}
-        </ul>
-      </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog open={sessionOpen} onOpenChange={setSessionOpen}>
+        <DialogTrigger
+          aria-label="New session"
+          className="fixed bottom-24 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"
+        >
+          <Plus className="h-6 w-6" />
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New session</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              const name = newSessionName.trim()
+              if (!name) return
+              sessionMutation.mutate(name)
+              setNewSessionName('')
+              setSessionOpen(false)
+            }}
+            className="space-y-3"
+          >
+            <div>
+              <Label htmlFor="session_name">Session name</Label>
+              <Input
+                id="session_name"
+                placeholder="e.g. Midterm Examination"
+                value={newSessionName}
+                onChange={(e) => setNewSessionName(e.target.value)}
+              />
+            </div>
+            <Button type="submit" className="w-full">Create session</Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </section>
   )
 }
