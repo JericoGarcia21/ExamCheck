@@ -68,10 +68,15 @@ serve(async (req) => {
 
     if (!response || !response.ok) {
       console.error('Gemini error:', lastStatus, await response?.text())
-      console.error('Make sure the deployed read-answers function uses only gemini-3.8-flash and is redeployed.')
       return Response.json(
-        { error: lastStatus === 503 ? 'The paper reader is busy. Please try again.' : 'The paper reader is unavailable right now.' },
-        { status: 503, headers: corsHeaders },
+        {
+          error: lastStatus === 429
+            ? 'You have used up your Gemini API quota. Check your Google AI plan/billing, or try again later.'
+            : lastStatus === 503
+              ? 'The paper reader is busy. Please try again.'
+              : 'The paper reader is unavailable right now.',
+        },
+        { status: lastStatus === 429 ? 429 : 503, headers: corsHeaders },
       )
     }
 
