@@ -1,7 +1,7 @@
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? ''
-const GEMINI_MODELS = ['gemini-3.8-flash-lite', 'gemini-3.8-flash', 'gemini-2.5-flash']
+const GEMINI_MODELS = ['gemini-3.8-flash']
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -68,6 +68,7 @@ serve(async (req) => {
 
     if (!response || !response.ok) {
       console.error('Gemini error:', lastStatus, await response?.text())
+      console.error('Make sure the deployed read-answers function uses only gemini-3.8-flash and is redeployed.')
       return Response.json(
         { error: lastStatus === 503 ? 'The paper reader is busy. Please try again.' : 'The paper reader is unavailable right now.' },
         { status: 503, headers: corsHeaders },
