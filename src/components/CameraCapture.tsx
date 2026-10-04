@@ -19,14 +19,17 @@ export default function CameraCapture({
         audio: false,
       })
       setStream(media)
-      if (videoRef.current) {
-        videoRef.current.srcObject = media
-        await videoRef.current.play()
-      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not open camera.')
     }
   }
+
+  useEffect(() => {
+    if (stream && videoRef.current) {
+      videoRef.current.srcObject = stream
+      videoRef.current.play().catch(() => {})
+    }
+  }, [stream])
 
   function stop() {
     stream?.getTracks().forEach((t) => t.stop())
