@@ -101,7 +101,7 @@ export default function ClassDetailPage() {
       const names: string[] = []
       for (const row of rows) {
         for (const cell of row) {
-          if (typeof cell === 'string' && cell.trim().length > 0) {
+          if (typeof cell === 'string' && cell.trim().length > 0 && /[a-zA-Z]/.test(cell)) {
             names.push(cell)
             break
           }
