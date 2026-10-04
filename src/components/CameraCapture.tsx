@@ -77,14 +77,14 @@ export default function CameraCapture({
             <button
               type="button"
               onClick={capture}
-              className="rounded-full bg-white px-8 py-4 text-sm font-semibold text-black shadow-lg"
+              className="rounded-none bg-white px-8 py-4 text-sm font-semibold text-black shadow-lg"
             >
               Capture photo
             </button>
             <button
               type="button"
               onClick={stop}
-              className="rounded-full border border-white/60 px-6 py-4 text-sm font-medium text-white"
+              className="rounded-none border border-white/60 px-6 py-4 text-sm font-medium text-white"
             >
               Cancel
             </button>
