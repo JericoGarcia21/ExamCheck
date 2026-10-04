@@ -127,6 +127,7 @@ export default function SessionPage() {
               value={pasteText}
               onChange={(e) => setPasteText(e.target.value)}
               rows={8}
+              className="max-h-60 overflow-y-auto"
               placeholder={'1. B\n2. C\n3. A\n4. D\n5. True\n6. Encapsulation'}
             />
             <div className="flex flex-col gap-2">
@@ -177,7 +178,7 @@ export default function SessionPage() {
           {rows.length === 0 ? (
             <p className="text-sm text-muted-foreground">No answer key yet.</p>
           ) : (
-            <ol className="divide-y text-sm">
+            <ol className="divide-y text-sm max-h-72 overflow-y-auto">
               {rows.map((row) => (
                 <li key={row.question_number} className="flex items-center gap-3 py-1.5">
                   <span className="w-8 text-right text-muted-foreground">{row.question_number}.</span>

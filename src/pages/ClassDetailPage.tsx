@@ -136,6 +136,7 @@ export default function ClassDetailPage() {
             value={pasteText}
             onChange={(e) => setPasteText(e.target.value)}
             rows={6}
+            className="max-h-60 overflow-y-auto"
             placeholder={'GARCIA, JERICO B.\nCRUZ, JUAN D.\nAQUINO, PAOLO R.'}
           />
           <div className="flex flex-col gap-2">
@@ -174,7 +175,7 @@ export default function ClassDetailPage() {
             )}
           </div>
         </CardHeader>
-        <CardContent className="divide-y p-0">
+        <CardContent className="divide-y p-0 max-h-96 overflow-y-auto">
           {students?.length === 0 && (
             <p className="px-4 py-6 text-center text-sm text-muted-foreground">No students yet.</p>
           )}
