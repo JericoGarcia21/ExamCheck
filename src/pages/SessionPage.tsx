@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import CameraCapture from '../components/CameraCapture'
+import { supabase } from '../lib/supabase'
 import {
   confirmAnswerKey,
   getSession,
@@ -61,6 +62,10 @@ export default function SessionPage() {
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
   const [selectedStudentName, setSelectedStudentName] = useState<string | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
+  const [paperResult, setPaperResult] = useState<ReturnType<typeof calculateScore> | null>(null)
+  const [paperError, setPaperError] = useState<string | null>(null)
+  const [paperLoading, setPaperLoading] = useState(false)
+  const [ruleViolations, setRuleViolations] = useState<string[]>([])
 
   const { data: session } = useQuery({
     queryKey: ['session', sessionId],
@@ -301,8 +306,97 @@ export default function SessionPage() {
             {selectedStudentName && (
               <>
                 <p className="text-sm text-green-700">✓ Now checking: {selectedStudentName}</p>
-                <CameraCapture onCapture={(b64) => setPreview(`data:image/jpeg;base64,${b64}`)} />
+                <CameraCapture
+                  onCapture={async (b64) => {
+                    setPreview(`data:image/jpeg;base64,${b64}`)
+                    setPaperLoading(true)
+                    setPaperResult(null)
+                    setPaperError(null)
+                    try {
+                      const { data, error } = await supabase.functions.invoke('read-answers', {
+                        body: { imageBase64: b64, mimeType: 'image/jpeg', totalItems: rows.length, rules: session?.rules ?? '' },
+                      })
+                      if (error) throw error
+                      if (data?.error) throw new Error(data.error)
+                      const scored = calculateScore(data.answers ?? [], rows)
+                      setPaperResult(scored)
+                      setRuleViolations(data.rule_violations ?? [])
+                    } catch (e) {
+                      let message = e instanceof Error ? e.message : String(e)
+                      if (e && typeof e === 'object' && 'context' in e) {
+                        try {
+                          const body = await (e as { context: Response }).context.json()
+                          if (body?.error) message = body.error
+                        } catch { /* ignore */ }
+                      }
+                      setPaperError(message)
+                    } finally {
+                      setPaperLoading(false)
+                    }
+                  }}
+                />
                 {preview && <img src={preview} alt="Captured" className="max-h-48 rounded-md border" />}
+                {paperLoading && <p className="text-sm text-muted-foreground">Reading answers…</p>}
+                {paperError && <p className="text-sm text-destructive">{paperError}</p>}
+                {paperResult && (
+                  <Card>
+                    <CardContent className="space-y-2 py-4">
+                      <p className="text-lg font-semibold">
+                        {selectedStudentName}: {paperResult.score}/{paperResult.total} ({Math.round((paperResult.score / paperResult.total) * 100)}%)
+                      </p>
+                      {ruleViolations.length > 0 && (
+                        <div className="rounded-md border border-destructive/30 bg-destructive/5 p-2 text-xs text-destructive">
+                          <p className="font-medium">Rule violations detected:</p>
+                          <ul className="list-disc pl-4">
+                            {ruleViolations.map((v, i) => (
+                              <li key={i}>{v}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      <ol className="divide-y text-sm">
+                        {paperResult.details.map((d) => (
+                          <li key={d.question_number} className="flex items-center gap-2 py-1">
+                            <span className="w-6 text-right text-muted-foreground">{d.question_number}.</span>
+                            <span className="flex-1">{d.student_answer}</span>
+                            <span className={d.is_correct ? 'text-green-600' : 'text-destructive'}>
+                              {d.is_correct ? '✓' : `✗ (${d.correct_answer})`}
+                            </span>
+                          </li>
+                        ))}
+                      </ol>
+                      <Button
+                        className="w-full"
+                        onClick={async () => {
+                          try {
+                            await saveSubmission({
+                              checking_session_id: sessionId!,
+                              student_id: selectedStudent!,
+                              score: paperResult.score,
+                              total_items: paperResult.total,
+                              answers: paperResult.details.map((d) => ({
+                                question_number: d.question_number,
+                                student_answer: d.student_answer,
+                                correct_answer: d.correct_answer,
+                                is_correct: d.is_correct,
+                              })),
+                            })
+                            setPaperResult(null)
+                            setPaperError(null)
+                            setPreview(null)
+                            setError(null)
+                            setSelectedStudent(null)
+                            setSelectedStudentName(null)
+                          } catch (e) {
+                            setPaperError(e instanceof Error ? e.message : String(e))
+                          }
+                        }}
+                      >
+                        Save result
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
               </>
             )}
           </CardContent>

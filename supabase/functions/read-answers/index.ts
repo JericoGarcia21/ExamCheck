@@ -16,16 +16,21 @@ serve(async (req) => {
       return Response.json({ error: 'GEMINI_API_KEY secret is not set.' }, { status: 500, headers: corsHeaders })
     }
 
-    const { imageBase64, mimeType, totalItems } = await req.json()
+    const { imageBase64, mimeType, totalItems, rules } = await req.json()
     if (!imageBase64 || !totalItems) {
       return Response.json({ error: 'imageBase64 and totalItems are required' }, { status: 400, headers: corsHeaders })
     }
 
+    const rulesPrompt = rules
+      ? ' Also check the paper against these rules and list any violations you observe: "' + rules + '". Put them in a separate array "rule_violations".'
+      : ''
+
     const prompt =
       'This is a handwritten exam answer sheet. There are ' + totalItems + ' questions, numbered 1 to ' + totalItems + '. ' +
       'For each question, read the student\'s answer (a letter like A/B/C/D, True/False, or a short written answer). ' +
-      'Respond ONLY with a JSON array in this exact format, no extra text: ' +
-      '[{"question_number":1,"student_answer":"B"}, ...]. If an answer is unreadable, use an empty string.'
+      'Respond ONLY with a JSON object in this exact format, no extra text: ' +
+      '{"answers":[{"question_number":1,"student_answer":"B"}], "rule_violations":[]}. ' +
+      'If an answer is unreadable, use an empty string.' + rulesPrompt
 
     let response: Response | null = null
     let lastStatus = 0
@@ -72,9 +77,11 @@ serve(async (req) => {
     const data = await response.json()
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
     try {
-      const match = text.match(/\[[\s\S]*\]/)
+      const match = text.match(/\{[\s\S]*\}/)
       const parsed = JSON.parse(match ? match[0] : text)
-      return Response.json({ answers: parsed }, { headers: corsHeaders })
+      const answers = Array.isArray(parsed) ? parsed : parsed.answers ?? []
+      const ruleViolations = Array.isArray(parsed) ? [] : parsed.rule_violations ?? []
+      return Response.json({ answers, rule_violations: ruleViolations }, { headers: corsHeaders })
     } catch {
       console.error('Gemini returned non-JSON:', text)
       return Response.json({ error: 'Could not understand the answer sheet. Please retake the photo.' }, { status: 422, headers: corsHeaders })
