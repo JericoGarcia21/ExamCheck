@@ -89,7 +89,16 @@ export default function SessionPage() {
       setDetectedName(name)
       setMatches(matchStudents(name, (students ?? []).map((s) => ({ id: s.id, name: s.name }))))
     } catch (e) {
-      setOcrError(e instanceof Error ? e.message : String(e))
+      let message = e instanceof Error ? e.message : String(e)
+      if (e && typeof e === 'object' && 'context' in e) {
+        try {
+          const body = await (e as { context: Response }).context.json()
+          if (body?.error) message = body.error
+        } catch {
+          // ignore parse errors
+        }
+      }
+      setOcrError(message)
     } finally {
       setOcrLoading(false)
     }

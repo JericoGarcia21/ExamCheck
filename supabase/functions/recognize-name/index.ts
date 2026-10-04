@@ -1,7 +1,7 @@
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? ''
-const GEMINI_MODEL = 'gemini-2.0-flash'
+const GEMINI_MODELS = ['gemini-3.8-flash', 'gemini-3.8-flash-lite', 'gemini-2.5-flash']
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -28,27 +28,52 @@ serve(async (req) => {
       'This image shows a student name written on paper. Extract ONLY the student name ' +
       'as written. Return just the name text, nothing else. If no name is readable, return EMPTY.'
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                { text: prompt },
-                { inline_data: { mime_type: mimeType ?? 'image/jpeg', data: imageBase64 } },
+    let response: Response | null = null
+    let lastStatus = 0
+    for (const model of GEMINI_MODELS) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    { text: prompt },
+                    { inline_data: { mime_type: mimeType ?? 'image/jpeg', data: imageBase64 } },
+                  ],
+                },
               ],
-            },
-          ],
-        }),
-      },
-    )
+            }),
+          },
+        )
+        lastStatus = response.status
+        if (response.ok) break
+        // Model not available -> try next model immediately
+        if (response.status === 404) break
+        // Busy -> retry once after a short wait
+        if (response.status === 503) {
+          await new Promise((r) => setTimeout(r, 1500))
+          continue
+        }
+        break
+      }
+      if (response?.ok) break
+    }
 
-    if (!response.ok) {
-      const text = await response.text()
-      return Response.json({ error: `Gemini error: ${text}` }, { status: 502, headers: corsHeaders })
+    if (!response || !response.ok) {
+      console.error('Gemini error:', lastStatus, await response?.text())
+      return Response.json(
+        {
+          error:
+            lastStatus === 503
+              ? 'The name reader is busy right now. Please wait a moment and try again.'
+              : 'The name reader is unavailable right now. Please try again or check the photo.',
+        },
+        { status: 503, headers: corsHeaders },
+      )
     }
 
     const data = await response.json()

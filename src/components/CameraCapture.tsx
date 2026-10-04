@@ -15,7 +15,11 @@ export default function CameraCapture({
     setError(null)
     try {
       const media = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
         audio: false,
       })
       setStream(media)
@@ -46,8 +50,9 @@ export default function CameraCapture({
     canvas.height = video.videoHeight
     const ctx = canvas.getContext('2d')
     if (!ctx) return
+    ctx.filter = 'contrast(1.15) brightness(1.05)'
     ctx.drawImage(video, 0, 0)
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.95)
     onCapture(dataUrl.split(',')[1], 'image/jpeg')
     stop()
   }
