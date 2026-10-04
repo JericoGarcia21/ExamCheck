@@ -89,6 +89,24 @@ export default function SessionPage() {
     enabled: !!session?.class_id,
   })
 
+  const { data: doneSubmissions } = useQuery({
+    queryKey: ['submissions', sessionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('submissions')
+        .select('student_id')
+        .eq('checking_session_id', sessionId!)
+      if (error) throw error
+      return data ?? []
+    },
+    enabled: !!sessionId,
+  })
+
+  const doneIds = new Set([
+    ...(doneSubmissions ?? []).map((s) => s.student_id),
+    ...checkedIds,
+  ])
+
   const rows =
     draft ??
     (keys ?? []).map((k) => ({
@@ -303,7 +321,7 @@ export default function SessionPage() {
                     className={`block w-full px-3 py-2 text-left text-sm hover:bg-muted/50 ${
                       selectedStudent === s.id
                         ? 'bg-primary/10 font-medium text-primary'
-                        : checkedIds.has(s.id)
+                        : doneIds.has(s.id)
                           ? 'bg-green-50 text-green-800'
                           : ''
                     }`}
@@ -313,7 +331,7 @@ export default function SessionPage() {
                     }}
                   >
                     {s.name}
-                    {checkedIds.has(s.id) && <span className="float-right text-green-600">✓ Checked</span>}
+                    {doneIds.has(s.id) && <span className="float-right text-green-600">✓ Checked</span>}
                   </button>
                 ))}
               {students?.filter((s) => s.name.toLowerCase().includes(studentSearch.toLowerCase())).length === 0 && (
@@ -431,6 +449,7 @@ export default function SessionPage() {
                               })),
                             })
                             setCheckedIds((prev) => new Set(prev).add(selectedStudent!))
+                            queryClient.invalidateQueries({ queryKey: ['submissions', sessionId] })
                             setPaperResult(null)
                             setPaperError(null)
                             setPreview(null)
