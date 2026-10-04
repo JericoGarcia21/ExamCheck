@@ -29,7 +29,7 @@ serve(async (req) => {
       'This is a handwritten exam answer sheet. There are ' + totalItems + ' questions, numbered 1 to ' + totalItems + '. ' +
       'For each question, read the student\'s answer (a letter like A/B/C/D, True/False, or a short written answer). ' +
       'Respond ONLY with a JSON object in this exact format, no extra text: ' +
-      '{"answers":[{"question_number":1,"student_answer":"B"}], "rule_violations":[]}. ' +
+      '{"answers":[{"question_number":1,"student_answer":"B"}], "rule_violations":[{"question_number":1,"violation":"erasure detected"}]}. ' +
       'If an answer is unreadable, use an empty string.' + rulesPrompt
 
     let response: Response | null = null
@@ -80,7 +80,11 @@ serve(async (req) => {
       const match = text.match(/\{[\s\S]*\}/)
       const parsed = JSON.parse(match ? match[0] : text)
       const answers = Array.isArray(parsed) ? parsed : parsed.answers ?? []
-      const ruleViolations = Array.isArray(parsed) ? [] : parsed.rule_violations ?? []
+      const ruleViolations = Array.isArray(parsed)
+        ? []
+        : (parsed.rule_violations ?? []).map((v: { question_number?: number; violation?: string } | string) =>
+            typeof v === 'string' ? { question_number: null, violation: v } : { question_number: v.question_number ?? null, violation: v.violation ?? '' },
+          );
       return Response.json({ answers, rule_violations: ruleViolations }, { headers: corsHeaders })
     } catch {
       console.error('Gemini returned non-JSON:', text)

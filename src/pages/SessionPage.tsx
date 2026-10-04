@@ -65,7 +65,7 @@ export default function SessionPage() {
   const [paperResult, setPaperResult] = useState<ReturnType<typeof calculateScore> | null>(null)
   const [paperError, setPaperError] = useState<string | null>(null)
   const [paperLoading, setPaperLoading] = useState(false)
-  const [ruleViolations, setRuleViolations] = useState<string[]>([])
+  const [ruleViolations, setRuleViolations] = useState<{ question_number: number | null; violation: string }[]>([])
 
   const { data: session } = useQuery({
     queryKey: ['session', sessionId],
@@ -319,8 +319,21 @@ export default function SessionPage() {
                       if (error) throw error
                       if (data?.error) throw new Error(data.error)
                       const scored = calculateScore(data.answers ?? [], rows)
-                      setPaperResult(scored)
-                      setRuleViolations(data.rule_violations ?? [])
+                      const violations: { question_number: number | null; violation: string }[] = data.rule_violations ?? []
+                      const violatedNumbers = new Set(
+                        violations.filter((v) => v.question_number !== null).map((v) => v.question_number),
+                      )
+                      const adjustedDetails = scored.details.map((d) => ({
+                        ...d,
+                        is_correct: d.is_correct && !violatedNumbers.has(d.question_number),
+                      }))
+                      const adjustedScore = {
+                        score: adjustedDetails.filter((d) => d.is_correct).length,
+                        total: scored.total,
+                        details: adjustedDetails,
+                      }
+                      setPaperResult(adjustedScore)
+                      setRuleViolations(violations)
                     } catch (e) {
                       let message = e instanceof Error ? e.message : String(e)
                       if (e && typeof e === 'object' && 'context' in e) {
@@ -349,7 +362,9 @@ export default function SessionPage() {
                           <p className="font-medium">Rule violations detected:</p>
                           <ul className="list-disc pl-4">
                             {ruleViolations.map((v, i) => (
-                              <li key={i}>{v}</li>
+                              <li key={i}>
+                                {v.question_number !== null ? `Q${v.question_number}: ` : ''}{v.violation}
+                              </li>
                             ))}
                           </ul>
                         </div>
