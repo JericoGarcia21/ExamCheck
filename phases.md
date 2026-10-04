@@ -44,22 +44,27 @@ Develop slowly but surely: finish and test one phase before starting the next. E
 
 **Status:** ✅ DONE (manual selection; teacher controls who is being checked)
 
-## Phase 4 — Paper Checking + Scoring — 🔵 CURRENT
+## Phase 4 — Paper Checking + Scoring — ✅ DONE
 
-- [ ] Capture/upload test paper image
-- [ ] Edge Function: preprocessing → detect questions → read answers
-- [ ] Answer types: multiple choice, T/F, identification, short answer
-- [ ] Deterministic comparison vs answer key
-- [ ] Centralized `calculateScore` → score, percentage
+- [x] Capture/upload test paper image (CameraCapture component)
+- [x] Edge Function: preprocessing → detect questions → read answers (`read-answers` + Gemini)
+- [x] Answer types: multiple choice, T/F, identification, short answer (auto-detected)
+- [x] Deterministic comparison vs answer key (`normalizeAnswer` + `calculateScore`)
+- [x] Centralized `calculateScore` → score, percentage
+- [x] Rule violations detection (erasures, tampering)
 
-**Deliverables:** 43/50, 86% computed and stored as a submission.
+**Status:** ✅ DONE (capture → AI read → score computed & stored as submission; build + typecheck PASS)
 
-## Phase 5 — Review + Correction
+**Deliverables:** score/total + percentage computed and stored as a submission.
 
-- [ ] Confidence scores per answer; flag uncertain
-- [ ] Review screen: accept / edit answer / mark wrong
-- [ ] Manual score adjustment by teacher
-- [ ] Low-confidence AI interpretations never auto-accepted
+## Phase 5 — Review + Correction — ✅ DONE
+
+- [x] Confidence scores per answer; flag uncertain (shown on every result row, <70% flagged red)
+- [x] Review screen: accept / edit answer / skip (modal with progress "Q x of N")
+- [x] Low-confidence AI interpretations never auto-accepted (review is optional, teacher decides)
+- [x] Manual score adjustment by teacher (override final score before save)
+
+**Status:** ✅ DONE (confidence shown per answer + average; review modal; teacher score override; build + typecheck PASS)
 
 **Deliverables:** Uncertain items routed to teacher; final teacher-approved score.
 

@@ -8,6 +8,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Fallback confidence when the model does not provide one.
+// Clear multiple-choice / true-false readings are reliable; free-text is not.
+function defaultConfidence(answerText: string): number {
+  const trimmed = answerText.trim()
+  if (!trimmed) return 0.1
+  if (/^[a-e]$/i.test(trimmed)) return 0.85
+  if (/^(true|false|t|f)$/i.test(trimmed)) return 0.85
+  return 0.6
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
@@ -27,10 +37,12 @@ serve(async (req) => {
 
     const prompt =
       'This is a handwritten exam answer sheet. There are ' + totalItems + ' questions, numbered 1 to ' + totalItems + '. ' +
-      'For each question, read the student\'s answer (a letter like A/B/C/D, True/False, or a short written answer). ' +
+      'For each question, read the student\'s answer (a letter like A/B/C/D, True/False, or a short written answer) ' +
+      'and estimate your confidence from 0 to 1 for how sure you are the reading is correct. ' +
+      'You MUST include a "confidence" number (0 to 1) for EVERY answer, even if you are unsure. ' +
       'Respond ONLY with a JSON object in this exact format, no extra text: ' +
-      '{"answers":[{"question_number":1,"student_answer":"B"}], "rule_violations":[{"question_number":1,"violation":"erasure detected"}]}. ' +
-      'If an answer is unreadable, use an empty string.' + rulesPrompt
+      '{"answers":[{"question_number":1,"student_answer":"B","confidence":0.95}], "rule_violations":[{"question_number":1,"violation":"erasure detected"}]}. ' +
+      'If an answer is unreadable, use an empty string and confidence 0.0.' + rulesPrompt
 
     let response: Response | null = null
     let lastStatus = 0
@@ -85,7 +97,27 @@ serve(async (req) => {
     try {
       const match = text.match(/\{[\s\S]*\}/)
       const parsed = JSON.parse(match ? match[0] : text)
-      const answers = Array.isArray(parsed) ? parsed : parsed.answers ?? []
+      const toAnswer = (a: { question_number?: number; student_answer?: string; confidence?: number | string }) => {
+        const answerText = a.student_answer ?? ''
+        // Coerce confidence to a number; Gemini sometimes returns it as a string
+        let confidence: number
+        if (typeof a.confidence === 'number' && !Number.isNaN(a.confidence)) {
+          confidence = a.confidence
+        } else if (typeof a.confidence === 'string') {
+          const parsedConfidence = parseFloat(a.confidence)
+          confidence = Number.isNaN(parsedConfidence) ? defaultConfidence(answerText) : parsedConfidence
+        } else {
+          confidence = defaultConfidence(answerText)
+        }
+        // Clamp to 0..1
+        confidence = Math.max(0, Math.min(1, confidence))
+        return {
+          question_number: a.question_number,
+          student_answer: answerText,
+          confidence,
+        }
+      }
+      const answers = (Array.isArray(parsed) ? parsed : (parsed.answers ?? [])).map(toAnswer)
       const ruleViolations = Array.isArray(parsed)
         ? []
         : (parsed.rule_violations ?? []).map((v: { question_number?: number; violation?: string } | string) =>

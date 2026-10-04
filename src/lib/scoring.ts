@@ -1,6 +1,7 @@
 export interface StudentAnswer {
   question_number: number
   student_answer: string
+  confidence?: number
 }
 
 export interface AnswerKeyItem {
@@ -14,6 +15,7 @@ export interface ScoredAnswer {
   student_answer: string
   correct_answer: string
   is_correct: boolean
+  confidence?: number
 }
 
 export function normalizeAnswer(value: string, type?: string | null): string {
@@ -48,6 +50,7 @@ export function calculateScore(answers: StudentAnswer[], key: AnswerKeyItem[]): 
       student_answer: a.student_answer,
       correct_answer: k.correct_answer,
       is_correct: isCorrect,
+      confidence: a.confidence,
     })
   }
 
