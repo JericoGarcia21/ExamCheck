@@ -1,10 +1,56 @@
+import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
+import { Card, CardContent } from '../components/ui/card'
+
 export default function CheckingPage() {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['allSessions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('checking_sessions')
+        .select('*, classes(*)')
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return data ?? []
+    },
+  })
+
   return (
-    <section>
-      <h2 className="text-xl font-semibold">Checking</h2>
-      <p className="mt-2 text-sm text-gray-600">
-        The main grading workspace. (Answer key upload in Phase 2, camera capture in Phase 3.)
+    <section className="space-y-4">
+      <h2 className="text-xl font-semibold">Checking sessions</h2>
+      <p className="text-sm text-muted-foreground">
+        All checking sessions across your classes. Tap one to continue grading.
       </p>
+
+      {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+      {error && <p className="text-sm text-destructive">{error.message}</p>}
+
+      {data?.length === 0 && (
+        <Card>
+          <CardContent className="py-6 text-center text-sm text-muted-foreground">
+            No checking sessions yet. Open a class and create one.
+          </CardContent>
+        </Card>
+      )}
+
+      {data?.map((s) => (
+        <Link key={s.id} to={`/sessions/${s.id}`}>
+          <Card className="hover:bg-muted/50">
+            <CardContent className="flex items-center justify-between py-4">
+              <div>
+                <p className="font-medium">{s.session_name || 'Untitled session'}</p>
+                <p className="text-sm text-muted-foreground">
+                  {s.classes?.block_name} · {s.session_date}
+                </p>
+              </div>
+              <span className="text-sm text-muted-foreground">
+                {s.answer_key_confirmed ? 'Key confirmed ✓' : 'Draft'}
+              </span>
+            </CardContent>
+          </Card>
+        </Link>
+      ))}
     </section>
   )
 }
