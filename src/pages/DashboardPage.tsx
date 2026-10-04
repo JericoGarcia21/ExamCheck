@@ -19,7 +19,7 @@ export default function DashboardPage() {
           </p>
         </CardContent>
       </Card>
-      <div className="grid grid-cols-1 gap-3">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         {tiles.map((t) => (
           <Link key={t.to} to={t.to}>
             <Card className="hover:bg-muted/50">

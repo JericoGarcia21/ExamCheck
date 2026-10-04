@@ -11,10 +11,24 @@ const links = [
 
 export default function AppLayout() {
   return (
-    <div className="min-h-screen bg-background text-foreground pb-20">
+    <div className="min-h-screen bg-background text-foreground pb-20 md:pb-10">
       <header className="sticky top-0 z-10 border-b bg-card">
-        <div className="mx-auto flex w-full max-w-md items-center justify-between px-4 py-3">
+        <div className="mx-auto flex w-full max-w-md items-center justify-between px-4 py-3 md:max-w-4xl">
           <h1 className="text-lg font-semibold">ExamCheck</h1>
+          <nav className="hidden items-center gap-4 text-sm md:flex">
+            {links.map((link) => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                end={link.to === '/'}
+                className={({ isActive }) =>
+                  isActive ? 'font-medium text-primary' : 'text-muted-foreground hover:text-foreground'
+                }
+              >
+                {link.label}
+              </NavLink>
+            ))}
+          </nav>
           <button
             onClick={async () => {
               await supabase.auth.signOut()
@@ -27,11 +41,11 @@ export default function AppLayout() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-md px-4 py-6">
+      <main className="mx-auto w-full max-w-md px-4 py-6 md:max-w-4xl">
         <Outlet />
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 border-t bg-card">
+      <nav className="fixed inset-x-0 bottom-0 z-20 border-t bg-card md:hidden">
         <div className="mx-auto flex max-w-5xl items-stretch justify-around">
           {links.map((link) => (
             <NavLink
