@@ -1,12 +1,15 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
+import { matchStudents } from '../lib/nameMatching'
 import {
   confirmAnswerKey,
   getSession,
   listAnswerKeys,
   saveAnswerKeys,
 } from '../services/sessionService'
+import { listStudents } from '../services/studentService'
 
 interface Row {
   question_number: number
@@ -56,6 +59,42 @@ export default function SessionPage() {
     queryFn: () => listAnswerKeys(sessionId!),
     enabled: !!sessionId,
   })
+
+  const { data: students } = useQuery({
+    queryKey: ['students', session?.class_id],
+    queryFn: () => listStudents(session!.class_id),
+    enabled: !!session?.class_id,
+  })
+
+  const [detectedName, setDetectedName] = useState('')
+  const [matches, setMatches] = useState<{ studentId: string; name: string; confidence: number }[]>([])
+  const [identified, setIdentified] = useState<string | null>(null)
+  const [ocrError, setOcrError] = useState<string | null>(null)
+  const [ocrLoading, setOcrLoading] = useState(false)
+
+  async function handleNamePhoto(file: File) {
+    setOcrError(null)
+    setDetectedName('')
+    setMatches([])
+    setIdentified(null)
+    setOcrLoading(true)
+    try {
+      const buffer = await file.arrayBuffer()
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)))
+      const { data, error } = await supabase.functions.invoke('recognize-name', {
+        body: { imageBase64: base64, mimeType: file.type },
+      })
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+      const name = (data?.detectedName ?? '').trim()
+      setDetectedName(name)
+      setMatches(matchStudents(name, (students ?? []).map((s) => ({ id: s.id, name: s.name }))))
+    } catch (e) {
+      setOcrError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setOcrLoading(false)
+    }
+  }
 
   const rows =
     draft ??
@@ -173,6 +212,59 @@ export default function SessionPage() {
         )}
         {locked && <p className="mt-3 text-sm text-green-700">✓ Locked. Ready to check student papers.</p>}
       </div>
+
+      {locked && (
+        <div className="rounded-lg border bg-white p-4">
+          <h3 className="text-sm font-semibold">Identify student (name photo)</h3>
+          <p className="mt-1 text-xs text-gray-500">
+            Take a photo of the student's name on the paper, or upload one.
+          </p>
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="mt-3 text-sm"
+            onChange={(e) => e.target.files?.[0] && handleNamePhoto(e.target.files[0])}
+          />
+          {ocrLoading && <p className="mt-2 text-sm text-gray-500">Reading name…</p>}
+          {ocrError && <p className="mt-2 text-sm text-red-600">{ocrError}</p>}
+
+          {detectedName && (
+            <p className="mt-3 text-sm">
+              Detected: <span className="font-medium">{detectedName}</span>
+            </p>
+          )}
+
+          {matches.length > 0 && (
+            <ul className="mt-3 divide-y rounded-md border">
+              {matches.map((m) => (
+                <li key={m.studentId} className="flex items-center justify-between px-3 py-2">
+                  <span className="text-sm font-medium">{m.name}</span>
+                  <span className="flex items-center gap-3">
+                    <span className="text-xs text-gray-500">{Math.round(m.confidence * 100)}%</span>
+                    <button
+                      className="rounded-md bg-blue-600 px-3 py-1 text-xs text-white"
+                      onClick={() => setIdentified(m.name)}
+                    >
+                      Confirm
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {detectedName && matches.length === 0 && (
+            <p className="mt-2 text-sm text-amber-700">
+              No roster match found. Check the spelling or pick the student manually in the class roster (Coming in Phase 4).
+            </p>
+          )}
+
+          {identified && (
+            <p className="mt-3 text-sm text-green-700">✓ Student identified: {identified}</p>
+          )}
+        </div>
+      )}
     </section>
   )
 }
