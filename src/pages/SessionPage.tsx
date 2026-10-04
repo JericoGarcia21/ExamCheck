@@ -7,8 +7,10 @@ import {
   getSession,
   listAnswerKeys,
   saveAnswerKeys,
+  saveRules,
 } from '../services/sessionService'
-import { listStudents } from '../services/studentService'
+import { saveSubmission } from '../services/submissionService'
+import { calculateScore } from '../lib/scoring'
 import { Button } from '../components/ui/button'
 import { Textarea } from '../components/ui/textarea'
 import { Label } from '../components/ui/label'
@@ -51,6 +53,7 @@ export default function SessionPage() {
   const queryClient = useQueryClient()
   const [draft, setDraft] = useState<Row[] | null>(null)
   const [pasteText, setPasteText] = useState('')
+  const [rules, setRules] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [expectedStyle, setExpectedStyle] = useState('any')
   const [checkResult, setCheckResult] = useState<string[] | null>(null)
@@ -133,6 +136,18 @@ export default function SessionPage() {
               className="max-h-60 overflow-y-auto"
               placeholder={'1. B\n2. C\n3. A\n4. D\n5. True\n6. Encapsulation'}
             />
+            <Textarea
+              value={rules}
+              onChange={(e) => setRules(e.target.value)}
+              rows={3}
+              placeholder={'Example rules:\n- No erasures\n- Uppercase letters only\n- No tampering'}
+            />
+            <Button
+              variant="outline"
+              onClick={() => saveRules(sessionId!, rules).then(() => setError(null)).catch((e) => setError(e.message))}
+            >
+              Save rules
+            </Button>
             <div className="flex flex-col gap-2">
               <div>
                 <Label htmlFor="style">Expected answer style</Label>
@@ -212,6 +227,7 @@ export default function SessionPage() {
                   }
                   setDraft(parsed)
                   saveAnswerKeys(sessionId!, parsed)
+                    .then(() => saveRules(sessionId!, rules))
                     .then(() => confirmMutation.mutate())
                     .catch((e) => setError(e.message))
                 }}
@@ -243,7 +259,16 @@ export default function SessionPage() {
               ))}
             </ol>
           )}
-          {locked && <p className="mt-3 text-sm text-green-700">✓ Locked. Ready to check student papers.</p>}
+          {locked && (
+            <div className="mt-3 space-y-1">
+              <p className="text-sm text-green-700">✓ Locked. Ready to check student papers.</p>
+              {session?.rules && (
+                <p className="text-xs text-muted-foreground">
+                  Rules: {session.rules.replace(/\n/g, ' · ')}
+                </p>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 

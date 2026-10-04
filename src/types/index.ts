@@ -22,6 +22,7 @@ export interface SessionRow {
   session_date: string
   status: string
   answer_key_confirmed: boolean
+  rules: string | null
   created_at: string
 }
 

@@ -74,6 +74,14 @@ export async function saveAnswerKeys(
   if (error) throw error
 }
 
+export async function saveRules(sessionId: string, rules: string): Promise<void> {
+  const { error } = await supabase
+    .from('checking_sessions')
+    .update({ rules: rules.trim() || null })
+    .eq('id', sessionId)
+  if (error) throw error
+}
+
 export async function confirmAnswerKey(sessionId: string): Promise<void> {
   const { error } = await supabase
     .from('checking_sessions')
