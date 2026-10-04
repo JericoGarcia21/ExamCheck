@@ -13,7 +13,7 @@ export default function AppLayout() {
   return (
     <div className="min-h-screen bg-background text-foreground pb-20 md:pb-10">
       <header className="sticky top-0 z-10 border-b bg-card">
-        <div className="mx-auto flex w-full max-w-md items-center justify-between px-4 py-3 md:max-w-4xl">
+        <div className="mx-auto flex w-full max-w-md items-center justify-between px-4 py-3 md:max-w-5xl">
           <h1 className="text-lg font-semibold">ExamCheck</h1>
           <nav className="hidden items-center gap-4 text-sm md:flex">
             {links.map((link) => (
@@ -41,7 +41,7 @@ export default function AppLayout() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-md px-4 py-6 md:max-w-4xl">
+      <main className="mx-auto w-full max-w-md px-4 py-6 md:max-w-5xl md:py-10">
         <Outlet />
       </main>
 

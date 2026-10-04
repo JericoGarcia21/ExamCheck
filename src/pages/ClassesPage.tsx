@@ -47,7 +47,7 @@ export default function ClassesPage() {
       {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
       {error && <p className="text-sm text-destructive">{error.message}</p>}
 
-      <div className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
+      <div className="space-y-3 md:grid md:grid-cols-3 md:gap-3 md:space-y-0">
         {classes?.length === 0 && (
           <p className="text-sm text-muted-foreground">No classes yet. Tap + to create your first one.</p>
         )}
