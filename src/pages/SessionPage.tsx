@@ -66,6 +66,7 @@ export default function SessionPage() {
   const [paperResult, setPaperResult] = useState<ReturnType<typeof calculateScore> | null>(null)
   const [paperError, setPaperError] = useState<string | null>(null)
   const [paperLoading, setPaperLoading] = useState(false)
+  const [paperProgress, setPaperProgress] = useState(0)
   const [ruleViolations, setRuleViolations] = useState<{ question_number: number | null; violation: string }[]>([])
   const [studentSearch, setStudentSearch] = useState('')
 
@@ -323,6 +324,10 @@ export default function SessionPage() {
                     setPaperLoading(true)
                     setPaperResult(null)
                     setPaperError(null)
+                    setPaperProgress(5)
+                    const interval = setInterval(() => {
+                      setPaperProgress((p) => Math.min(90, p + Math.max(1, Math.round((90 - p) / 10))))
+                    }, 500)
                     try {
                       const { data, error } = await supabase.functions.invoke('read-answers', {
                         body: { imageBase64: b64, mimeType: 'image/jpeg', totalItems: rows.length, rules: session?.rules ?? '' },
@@ -355,12 +360,24 @@ export default function SessionPage() {
                       }
                       setPaperError(message)
                     } finally {
+                      clearInterval(interval)
+                      setPaperProgress(100)
                       setPaperLoading(false)
                     }
                   }}
                 />
                 {preview && <img src={preview} alt="Captured" className="max-h-48 rounded-md border" />}
-                {paperLoading && <p className="text-sm text-muted-foreground">Reading answers…</p>}
+                {paperLoading && (
+                  <div className="space-y-1">
+                    <div className="h-2 w-full rounded bg-muted">
+                      <div
+                        className="h-full rounded bg-primary transition-all"
+                        style={{ width: `${paperProgress}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">Reading answers… {paperProgress}%</p>
+                  </div>
+                )}
                 {paperError && <p className="text-sm text-destructive">{paperError}</p>}
                 {paperResult && (
                   <Card>
