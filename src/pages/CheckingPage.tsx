@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { Card, CardContent } from '../components/ui/card'
+import { Badge } from '../components/ui/badge'
 
 export default function CheckingPage() {
   const { data, isLoading, error } = useQuery({
@@ -44,8 +45,10 @@ export default function CheckingPage() {
                   {s.classes?.block_name} · {s.session_date}
                 </p>
               </div>
-              <span className="text-sm text-muted-foreground">
-                {s.answer_key_confirmed ? 'Key confirmed ✓' : 'Draft'}
+              <span>
+                <Badge variant={s.answer_key_confirmed ? 'default' : 'secondary'}>
+                  {s.answer_key_confirmed ? 'Key confirmed ✓' : 'Draft'}
+                </Badge>
               </span>
             </CardContent>
           </Card>
