@@ -64,17 +64,21 @@ export default function CameraCapture({
           Open camera
         </button>
       ) : (
-        <div className="space-y-3">
-          <video ref={videoRef} playsInline muted className="w-full rounded-md border" />
-          <div className="flex gap-3">
+        <div className="fixed inset-0 z-50 flex flex-col bg-black">
+          <video ref={videoRef} playsInline muted className="h-full w-full flex-1 object-cover" />
+          <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-4 p-6">
             <button
               type="button"
               onClick={capture}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white"
+              className="rounded-full bg-white px-8 py-4 text-sm font-semibold text-black shadow-lg"
             >
               Capture photo
             </button>
-            <button type="button" onClick={stop} className="rounded-md border px-4 py-2 text-sm">
+            <button
+              type="button"
+              onClick={stop}
+              className="rounded-full border border-white/60 px-6 py-4 text-sm font-medium text-white"
+            >
               Cancel
             </button>
           </div>
