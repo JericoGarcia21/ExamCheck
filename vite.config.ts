@@ -20,7 +20,7 @@ export default defineConfig(({ command }) => ({
       manifest: {
         name: 'ExamCheck',
         short_name: 'ExamCheck',
-        description: 'Teacher-focused exam paper checking',
+        description: 'Install ExamCheck on your device for faster access and offline use.',
         theme_color: '#2563eb',
         background_color: '#f9fafb',
         display: 'standalone',

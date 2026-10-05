@@ -50,25 +50,27 @@ export default function CheckingPage() {
         </Card>
       )}
 
-      {data?.map((s) => (
-        <Link key={s.id} to={`/sessions/${s.id}`}>
-          <Card className="hover:bg-muted/50">
-            <CardContent className="flex items-center justify-between py-4">
-              <div>
-                <p className="font-medium">{s.session_name || 'Untitled session'}</p>
-                <p className="text-sm text-muted-foreground">
-                  {s.classes?.block_name} · {s.session_date}
-                </p>
-              </div>
-              <span>
-                <Badge variant={s.answer_key_confirmed ? 'default' : 'secondary'}>
-                  {s.answer_key_confirmed ? 'Key confirmed ✓' : 'Draft'}
-                </Badge>
-              </span>
-            </CardContent>
-          </Card>
-        </Link>
-      ))}
+      <div className="space-y-3">
+        {data?.map((s) => (
+          <Link key={s.id} to={`/sessions/${s.id}`}>
+            <Card className="hover:bg-muted/50">
+              <CardContent className="flex items-center justify-between py-4">
+                <div>
+                  <p className="font-medium">{s.session_name || 'Untitled session'}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {s.classes?.block_name} · {s.session_date}
+                  </p>
+                </div>
+                <span>
+                  <Badge variant={s.answer_key_confirmed ? 'default' : 'secondary'}>
+                    {s.answer_key_confirmed ? 'Key confirmed ✓' : 'Draft'}
+                  </Badge>
+                </span>
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
+      </div>
     </section>
   )
 }
