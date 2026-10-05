@@ -115,7 +115,7 @@ export default function SessionResultsPage() {
         </p>
       )}
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <Stat label="Checked" value={`${checkedRows.length} / ${rows.length}`} loading={loadingResults} />
         <Stat label="Average" value={`${average}%`} loading={loadingResults} />
         <Stat label="Highest" value={`${highest}%`} loading={loadingResults} />

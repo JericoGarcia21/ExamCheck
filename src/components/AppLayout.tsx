@@ -15,13 +15,13 @@ export default function AppLayout() {
   const online = useOnlineStatus()
 
   return (
-    <div className="min-h-screen text-foreground pb-24 md:pb-10">
+    <div className="min-h-screen text-foreground pb-24 lg:pb-10">
       <header className="sticky top-0 z-10 border-b border-white/40 bg-white/70 backdrop-blur-md">
-        <div className="mx-auto flex w-full max-w-md items-center justify-between px-4 py-3 md:max-w-5xl">
+        <div className="mx-auto flex w-full max-w-md items-center justify-between px-4 py-3 lg:max-w-5xl">
           <h1 className="font-heading text-lg font-semibold">
             <span className="text-primary">Exam</span>Check
           </h1>
-          <nav className="hidden items-center gap-1 text-sm md:flex">
+          <nav className="hidden items-center gap-1 text-sm lg:flex">
             {links.map((link) => (
               <NavLink
                 key={link.to}
@@ -58,13 +58,13 @@ export default function AppLayout() {
         )}
       </header>
 
-      <main className="mx-auto w-full max-w-md px-4 py-6 md:max-w-5xl md:px-6 md:py-10">
+      <main className="mx-auto w-full max-w-md px-4 py-6 lg:max-w-5xl lg:px-6 lg:py-10">
         <ErrorBoundary>
           <Outlet />
         </ErrorBoundary>
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-white/40 bg-white/80 backdrop-blur-md md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-white/40 bg-white/80 backdrop-blur-md lg:hidden">
         <div className="mx-auto flex max-w-5xl items-stretch justify-around px-2 py-1">
           {links.map((link) => (
             <NavLink

@@ -46,7 +46,7 @@ export default function PaperResultCard({
   const lowCount = effectiveDetails.filter((d) => displayConfidence(d) < 0.7).length
 
   return (
-    <div className="space-y-4 rounded-2xl border bg-muted/20 p-4 md:p-5">
+    <div className="space-y-4 rounded-2xl border bg-muted/20 p-4 lg:p-5">
       <p className="text-lg font-semibold">
         {studentName}: {effectiveScore}/{result.total} ({percent}%)
       </p>

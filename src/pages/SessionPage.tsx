@@ -393,7 +393,7 @@ export default function SessionPage() {
           />
 
           <Card>
-            <CardContent className="space-y-4 p-5 md:p-6">
+            <CardContent className="space-y-4 p-5 lg:p-6">
               {!selectedStudentName && (
                 <p className="py-2 text-center text-sm text-muted-foreground">
                   Select a student above to start checking their paper.

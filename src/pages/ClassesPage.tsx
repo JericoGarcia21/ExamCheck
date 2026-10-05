@@ -46,7 +46,7 @@ export default function ClassesPage() {
       <h2 className="text-2xl font-semibold tracking-tight">Classes</h2>
 
       {isLoading && (
-        <div className="space-y-3 md:grid md:grid-cols-3 md:gap-3 md:space-y-0">
+        <div className="space-y-3 lg:grid lg:grid-cols-3 lg:gap-3 lg:space-y-0">
           {Array.from({ length: 3 }).map((_, i) => (
             <Card key={i}>
               <CardContent className="flex items-center justify-between py-4">
@@ -59,7 +59,7 @@ export default function ClassesPage() {
       )}
       {error && <p className="text-sm text-destructive">{error.message}</p>}
 
-      <div className="space-y-3 md:grid md:grid-cols-3 md:gap-3 md:space-y-0">
+      <div className="space-y-3 lg:grid lg:grid-cols-3 lg:gap-3 lg:space-y-0">
         {classes?.length === 0 && (
           <p className="text-sm text-muted-foreground">No classes yet. Tap + to create your first one.</p>
         )}

@@ -25,7 +25,7 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         {tiles.map((t) => (
           <Link key={t.to} to={t.to}>
             <Card className="transition-transform hover:-translate-y-0.5">

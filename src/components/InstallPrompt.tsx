@@ -27,7 +27,7 @@ export default function InstallPrompt() {
 
   return (
     <div className="border-b border-primary/20 bg-primary/10 px-4 py-2 text-xs text-primary">
-      <div className="mx-auto flex w-full max-w-md items-center justify-between gap-2 md:max-w-5xl">
+      <div className="mx-auto flex w-full max-w-md items-center justify-between gap-2 lg:max-w-5xl">
         <span className="flex items-center gap-2">
           <Download className="h-3.5 w-3.5 shrink-0" />
           <span>
@@ -58,7 +58,7 @@ export default function InstallPrompt() {
       </div>
 
       {showIosHelp && isIos && (
-        <div className="mx-auto mt-2 w-full max-w-md rounded-md border border-primary/20 bg-card p-3 text-foreground md:max-w-5xl">
+        <div className="mx-auto mt-2 w-full max-w-md rounded-md border border-primary/20 bg-card p-3 text-foreground lg:max-w-5xl">
           <p className="flex items-center gap-2 text-sm font-medium">
             Install on iPhone / iPad
           </p>
