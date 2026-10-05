@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import CameraCapture, { type CameraCaptureHandle } from '../components/CameraCapture'
@@ -12,7 +12,7 @@ import {
 } from '../services/sessionService'
 import { listStudents } from '../services/studentService'
 import { saveSubmission } from '../services/submissionService'
-import { calculateScore, sumPoints, type AnswerKind, type ScoredAnswer } from '../lib/scoring'
+import { calculateScore, sumPoints, type AnswerKind, type ScoredAnswer, type StudentAnswer } from '../lib/scoring'
 import { parseAnswerKeyText, type KeyRow } from '../lib/answerKey'
 import { displayConfidence } from '../lib/confidence'
 import { readPaperAnswers, extractFunctionError, type RuleViolation } from '../lib/readPaper'
@@ -48,6 +48,8 @@ export default function SessionPage() {
   const [paperLoading, setPaperLoading] = useState(false)
   const [paperProgress, setPaperProgress] = useState(0)
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set())
+  const [editText, setEditText] = useState('')
+  const [editError, setEditError] = useState<string | null>(null)
   const [ruleViolations, setRuleViolations] = useState<RuleViolation[]>([])
   const [studentSearch, setStudentSearch] = useState('')
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
@@ -86,6 +88,43 @@ export default function SessionPage() {
   })
 
   const doneIds = new Set([...(doneSubmissions ?? []).map((s) => s.student_id), ...checkedIds])
+
+  const isCheckedStudent = !!selectedStudent && doneIds.has(selectedStudent)
+
+  // For already-checked students, don't force the camera flow. Let the teacher
+  // see the saved result and/or edit the answer text directly.
+  const { data: savedAnswers } = useQuery({
+    queryKey: ['savedAnswers', sessionId, selectedStudent],
+    queryFn: async () => {
+      if (!selectedStudent) return []
+      const { data: subs, error: subError } = await supabase
+        .from('submissions')
+        .select('id')
+        .eq('checking_session_id', sessionId!)
+        .eq('student_id', selectedStudent)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+      if (subError) throw subError
+      if (!subs) return []
+      const { data: answers, error: ansError } = await supabase
+        .from('answers')
+        .select('question_number, student_answer, is_correct, confidence')
+        .eq('submission_id', subs.id)
+        .order('question_number', { ascending: true })
+      if (ansError) throw ansError
+      return answers ?? []
+    },
+    enabled: !!sessionId && !!selectedStudent && isCheckedStudent,
+  })
+
+  // Prefill the editable answer text when a checked student is selected.
+  useEffect(() => {
+    if (!savedAnswers || savedAnswers.length === 0) return
+    const lines = savedAnswers.map((a) => `${a.question_number}. ${a.student_answer}`)
+    setEditText(lines.join('\n'))
+    setEditError(null)
+  }, [savedAnswers])
 
   const rows: KeyRow[] =
     draft ??
@@ -364,7 +403,39 @@ export default function SessionPage() {
               {selectedStudentName && (
                 <div className="space-y-4">
                   <p className="text-sm font-medium text-green-700">✓ Now checking: {selectedStudentName}</p>
-                  <CameraCapture ref={cameraRef} onCapture={handleCapture} />
+                  {!isCheckedStudent && <CameraCapture ref={cameraRef} onCapture={handleCapture} />}
+                  {isCheckedStudent && (
+                    <div className="space-y-2 rounded-lg border bg-muted/30 p-3 text-sm">
+                      <p className="text-xs text-muted-foreground">
+                        This student was already checked. Edit the answers below instead of re-scanning the paper.
+                      </p>
+                      <textarea
+                        className="h-40 w-full rounded-md border p-2 text-sm"
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                      />
+                      {editError && <p className="text-xs text-destructive">{editError}</p>}
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          const parsed = parseAnswerKeyText(editText)
+                          if (parsed.length === 0) {
+                            setEditError('No answers found. Use one answer per line, e.g. "1. B" or "B".')
+                            return
+                          }
+                          const stuAnswers: StudentAnswer[] = parsed.map((r) => ({
+                            question_number: r.question_number,
+                            student_answer: r.correct_answer,
+                          }))
+                          const scored = calculateScore(stuAnswers, rows)
+                          setPaperResult(scored)
+                          setRuleViolations([])
+                        }}
+                      >
+                        Recalculate score
+                      </Button>
+                    </div>
+                  )}
                   {preview && (
                     <img src={preview} alt="Captured paper" className="max-h-64 rounded-2xl border object-contain" />
                   )}
