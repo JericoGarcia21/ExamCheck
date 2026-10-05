@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { Badge } from '../components/ui/badge'
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
@@ -41,7 +40,7 @@ export default function LoginPage() {
             onClick={() => setRole('tech')}
             className="w-full rounded-md border px-4 py-3 text-sm font-medium hover:bg-muted/50"
           >
-            I'm a Tech User
+            I'm in IT / Computer Science / related field
           </button>
         </div>
       )}
@@ -63,18 +62,12 @@ export default function LoginPage() {
 
       {role === 'tech' && (
         <div className="space-y-4 rounded-md border border-amber-400 bg-amber-50 p-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium">Ollama API</p>
-            <Badge variant="secondary">Under development</Badge>
-          </div>
+          <p className="text-sm font-medium">Ollama API setup</p>
           <p className="text-xs text-muted-foreground">
-            Tech users can connect their own Ollama API key here later. This feature is still being built and is not available yet.
+            If you are in IT / Computer Science, you can set up your own Ollama API key later. This feature is still being built.
           </p>
-          <button
-            disabled
-            className="w-full cursor-not-allowed rounded-md border px-4 py-3 text-sm font-medium opacity-50"
-          >
-            Connect Ollama (coming soon)
+          <button disabled className="w-full cursor-not-allowed rounded-md border px-4 py-3 text-sm font-medium opacity-50">
+            Coming soon...
           </button>
           <button onClick={() => setRole(null)} className="text-xs text-primary">
             ← Back
