@@ -11,6 +11,7 @@ import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { Card, CardContent } from '../components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog'
+import { Skeleton } from '../components/ui/skeleton'
 
 const schema = z.object({
   block_name: z.string().min(1, 'Required'),
@@ -44,7 +45,18 @@ export default function ClassesPage() {
     <section className="space-y-4">
       <h2 className="text-2xl font-semibold tracking-tight">Classes</h2>
 
-      {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+      {isLoading && (
+        <div className="space-y-3 md:grid md:grid-cols-3 md:gap-3 md:space-y-0">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i}>
+              <CardContent className="flex items-center justify-between py-4">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-16" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
       {error && <p className="text-sm text-destructive">{error.message}</p>}
 
       <div className="space-y-3 md:grid md:grid-cols-3 md:gap-3 md:space-y-0">
@@ -66,7 +78,7 @@ export default function ClassesPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger
           aria-label="New class"
-          className="fixed bottom-24 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-none bg-primary text-primary-foreground shadow-lg"
+          className="fixed bottom-24 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:scale-105"
         >
           <Plus className="h-6 w-6" />
         </DialogTrigger>

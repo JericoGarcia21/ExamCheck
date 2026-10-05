@@ -1,12 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 
-export default function CameraCapture({
-  onCapture,
-  disabled,
-}: {
+export interface CameraCaptureHandle {
+  /** Open the camera (used by a parent "Retake photo" button). */
+  open: () => void
+}
+
+const CameraCapture = forwardRef<CameraCaptureHandle, {
   onCapture: (base64: string, mimeType: string) => void
   disabled?: boolean
-}) {
+  label?: string
+}>(function CameraCapture({ onCapture, disabled, label = 'Open camera' }, ref) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -27,6 +30,8 @@ export default function CameraCapture({
       setError(e instanceof Error ? e.message : 'Could not open camera.')
     }
   }
+
+  useImperativeHandle(ref, () => ({ open: () => void start() }))
 
   useEffect(() => {
     if (stream && videoRef.current) {
@@ -60,15 +65,15 @@ export default function CameraCapture({
   }
 
   return (
-    <div className="mt-3 space-y-3">
+    <div className="space-y-3">
       {!stream ? (
         <button
           type="button"
           disabled={disabled}
           onClick={start}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="rounded-full bg-gradient-to-b from-primary to-primary/85 px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm shadow-primary/25 disabled:opacity-50"
         >
-          Open camera
+          {label}
         </button>
       ) : (
         <div className="fixed inset-0 z-50 flex flex-col bg-black">
@@ -77,14 +82,14 @@ export default function CameraCapture({
             <button
               type="button"
               onClick={capture}
-              className="rounded-none bg-white px-8 py-4 text-sm font-semibold text-black shadow-lg"
+              className="rounded-full bg-white px-8 py-4 text-sm font-semibold text-black shadow-lg"
             >
               Capture photo
             </button>
             <button
               type="button"
               onClick={stop}
-              className="rounded-none border border-white/60 px-6 py-4 text-sm font-medium text-white"
+              className="rounded-full border border-white/60 px-6 py-4 text-sm font-medium text-white"
             >
               Cancel
             </button>
@@ -94,4 +99,6 @@ export default function CameraCapture({
       {error && <p className="text-sm text-red-600">{error}</p>}
     </div>
   )
-}
+})
+
+export default CameraCapture

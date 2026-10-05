@@ -1,6 +1,8 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { Home, BookOpen, ClipboardCheck, BarChart3 } from 'lucide-react'
+import { Home, BookOpen, ClipboardCheck, BarChart3, WifiOff } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { useOnlineStatus } from '../hooks/useOnlineStatus'
+import ErrorBoundary from './ErrorBoundary'
 
 const links = [
   { to: '/', label: 'Home', icon: Home },
@@ -10,19 +12,27 @@ const links = [
 ]
 
 export default function AppLayout() {
+  const online = useOnlineStatus()
+
   return (
-    <div className="min-h-screen bg-background text-foreground pb-20 md:pb-10">
-      <header className="sticky top-0 z-10 border-b bg-card">
+    <div className="min-h-screen text-foreground pb-24 md:pb-10">
+      <header className="sticky top-0 z-10 border-b border-white/40 bg-white/70 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-md items-center justify-between px-4 py-3 md:max-w-5xl">
-          <h1 className="text-lg font-semibold">ExamCheck</h1>
-          <nav className="hidden items-center gap-4 text-sm md:flex">
+          <h1 className="font-heading text-lg font-semibold">
+            <span className="text-primary">Exam</span>Check
+          </h1>
+          <nav className="hidden items-center gap-1 text-sm md:flex">
             {links.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
                 end={link.to === '/'}
                 className={({ isActive }) =>
-                  isActive ? 'font-medium text-primary' : 'text-muted-foreground hover:text-foreground'
+                  `rounded-full px-3 py-1.5 transition-colors ${
+                    isActive
+                      ? 'bg-primary/10 font-medium text-primary'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  }`
                 }
               >
                 {link.label}
@@ -34,26 +44,35 @@ export default function AppLayout() {
               await supabase.auth.signOut()
               window.location.href = '/login'
             }}
-            className="text-sm text-muted-foreground hover:text-foreground"
+            className="rounded-full px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             Sign out
           </button>
         </div>
+
+        {!online && (
+          <div className="flex items-center justify-center gap-2 bg-amber-100 px-4 py-1.5 text-xs text-amber-900">
+            <WifiOff className="h-3.5 w-3.5" />
+            You are offline. Checking papers needs an internet connection.
+          </div>
+        )}
       </header>
 
-      <main className="mx-auto w-full max-w-md px-4 py-6 md:max-w-5xl md:py-10">
-        <Outlet />
+      <main className="mx-auto w-full max-w-md px-4 py-6 md:max-w-5xl md:px-6 md:py-10">
+        <ErrorBoundary>
+          <Outlet />
+        </ErrorBoundary>
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 border-t bg-card md:hidden">
-        <div className="mx-auto flex max-w-5xl items-stretch justify-around">
+      <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-white/40 bg-white/80 backdrop-blur-md md:hidden">
+        <div className="mx-auto flex max-w-5xl items-stretch justify-around px-2 py-1">
           {links.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
               end={link.to === '/'}
               className={({ isActive }) =>
-                `flex flex-1 flex-col items-center gap-0.5 py-2 text-xs ${
+                `flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 text-xs transition-colors ${
                   isActive ? 'font-medium text-primary' : 'text-muted-foreground'
                 }`
               }

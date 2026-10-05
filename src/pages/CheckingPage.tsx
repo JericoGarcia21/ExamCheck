@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { Card, CardContent } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
+import { Skeleton } from '../components/ui/skeleton'
 
 export default function CheckingPage() {
   const { data, isLoading, error } = useQuery({
@@ -24,7 +25,21 @@ export default function CheckingPage() {
         All checking sessions across your classes. Tap one to continue grading.
       </p>
 
-      {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+      {isLoading && (
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i}>
+              <CardContent className="flex items-center justify-between py-4">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-3 w-52" />
+                </div>
+                <Skeleton className="h-5 w-24" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
       {error && <p className="text-sm text-destructive">{error.message}</p>}
 
       {data?.length === 0 && (

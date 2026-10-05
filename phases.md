@@ -68,20 +68,24 @@ Develop slowly but surely: finish and test one phase before starting the next. E
 
 **Deliverables:** Uncertain items routed to teacher; final teacher-approved score.
 
-## Phase 6 — Results + Export
+## Phase 6 — Results + Export — ✅ DONE
 
-- [ ] Class results view (alphabetical, avg/highest/lowest, needs-review count)
-- [ ] Per-student submission detail
-- [ ] Checking session history
-- [ ] Export Excel / CSV / PDF
+- [x] Class results view (alphabetical, avg/highest/lowest, needs-review count)
+- [x] Per-student submission detail
+- [x] Checking session history
+- [x] Export Excel / CSV / PDF
+
+**Status:** ✅ DONE (session history + per-session results + per-student detail + Excel/CSV/print-PDF export; build + typecheck PASS)
 
 **Deliverables:** Exportable grades matching the plan's format.
 
-## Phase 7 — PWA + Polish
+## Phase 7 — PWA + Polish — ✅ DONE
 
-- [ ] vite-plugin-pwa: manifest, service worker, offline shell
-- [ ] Installable on phone/tablet; camera-optimized checking UI
-- [ ] Error handling, loading/empty states, responsive checks
-- [ ] Final QA pass per AGENT_SKILLS.md §46 checklist
+- [x] vite-plugin-pwa: manifest, service worker, offline shell
+- [x] Installable on phone/tablet; camera-optimized checking UI
+- [x] Error handling, loading/empty states, responsive checks
+- [x] Final QA pass per AGENT_SKILLS.md §46 checklist
+
+**Status:** ✅ DONE (real PNG/maskable icons, update handling, offline + install UI, error boundaries, route code-splitting, on-demand xlsx; build + typecheck PASS)
 
 **Deliverables:** Installable PWA, polished UI, all QA checks passing.

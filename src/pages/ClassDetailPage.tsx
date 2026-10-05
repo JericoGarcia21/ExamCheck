@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
-import * as XLSX from 'xlsx'
 import { getClass } from '../services/classService'
 import {
   addStudents,
@@ -19,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog'
 import { Label } from '../components/ui/label'
+import { Skeleton } from '../components/ui/skeleton'
 import { Plus } from 'lucide-react'
 
 export default function ClassDetailPage() {
@@ -95,6 +95,7 @@ export default function ClassDetailPage() {
   async function handleExcel(file: File) {
     setError(null)
     try {
+      const XLSX = await import('xlsx')
       const buffer = await file.arrayBuffer()
       const workbook = XLSX.read(buffer)
       const sheet = workbook.Sheets[workbook.SheetNames[0]]
@@ -124,7 +125,7 @@ export default function ClassDetailPage() {
       <div>
         <Link to="/classes" className="text-sm text-primary">&larr; Back to classes</Link>
         <h2 className="mt-1 text-2xl font-semibold tracking-tight">
-          {classRow ? `${classRow.block_name} · ${classRow.school_year}` : 'Loading…'}
+          {classRow ? `${classRow.block_name} · ${classRow.school_year}` : <Skeleton className="h-8 w-56" />}
         </h2>
         <p className="text-sm text-muted-foreground">{students?.length ?? 0} students</p>
       </div>
@@ -178,6 +179,16 @@ export default function ClassDetailPage() {
           </div>
         </CardHeader>
         <CardContent className="divide-y p-0 max-h-96 overflow-y-auto">
+          {!students && (
+            <div className="divide-y">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 px-4 py-2.5">
+                  <Skeleton className="h-4 w-6" />
+                  <Skeleton className="h-4 flex-1" />
+                </div>
+              ))}
+            </div>
+          )}
           {students?.length === 0 && (
             <p className="px-4 py-6 text-center text-sm text-muted-foreground">No students yet.</p>
           )}
@@ -213,6 +224,16 @@ export default function ClassDetailPage() {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="divide-y">
+            {!sessions && (
+              <>
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex items-center justify-between py-2.5">
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-5 w-24" />
+                  </div>
+                ))}
+              </>
+            )}
             {sessions?.length === 0 && (
               <p className="py-4 text-center text-sm text-muted-foreground">No sessions yet.</p>
             )}
@@ -248,7 +269,7 @@ export default function ClassDetailPage() {
       <Dialog open={sessionOpen} onOpenChange={setSessionOpen}>
         <DialogTrigger
           aria-label="New session"
-          className="fixed bottom-24 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-none bg-primary text-primary-foreground shadow-lg"
+          className="fixed bottom-24 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:scale-105"
         >
           <Plus className="h-6 w-6" />
         </DialogTrigger>

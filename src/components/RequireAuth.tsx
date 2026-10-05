@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { Skeleton } from './ui/skeleton'
 
 export default function RequireAuth({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null | undefined>(undefined)
@@ -16,7 +17,16 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
   }, [])
 
   if (session === undefined) {
-    return <p className="p-6 text-sm text-gray-500">Loading…</p>
+    return (
+      <div className="mx-auto w-full max-w-md space-y-4 p-6">
+        <Skeleton className="h-8 w-40" />
+        <Skeleton className="h-24 w-full" />
+        <div className="grid grid-cols-1 gap-3">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+        </div>
+      </div>
+    )
   }
 
   if (!session) {

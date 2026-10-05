@@ -51,7 +51,13 @@ export async function listAnswerKeys(sessionId: string): Promise<AnswerKeyRow[]>
 
 export async function saveAnswerKeys(
   sessionId: string,
-  keys: { question_number: number; correct_answer: string; question_type?: string | null }[],
+  keys: {
+    question_number: number
+    correct_answer: string
+    question_type?: string | null
+    rubric?: string | null
+    max_points?: number
+  }[],
 ): Promise<void> {
   const { error: deleteError } = await supabase
     .from('answer_keys')
