@@ -24,7 +24,7 @@ export default function LoginPage() {
       <div>
         <h2 className="text-2xl font-semibold">ExamCheck</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Are you a teacher or a tech/user?
+          Are you a teacher or in IT / Computer Science / related field?
         </p>
       </div>
 
@@ -62,13 +62,10 @@ export default function LoginPage() {
 
       {role === 'tech' && (
         <div className="space-y-4 rounded-md border border-amber-400 bg-amber-50 p-4">
-          <p className="text-sm font-medium">Ollama API setup</p>
+          <p className="text-sm font-medium">Got it!</p>
           <p className="text-xs text-muted-foreground">
-            If you are in IT / Computer Science, you can set up your own Ollama API key later. This feature is still being built.
+            Thanks for letting us know you're in IT / Computer Science. The custom Ollama API setup will be available in a future update.
           </p>
-          <button disabled className="w-full cursor-not-allowed rounded-md border px-4 py-3 text-sm font-medium opacity-50">
-            Coming soon...
-          </button>
           <button onClick={() => setRole(null)} className="text-xs text-primary">
             ← Back
           </button>
