@@ -6,11 +6,14 @@ import basicSsl from '@vitejs/plugin-basic-ssl'
 import path from 'node:path'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [
     react(),
     tailwindcss(),
-    basicSsl(),
+    // Self-signed HTTPS is only needed for local dev/preview (e.g. testing the
+    // camera from a phone on the LAN). Production hosts provide real HTTPS, and
+    // generating a cert during CI builds can fail the build.
+    ...(command === 'serve' ? [basicSsl()] : []),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
@@ -76,4 +79,4 @@ export default defineConfig({
       },
     },
   },
-})
+}))
