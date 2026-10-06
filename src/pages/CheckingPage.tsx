@@ -52,7 +52,7 @@ export default function CheckingPage() {
 
       <div className="space-y-3">
         {data?.map((s) => (
-          <Link key={s.id} to={`/sessions/${s.id}`}>
+          <Link key={s.id} to={`/sessions/${s.id}`} className="block">
             <Card className="hover:bg-muted/50">
               <CardContent className="flex items-center justify-between py-4">
                 <div>

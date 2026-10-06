@@ -1,5 +1,4 @@
-// Generates PWA PNG icons (no external image tools needed).
-// Draws a rounded blue square with a white checkmark and writes PNGs using zlib.
+// Generates ExamCheck PWA icons without external image tools.
 import { deflateSync } from 'node:zlib'
 import { writeFileSync, mkdirSync } from 'node:fs'
 
@@ -57,71 +56,80 @@ function coverage(dist, half) {
   return Math.max(0, Math.min(1, half + 0.5 - dist))
 }
 
-// Draws the icon scaled to `size`. `pad` shrinks the artwork for maskable icons.
-function drawIcon(size, pad) {
+function drawIcon(size, maskable = false) {
   const rgba = Buffer.alloc(size * size * 4)
-  const S = size
-  const inset = S * pad
-  const radius = (S - inset * 2) * 0.22
-  const x0 = inset
-  const y0 = inset
-  const x1 = S - inset
-  const y1 = S - inset
+  const backgroundRadius = size * 0.22
 
-  // Checkmark geometry (relative to the inner box)
-  const w = x1 - x0
-  const h = y1 - y0
-  const cx = x0 + w * 0.5
-  const cy = y0 + h * 0.54
-  const ax = x0 + w * 0.24
-  const ay = y0 + h * 0.53
-  const bx = x0 + w * 0.42
-  const by = y0 + h * 0.72
-  const ccx = x0 + w * 0.78
-  const ccy = y0 + h * 0.30
-  const stroke = w * 0.085
-
-  const blue = [37, 99, 235]
-  const white = [255, 255, 255]
-
-  for (let y = 0; y < S; y++) {
-    for (let x = 0; x < S; x++) {
-      const px = x + 0.5
-      const py = y + 0.5
-
-      // Rounded-rect signed distance
-      const qx = Math.abs(px - (x0 + x1) / 2) - ((x1 - x0) / 2 - radius)
-      const qy = Math.abs(py - (y0 + y1) / 2) - ((y1 - y0) / 2 - radius)
-      const outside = Math.hypot(Math.max(qx, 0), Math.max(qy, 0))
-      const inside = Math.min(Math.max(qx, qy), 0)
-      const rectDist = outside + inside - radius
-      const bgA = coverage(rectDist, 0.75)
-
-      const chk =
-        Math.min(distToSegment(px, py, ax, ay, bx, by), distToSegment(px, py, bx, by, ccx, ccy)) - stroke
-      const chkA = coverage(chk, 0.75)
-
-      const r = blue[0] + (white[0] - blue[0]) * chkA
-      const g = blue[1] + (white[1] - blue[1]) * chkA
-      const b = blue[2] + (white[2] - blue[2]) * chkA
-      const a = Math.max(bgA, chkA * bgA) * 255
-
-      const i = (y * S + x) * 4
-      rgba[i] = Math.round(r)
-      rgba[i + 1] = Math.round(g)
-      rgba[i + 2] = Math.round(b)
-      rgba[i + 3] = Math.round(a)
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const t = (x + y) / (2 * (size - 1))
+      const i = (y * size + x) * 4
+      rgba[i] = Math.round(37 + (117 - 37) * t)
+      rgba[i + 1] = Math.round(99 + (88 - 99) * t)
+      rgba[i + 2] = Math.round(235 + (238 - 235) * t)
+      rgba[i + 3] = maskable
+        ? 255
+        : Math.round(coverage(roundedRectDistance(x + 0.5, y + 0.5, 0, 0, size, size, backgroundRadius), 0.75) * 255)
     }
   }
-  return encodePng(S, S, rgba)
+
+  function paint(color, alphaAt) {
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const alpha = alphaAt(x + 0.5, y + 0.5)
+        if (alpha <= 0) continue
+        const i = (y * size + x) * 4
+        const sourceAlpha = Math.min(1, alpha)
+        const destAlpha = rgba[i + 3] / 255
+        const outAlpha = sourceAlpha + destAlpha * (1 - sourceAlpha)
+        for (let channel = 0; channel < 3; channel++) {
+          rgba[i + channel] = Math.round(
+            (color[channel] * sourceAlpha + rgba[i + channel] * destAlpha * (1 - sourceAlpha)) / outAlpha,
+          )
+        }
+        rgba[i + 3] = Math.round(outAlpha * 255)
+      }
+    }
+  }
+
+  const rect = (x0, y0, x1, y1, radius, color, opacity = 1) =>
+    paint(color, (x, y) =>
+      coverage(roundedRectDistance(x, y, x0 * size, y0 * size, x1 * size, y1 * size, radius * size), 0.75) *
+      opacity,
+    )
+  const circle = (cx, cy, radius, color, opacity = 1) =>
+    paint(color, (x, y) => coverage(Math.hypot(x - cx * size, y - cy * size) - radius * size, 0.75) * opacity)
+  const line = (ax, ay, bx, by, stroke, color) =>
+    paint(color, (x, y) =>
+      coverage(distToSegment(x, y, ax * size, ay * size, bx * size, by * size) - stroke * size / 2, 0.75),
+    )
+
+  function roundedRectDistance(x, y, x0, y0, x1, y1, radius) {
+    const qx = Math.abs(x - (x0 + x1) / 2) - ((x1 - x0) / 2 - radius)
+    const qy = Math.abs(y - (y0 + y1) / 2) - ((y1 - y0) / 2 - radius)
+    return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - radius
+  }
+
+  const paperShadow = maskable ? [27, 43, 112] : [18, 48, 133]
+  rect(0.28, 0.205, 0.705, 0.755, 0.065, paperShadow, 0.24)
+  rect(0.28, 0.19, 0.705, 0.74, 0.065, [255, 255, 255])
+
+  const rule = [191, 210, 250]
+  line(0.375, 0.37, 0.61, 0.37, 0.022, rule)
+  line(0.375, 0.465, 0.61, 0.465, 0.022, rule)
+  line(0.375, 0.56, 0.55, 0.56, 0.022, rule)
+
+  circle(0.685, 0.68, 0.17, [27, 43, 112], 0.24)
+  circle(0.68, 0.66, 0.165, [255, 255, 255])
+  line(0.605, 0.665, 0.655, 0.715, 0.038, [37, 99, 235])
+  line(0.655, 0.715, 0.765, 0.585, 0.038, [37, 99, 235])
+
+  return encodePng(size, size, rgba)
 }
 
 mkdirSync('public', { recursive: true })
-// Standard icons (small padding)
-writeFileSync('public/pwa-192x192.png', drawIcon(192, 0.02))
-writeFileSync('public/pwa-512x512.png', drawIcon(512, 0.02))
-// Maskable icons need extra safe-zone padding
-writeFileSync('public/maskable-512x512.png', drawIcon(512, 0.14))
-// Apple touch icon
-writeFileSync('public/apple-touch-icon.png', drawIcon(180, 0.02))
+writeFileSync('public/pwa-192x192.png', drawIcon(192))
+writeFileSync('public/pwa-512x512.png', drawIcon(512))
+writeFileSync('public/maskable-512x512.png', drawIcon(512, true))
+writeFileSync('public/apple-touch-icon.png', drawIcon(180))
 console.log('icons written')

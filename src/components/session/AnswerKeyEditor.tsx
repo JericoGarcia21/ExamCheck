@@ -47,9 +47,10 @@ export default function AnswerKeyEditor({
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-xs text-muted-foreground">
-          Paste your answer key, one answer per line. Questions are numbered in the order you paste them — printed
-          numbers that restart in each part are ignored. Optionally add a <code># Heading</code> before a part to set
-          its type (Multiple choice / True-False / Identification / Coding / Essay).
+          Paste one answer per line, or paste a table with repeated No. / Ans. columns (from Word or a spreadsheet).
+          Table question numbers are kept. For answer lists, questions are numbered in paste order — printed numbers
+          that restart in each part are ignored. Optionally add a <code># Heading</code> before a part to set its type
+          (Multiple choice / True-False / Identification / Coding / Essay).
         </p>
         <Textarea
           value={pasteText}
