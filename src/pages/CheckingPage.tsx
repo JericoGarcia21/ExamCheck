@@ -10,7 +10,8 @@ export default function CheckingPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('checking_sessions')
-        .select('*, classes(*)')
+        .select('*, classes!inner(*)')
+        .is('classes.archived_at', null)
         .order('created_at', { ascending: false })
       if (error) throw error
       return data ?? []
@@ -49,7 +50,7 @@ export default function CheckingPage() {
         </Card>
       )}
 
-      <div className="grid gap-3">
+      <div className="session-list">
         {data?.map((s) => (
           <SessionListCard key={s.id} to={"/sessions/" + s.id} title={s.session_name}
             block={s.classes?.block_name} schoolYear={s.classes?.school_year}

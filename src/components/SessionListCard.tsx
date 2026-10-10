@@ -1,7 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, CalendarDays } from 'lucide-react'
-import { Card, CardContent } from './ui/card'
-import { Badge } from './ui/badge'
+import { ChevronRight } from 'lucide-react'
 
 interface SessionListCardProps {
   to: string
@@ -13,28 +11,27 @@ interface SessionListCardProps {
   checked?: number
 }
 
+function formatDate(value: string) {
+  const date = new Date(value + 'T00:00:00')
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
 export default function SessionListCard({ to, title, block, schoolYear, date, confirmed, checked }: SessionListCardProps) {
   return (
-    <Link to={to} className="group block min-w-0 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-      <Card size="sm" className="transition-colors group-hover:bg-muted/50 group-active:bg-muted">
-        <CardContent className="space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="min-w-0 flex-1 space-y-1">
-              <h3 className="break-words text-base font-semibold leading-snug">{title || 'Untitled session'}</h3>
-              <p className="break-words text-sm text-muted-foreground">{[block, schoolYear].filter(Boolean).join(' · ')}</p>
-              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <CalendarDays className="size-3.5 shrink-0" aria-hidden="true" />
-                <time dateTime={date}>{date}</time>
-              </p>
-            </div>
-            <ArrowRight className="mt-1 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-          </div>
-          <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
-            <span className="whitespace-nowrap text-sm text-muted-foreground">{checked === undefined ? 'Answer key' : checked + ' checked'}</span>
-            <Badge variant={confirmed ? 'default' : 'secondary'} className="shrink-0">{confirmed ? 'Key confirmed ✓' : 'Draft'}</Badge>
-          </div>
-        </CardContent>
-      </Card>
+    <Link to={to} className="session-row group outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
+      <div className="min-w-0">
+        <h3 className="break-words text-[15px] font-semibold leading-snug group-hover:text-primary">{title || 'Untitled session'}</h3>
+        <p className="mt-1 break-words text-sm text-muted-foreground">{block || 'No class'}{schoolYear && <span className="text-muted-foreground/80"> · {schoolYear}</span>}</p>
+        <time dateTime={date} className="mt-2 block text-xs text-muted-foreground">{formatDate(date)}</time>
+      </div>
+      <div className="session-row-status">
+        <span className={confirmed ? 'session-status session-status-confirmed' : 'session-status'}>
+          <span className="size-1.5 shrink-0 rounded-full bg-current" aria-hidden="true" />
+          {confirmed ? 'Key confirmed' : 'Draft key'}
+        </span>
+        {checked !== undefined && <span className="text-xs text-muted-foreground"><strong className="font-medium tabular-nums text-foreground">{checked}</strong> {checked === 1 ? 'paper' : 'papers'} checked</span>}
+      </div>
+      <ChevronRight className="session-row-arrow size-4 text-muted-foreground/60 group-hover:text-primary" aria-hidden="true" />
     </Link>
   )
 }

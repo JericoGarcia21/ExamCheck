@@ -1,4 +1,5 @@
 export interface ClassRow {
+  archived_at: string | null
   id: string
   teacher_id: string
   block_name: string

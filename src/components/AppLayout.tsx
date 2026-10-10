@@ -15,20 +15,20 @@ export default function AppLayout() {
   const online = useOnlineStatus()
 
   return (
-    <div className="min-h-screen text-foreground pb-24 lg:pb-10">
-      <header className="sticky top-0 z-10 border-b border-white/40 bg-white/70 backdrop-blur-md">
-        <div className="mx-auto flex w-full max-w-md items-center justify-between px-4 py-3 lg:max-w-5xl">
+    <div className="min-h-screen text-foreground pb-24 md:pb-10">
+      <header className="sticky top-0 z-10 border-b border-border bg-card">
+        <div className="mx-auto flex w-full max-w-2xl items-center justify-between px-4 py-3 md:max-w-5xl">
           <h1 className="font-heading text-lg font-semibold">
             <span className="text-primary">Exam</span>Check
           </h1>
-          <nav className="hidden items-center gap-1 text-sm lg:flex">
+          <nav aria-label="Main navigation" className="hidden items-center gap-1 text-sm md:flex">
             {links.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
                 end={link.to === '/'}
                 className={({ isActive }) =>
-                  `rounded-full px-3 py-1.5 transition-colors ${
+                  `rounded-md px-3 py-1.5 transition-colors ${
                     isActive
                       ? 'bg-primary/10 font-medium text-primary'
                       : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -44,7 +44,7 @@ export default function AppLayout() {
               await supabase.auth.signOut()
               window.location.href = '/login'
             }}
-            className="rounded-full px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             Sign out
           </button>
@@ -58,22 +58,22 @@ export default function AppLayout() {
         )}
       </header>
 
-      <main className="mx-auto w-full max-w-md px-4 py-6 lg:max-w-5xl lg:px-6 lg:py-10">
+      <main className="mx-auto w-full max-w-2xl px-4 py-6 md:max-w-5xl md:px-6 md:py-10">
         <ErrorBoundary>
           <Outlet />
         </ErrorBoundary>
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-white/40 bg-white/80 backdrop-blur-md lg:hidden">
-        <div className="mx-auto flex max-w-5xl items-stretch justify-around px-2 py-1">
+      <nav aria-label="Mobile navigation" className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card md:hidden">
+        <div className="mx-auto flex max-w-5xl items-stretch justify-around px-2 pt-1 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
           {links.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
               end={link.to === '/'}
               className={({ isActive }) =>
-                `flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 text-xs transition-colors ${
-                  isActive ? 'font-medium text-primary' : 'text-muted-foreground'
+                `flex flex-1 flex-col items-center gap-0.5 rounded-lg py-2 text-xs transition-colors ${
+                  isActive ? 'bg-primary/5 font-medium text-primary' : 'text-muted-foreground'
                 }`
               }
             >

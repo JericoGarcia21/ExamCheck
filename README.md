@@ -126,6 +126,7 @@ Editor or `supabase db push`):
 | `0005_submission_unique.sql` | One submission per (session, student); removes duplicates |
 | `0006_qa_integrity.sql` | Atomic saves, numeric grades, class integrity, confirmed-key locking |
 | `0007_reader_limits.sql` | Authenticated per-user recognition request limits |
+| `0008_class_archive.sql` | Reversible class archiving; prevents teacher class deletion |
 
 > ⚠️ `0005` deletes existing duplicate submissions, keeping the most recent per
 > student. Review it before running on a database with real data.
@@ -279,3 +280,7 @@ Edit the original handler or shared validator and regenerate; do not manually ed
 The native launch screen uses the manifest background and generated icons; the HTML startup screen and authentication/loading fallback share ExamCheck branding without an artificial delay. Run `npm run icons` after changing the icon generator. Redeploy the frontend and accept the PWA update. Installed icon/launch metadata may require removing the home-screen app and installing it again. Verify cold launches on Android and iOS; platform-native splash layouts vary.
 
 Future AI provider work is tracked in [future-plan.md](future-plan.md).
+
+### Class archive rollout
+
+Apply `supabase/migrations/0008_class_archive.sql` in the Supabase SQL Editor (or via the linked CLI) before deploying this frontend. It adds a nullable archive timestamp without changing existing class data and revokes permanent class deletion from client roles. Owner RLS still applies to archive and restore. Classes → Archive moves a class out of Active, Checking, and Results lists; Classes → Archived → Restore brings it back with its students, sessions, keys, and grades intact. Archived class history remains accessible.

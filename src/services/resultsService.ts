@@ -11,7 +11,8 @@ interface RawSubmission extends SubmissionRow {
 export async function listAllSessions(): Promise<SessionWithClass[]> {
   const { data, error } = await supabase
     .from('checking_sessions')
-    .select('*, classes(block_name, school_year)')
+    .select('*, classes!inner(block_name, school_year)')
+    .is('classes.archived_at', null)
     .order('created_at', { ascending: false })
   if (error) throw error
   return (data ?? []) as SessionWithClass[]

@@ -26,19 +26,19 @@ export default function InstallPrompt() {
   }
 
   return (
-    <div className="border-b border-primary/20 bg-primary/10 px-4 py-2 text-xs text-primary">
-      <div className="mx-auto flex w-full max-w-md items-center justify-between gap-2 lg:max-w-5xl">
+    <div className="border-b border-border bg-card px-4 py-2 text-xs text-muted-foreground">
+      <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-2 md:max-w-5xl">
         <span className="flex items-center gap-2">
           <Download className="h-3.5 w-3.5 shrink-0" />
           <span>
-            <strong>Install ExamCheck</strong> on your device for faster access and offline shell.
+            <strong className="text-foreground">ExamCheck on your home screen</strong>
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-2">
           {canPrompt && (
             <button
               onClick={() => install()}
-              className="rounded bg-primary px-2.5 py-1 font-medium text-primary-foreground"
+              className="min-h-9 rounded-md bg-primary px-3 py-1 font-medium text-primary-foreground"
             >
               Install
             </button>
@@ -51,14 +51,14 @@ export default function InstallPrompt() {
               How?
             </button>
           )}
-          <button onClick={close} aria-label="Dismiss install prompt" className="text-primary/70 hover:text-primary">
+          <button onClick={close} aria-label="Dismiss install prompt" className="flex size-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
             <X className="h-4 w-4" />
           </button>
         </span>
       </div>
 
       {showIosHelp && isIos && (
-        <div className="mx-auto mt-2 w-full max-w-md rounded-md border border-primary/20 bg-card p-3 text-foreground lg:max-w-5xl">
+        <div className="mx-auto mt-2 w-full max-w-2xl rounded-md border border-primary/20 bg-card p-3 text-foreground md:max-w-5xl">
           <p className="flex items-center gap-2 text-sm font-medium">
             Install on iPhone / iPad
           </p>

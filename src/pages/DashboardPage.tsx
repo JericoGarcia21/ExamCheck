@@ -25,12 +25,12 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         {tiles.map((t) => (
           <Link key={t.to} to={t.to}>
-            <Card className="transition-transform hover:-translate-y-0.5">
+            <Card className="transition-colors hover:bg-muted/50">
               <CardContent className="flex items-center gap-4 py-5">
-                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary">
+                <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-primary">
                   <t.icon className="h-6 w-6" />
                 </span>
                 <div>

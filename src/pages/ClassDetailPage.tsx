@@ -137,6 +137,8 @@ export default function ClassDetailPage() {
         <p className="text-sm text-muted-foreground">{students?.length ?? 0} students</p>
       </div>
 
+      {classRow?.archived_at && <div className="rounded-lg border bg-muted/50 p-4"><p className="text-sm font-medium">This class is archived</p><p className="mt-1 text-sm text-muted-foreground">Its students and exam history are still here. <Link to="/classes" className="font-medium text-primary">Restore it from the Archived tab.</Link></p></div>}
+
       <Card>
         <CardHeader>
           <CardTitle>Add students</CardTitle>

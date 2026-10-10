@@ -25,7 +25,7 @@ before(async()=>{
     await db.exec(sql.replace('create extension if not exists "pgcrypto";',''))
   }
   await db.exec('grant select,insert,update,delete on all tables in schema public to anon,authenticated;')
-  for(const name of ['0006_qa_integrity.sql','0007_reader_limits.sql']) await db.exec(await readFile(new URL('../supabase/migrations/'+name,import.meta.url),'utf8'))
+  for(const name of ['0006_qa_integrity.sql','0007_reader_limits.sql','0008_class_archive.sql']) await db.exec(await readFile(new URL('../supabase/migrations/'+name,import.meta.url),'utf8'))
   await db.query('insert into auth.users(id,email) values ($1,$2),($3,$4)',[A,'a@example.test',B,'b@example.test'])
   await db.query('insert into public.classes(id,teacher_id,block_name,school_year) values ($1,$2,$3,$4),($5,$6,$7,$4),($8,$2,$9,$4)',[CA,A,'A','2026',CB,B,'B',CA2,'A2'])
   await db.query('insert into public.students(id,class_id,name,sort_name) values ($1,$2,$3,$3),($4,$5,$6,$6),($7,$8,$9,$9)',[SA,CA,'Student A',SB,CB,'Student B',SA2,CA2,'Student A2'])
@@ -101,6 +101,29 @@ test('quota is user-scoped and enforced server-side',async()=>{
   assert.equal((await db.query('select public.consume_reader_quota() as allowed')).rows[0].allowed,false)
   await asUser(B);assert.equal((await db.query('select public.consume_reader_quota() as allowed')).rows[0].allowed,true)
   await asUser(null,'anon');await assert.rejects(db.query('select public.consume_reader_quota()'))
+})
+
+test('archiving and restoring a class preserves its roster and complete exam history',async()=>{
+  await asUser(A); await save()
+  const tables=['students','checking_sessions','answer_keys','submissions','answers']
+  const before=[]
+  for(const table of tables) before.push((await db.query('select * from public.'+table+' order by id')).rows)
+  await db.query('update public.classes set archived_at=now() where id=$1',[CA])
+  assert.equal((await db.query('select id from public.classes where archived_at is null')).rows.some(row=>row.id===CA),false)
+  assert.equal((await db.query('select id from public.classes where archived_at is not null')).rows[0].id,CA)
+  assert.equal((await db.query('select s.id from public.checking_sessions s join public.classes c on c.id=s.class_id where c.archived_at is null')).rows.some(row=>row.id===SESSION),false)
+  for(let i=0;i<tables.length;i++) assert.deepEqual((await db.query('select * from public.'+tables[i]+' order by id')).rows,before[i])
+  await asUser(B)
+  assert.equal((await db.query('update public.classes set archived_at=null where id=$1 returning id',[CA])).rows.length,0)
+  assert.equal((await db.query('update public.classes set archived_at=now() where id=$1 returning id',[CA2])).rows.length,0)
+  await asUser(null,'anon')
+  assert.equal((await db.query('update public.classes set archived_at=null where id=$1 returning id',[CA])).rows.length,0)
+  await asUser(A)
+  await assert.rejects(db.query('delete from public.classes where id=$1',[CA]))
+  await db.query('update public.classes set archived_at=null where id=$1',[CA])
+  assert.equal((await db.query('select id from public.classes where archived_at is null')).rows.some(row=>row.id===CA),true)
+  assert.equal((await db.query('select s.id from public.checking_sessions s join public.classes c on c.id=s.class_id where c.archived_at is null')).rows.some(row=>row.id===SESSION),true)
+  for(let i=0;i<tables.length;i++) assert.deepEqual((await db.query('select * from public.'+tables[i]+' order by id')).rows,before[i])
 })
 
 test('deleting a confirmed synthetic session still cascades its key and results',async()=>{
