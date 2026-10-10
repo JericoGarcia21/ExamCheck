@@ -36,6 +36,14 @@ type Filter = 'all' | 'checked' | 'unchecked' | 'review'
 
 export default function SessionResultsPage() {
   const { sessionId } = useParams<{ sessionId: string }>()
+  const [exportError, setExportError] = useState<string | null>(null)
+  async function downloadExcel(student = false) {
+    setExportError(null)
+    try {
+      if (student && detail) await exportStudentExcel(detail.studentName, detailAnswers ?? [], meta)
+      else await exportExcel(rows, meta)
+    } catch { setExportError('Could not export the workbook. Please retry.') }
+  }
   const [detailId, setDetailId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
@@ -52,12 +60,9 @@ export default function SessionResultsPage() {
     enabled: !!sessionId,
   })
 
-  const detail = useMemo(
-    () => (detailId ? (results ?? []).find((r) => r.studentId === detailId) ?? null : null),
-    [detailId, results],
-  )
+  const detail = detailId ? (results ?? []).find((r) => r.studentId === detailId) ?? null : null
 
-  const { data: detailAnswers, isLoading: loadingAnswers } = useQuery({
+  const { data: detailAnswers, isLoading: loadingAnswers, error: answerError } = useQuery({
     queryKey: ['submissionAnswers', detail?.submissionId],
     queryFn: () => listSubmissionAnswers(detail!.submissionId!),
     enabled: !!detail?.submissionId,
@@ -109,6 +114,7 @@ export default function SessionResultsPage() {
         </p>
       </div>
 
+      {exportError && <p role="alert" className="text-destructive">{exportError}</p>}
       {error && (
         <p className="rounded-md border border-destructive/30 bg-destructive/5 p-2 text-sm text-destructive">
           Could not load results: {error.message}
@@ -134,7 +140,7 @@ export default function SessionResultsPage() {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <CardTitle>Class results</CardTitle>
             <div className="flex gap-2">
-              <Button size="sm" variant="outline" disabled={rows.length === 0} onClick={() => exportExcel(rows, meta)}>
+              <Button size="sm" variant="outline" disabled={rows.length === 0} onClick={() => void downloadExcel()}>
                 Excel
               </Button>
               <Button size="sm" variant="outline" disabled={rows.length === 0} onClick={() => exportCsv(rows, meta)}>
@@ -206,7 +212,7 @@ export default function SessionResultsPage() {
                       key={r.studentId}
                       className={`border-b last:border-0 hover:bg-muted/40 ${r.checked ? '' : 'bg-muted/20'}`}
                     >
-                      <td className="px-4 py-2 text-right text-muted-foreground">{r.studentNumber ?? ''}</td>
+                      <td className="px-4 py-2 text-right text-muted-foreground">{rows.findIndex((row) => row.studentId === r.studentId) + 1}</td>
                       <td className="px-2 py-2">
                         {r.studentName}
                         {r.needsReview && (
@@ -280,11 +286,12 @@ export default function SessionResultsPage() {
                   size="sm"
                   variant="outline"
                   disabled={!detailAnswers || detailAnswers.length === 0}
-                  onClick={() => exportStudentExcel(detail.studentName, detailAnswers ?? [], meta)}
+                  onClick={() => void downloadExcel(true)}
                 >
                   Export student
                 </Button>
               </div>
+              {answerError && <p role="alert" className="text-destructive">Could not load answers. Please close and retry.</p>}
               <div className="max-h-[55vh] overflow-auto rounded-md border">
                 <table className="w-full min-w-[420px] text-xs">
                   <thead className="sticky top-0 bg-card text-left text-muted-foreground">

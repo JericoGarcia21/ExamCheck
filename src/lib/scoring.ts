@@ -1,3 +1,5 @@
+import { needsTeacherReview } from './confidence'
+
 export type AnswerKind = 'multiple_choice' | 'true_false' | 'identification' | 'coding' | 'essay'
 
 export const ANSWER_KINDS: { value: AnswerKind; label: string }[] = [
@@ -12,9 +14,7 @@ export interface StudentAnswer {
   question_number: number
   student_answer: string
   confidence?: number
-  /** AI-suggested points for essay / partial-credit questions. */
   points?: number
-  /** Short feedback for essay questions. */
   feedback?: string
 }
 
@@ -32,7 +32,6 @@ export interface ScoredAnswer {
   is_correct: boolean
   confidence?: number
   review_status?: string
-  /** True when the answer could not be confidently matched and the teacher should decide. */
   needs_review?: boolean
   points_awarded: number
   max_points: number
@@ -45,16 +44,9 @@ export interface ScoreResult {
   details: ScoredAnswer[]
 }
 
-/**
- * Lenient normalization for coding / debugging answers.
- * Ignores case, all whitespace, and the punctuation students vary most
- * (semicolons, braces and parentheses) so "class Dog extends Animal{}" matches "Class Dog extends Animal { }".
- */
+/** Preserve code semantics: only normalize line endings and surrounding whitespace. */
 export function normalizeCode(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[;{}()]/g, '')
-    .replace(/\s+/g, '')
+  return value.replace(/\r\n/g, '\n').trim()
 }
 
 export function normalizeAnswer(value: string, type?: string | null): string {
@@ -65,13 +57,13 @@ export function normalizeAnswer(value: string, type?: string | null): string {
     if (lower === 'f' || lower === 'false') return 'false'
     return lower
   }
-  if (type === 'multiple_choice') return trimmed.toUpperCase().replace(/[^A-Z]/g, '')
+  if (type === 'multiple_choice') return trimmed.toUpperCase()
   if (type === 'coding') return normalizeCode(trimmed)
   return trimmed.replace(/\s+/g, ' ').toLowerCase()
 }
 
 function clampPoints(value: number, max: number): number {
-  if (Number.isNaN(value)) return 0
+  if (!Number.isFinite(value)) return 0
   return Math.max(0, Math.min(max, value))
 }
 
@@ -96,7 +88,7 @@ export function calculateScore(
         is_correct: false,
         points_awarded: 0,
         max_points: maxPoints,
-        needs_review: k.question_type === 'coding' || k.question_type === 'essay',
+        needs_review: true,
       })
       continue
     }
@@ -126,7 +118,10 @@ export function calculateScore(
 
     // Coding/debugging mismatches are never auto-failed: formatting differences are
     // common, so they are flagged for the teacher to decide.
-    const needsReview = !isCorrect && k.question_type === 'coding'
+    const invalidFormat = (k.question_type === 'multiple_choice' && !/^[A-Z]$/i.test(a.student_answer.trim())) ||
+      (k.question_type === 'true_false' && !/^(true|false|t|f)$/i.test(a.student_answer.trim()))
+    const needsReview = invalidFormat || (!isCorrect && k.question_type === 'coding') ||
+      needsTeacherReview({ student_answer: a.student_answer, confidence: a.confidence })
     const points = isCorrect ? maxPoints : 0
     score += points
     details.push({

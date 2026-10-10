@@ -1,9 +1,10 @@
+import { needsTeacherReview } from '../lib/confidence'
 import { supabase } from '../lib/supabase'
 import type { AnswerRow, ResultRow, SessionWithClass, SubmissionRow } from '../types'
 
 interface RawSubmission extends SubmissionRow {
   students: { name: string; sort_name: string | null; student_number: string | null } | null
-  answers: { needs_review: boolean | null }[] | null
+  answers: { needs_review: boolean | null; review_status: string; confidence: number | null; student_answer: string | null }[] | null
 }
 
 /** All checking sessions across a teacher's classes, newest first. */
@@ -46,7 +47,7 @@ export async function listSessionResults(sessionId: string): Promise<ResultRow[]
     supabase
       .from('submissions')
       .select(
-        'id, student_id, score, total_items, status, created_at, students(name, sort_name, student_number), answers(needs_review)',
+        'id, student_id, score, total_items, status, created_at, students(name, sort_name, student_number), answers(needs_review, review_status, confidence, student_answer)',
       )
       .eq('checking_session_id', sessionId),
   ])
@@ -79,7 +80,7 @@ export async function listSessionResults(sessionId: string): Promise<ResultRow[]
         score,
         total,
         percentage: total > 0 ? Math.round((score / total) * 100) : 0,
-        needsReview: (sub?.answers ?? []).some((a) => a.needs_review === true),
+        needsReview: (sub?.answers ?? []).some(needsTeacherReview),
         checked: !!sub,
       }
     })

@@ -1,3 +1,4 @@
+import { escapeCsvCell } from './csv'
 import type { AnswerRow, ResultRow } from '../types'
 import { remarkFor } from './grading'
 
@@ -61,17 +62,13 @@ function rowsToMatrix(rows: TableRow[]): (string | number)[][] {
 /** CSV export using native generation (project rule: no library for CSV). */
 export function exportCsv(results: ResultRow[], meta: ExportMeta): void {
   const matrix = rowsToMatrix(buildTableRows(results))
-  const escape = (cell: string | number) => {
-    const s = String(cell)
-    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
-  }
   const lines = [
     [`CLASS: ${meta.className} (${meta.schoolYear})`],
     [`SESSION: ${meta.sessionName} — ${meta.sessionDate}`],
     [],
     ...matrix,
   ]
-  const csv = lines.map((line) => line.map(escape).join(',')).join('\r\n')
+  const csv = lines.map((line) => line.map(escapeCsvCell).join(',')).join('\r\n')
   downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `${slugify(meta.className)}_${slugify(meta.sessionName)}.csv`)
 }
 

@@ -25,49 +25,11 @@ export async function saveSubmission(input: {
     needs_review?: boolean
   }[]
 }): Promise<void> {
-  const { data: existing, error: findError } = await supabase
-    .from('submissions')
-    .select('id')
-    .eq('checking_session_id', input.checking_session_id)
-    .eq('student_id', input.student_id)
-    .order('created_at', { ascending: false })
-    .limit(1)
-  if (findError) throw findError
-
-  let submissionId: string
-  if (existing && existing.length > 0) {
-    submissionId = existing[0].id
-    const { error: updateError } = await supabase
-      .from('submissions')
-      .update({
-        score: input.score,
-        total_items: input.total_items,
-        status: 'checked',
-      })
-      .eq('id', submissionId)
-    if (updateError) throw updateError
-
-    // Clear previous answers so a re-check cannot leave stale rows behind.
-    const { error: deleteError } = await supabase.from('answers').delete().eq('submission_id', submissionId)
-    if (deleteError) throw deleteError
-  } else {
-    const { data, error } = await supabase
-      .from('submissions')
-      .insert({
-        checking_session_id: input.checking_session_id,
-        student_id: input.student_id,
-        score: input.score,
-        total_items: input.total_items,
-        status: 'checked',
-      })
-      .select()
-      .single()
-    if (error) throw error
-    submissionId = data.id
-  }
-
-  const rows = input.answers.map((a) => ({ ...a, submission_id: submissionId }))
-  if (rows.length === 0) return
-  const { error: answersError } = await supabase.from('answers').insert(rows)
-  if (answersError) throw answersError
+  const { error } = await supabase.rpc('save_submission_atomic', {
+    p_session_id: input.checking_session_id,
+    p_student_id: input.student_id,
+    p_score: input.score,
+    p_answers: input.answers,
+  })
+  if (error) throw new Error('Could not confirm the result was saved. Your answers remain here; retry to safely save the same result.')
 }

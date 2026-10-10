@@ -1,8 +1,10 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import AppSplash from './components/AppSplash'
 import AppLayout from './components/AppLayout'
 import RequireAuth from './components/RequireAuth'
+import PwaUpdatePrompt from './components/PwaUpdatePrompt'
 import InstallPrompt from './components/InstallPrompt'
 
 // Route-level code splitting keeps the initial load small.
@@ -25,22 +27,13 @@ const queryClient = new QueryClient({
   },
 })
 
-function PageFallback() {
-  return (
-    <div className="space-y-4 p-1">
-      <div className="h-8 w-56 animate-pulse rounded-md bg-muted" />
-      <div className="h-24 w-full animate-pulse rounded-md bg-muted" />
-      <div className="h-24 w-full animate-pulse rounded-md bg-muted" />
-    </div>
-  )
-}
-
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <InstallPrompt />
-        <Suspense fallback={<PageFallback />}>
+        <PwaUpdatePrompt />
+        <Suspense fallback={<AppSplash />}>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route

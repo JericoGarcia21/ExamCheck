@@ -42,7 +42,6 @@ export function headingToKind(line: string): AnswerKind | null {
  */
 export function parseAnswerKeyText(text: string): KeyRow[] {
   const lines = text.split(/\r?\n/)
-  const hasHeadings = lines.some((l) => l.trim().startsWith('#'))
   const rows: KeyRow[] = []
   let autoNumber = 0
   let currentKind: AnswerKind | null = null
@@ -57,14 +56,13 @@ export function parseAnswerKeyText(text: string): KeyRow[] {
       continue
     }
 
-    const match = line.match(/^(?:(\d+)[.):-]?\s*)?(.+)$/)
+    const match = line.match(/^(?:\d+[.):-]\s+)?(.+)$/)
     if (!match) continue
-    const answer = match[2].trim()
+    const answer = match[1].trim()
     if (!answer) continue
 
     autoNumber += 1
-    // With headings we always number sequentially so restarted part numbers cannot collide.
-    const questionNumber = hasHeadings ? autoNumber : match[1] ? Number(match[1]) : autoNumber
+    const questionNumber = autoNumber
     const questionType = currentKind ?? detectKind(answer)
     rows.push({
       question_number: questionNumber,
@@ -74,7 +72,5 @@ export function parseAnswerKeyText(text: string): KeyRow[] {
     })
   }
 
-  const byNumber = new Map<number, KeyRow>()
-  for (const row of rows) byNumber.set(row.question_number, row)
-  return [...byNumber.values()].sort((a, b) => a.question_number - b.question_number)
+  return rows
 }

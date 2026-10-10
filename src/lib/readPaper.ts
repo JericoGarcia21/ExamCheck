@@ -1,3 +1,4 @@
+import { validateRecognition } from '../../supabase/functions/_shared/validation'
 import { supabase } from './supabase'
 import { calculateScore, type ScoreResult } from './scoring'
 import type { KeyRow } from './answerKey'
@@ -14,11 +15,6 @@ export interface ReadPaperResult {
   violations: RuleViolation[]
 }
 
-interface RawViolation {
-  question_number: number | null
-  violation: string
-  confidence: number | null
-}
 
 /**
  * Sends a captured paper to the read-answers Edge Function and returns the
@@ -28,47 +24,28 @@ interface RawViolation {
  * answer is marked wrong.
  */
 export async function readPaperAnswers(params: {
+  sessionId: string
   imageBase64: string
   mimeType: string
-  rules: string
   rows: KeyRow[]
 }): Promise<ReadPaperResult> {
-  const { imageBase64, mimeType, rules, rows } = params
+  const { sessionId, imageBase64, mimeType, rows } = params
   if (rows.length === 0) {
     throw new Error('There is no answer key for this session yet. Confirm the answer key before checking papers.')
   }
   const { data, error } = await supabase.functions.invoke('read-answers', {
     body: {
+      sessionId,
       imageBase64,
       mimeType,
-      totalItems: rows.length,
-      rules,
-      answerKey: rows.map((r) => ({
-        question_number: r.question_number,
-        question_type: r.question_type,
-        max_points: r.max_points,
-        rubric: r.rubric ?? null,
-      })),
     },
   })
   if (error) throw error
   if (data?.error) throw new Error(data.error)
 
-  const rawAnswers = Array.isArray(data.answers) ? data.answers : []
-  const readable = rawAnswers.filter((a: { student_answer?: string }) => (a.student_answer ?? '').trim() !== '')
-  if (readable.length === 0) {
-    throw new Error(
-      'No answers could be read from the photo. Make sure the whole answer sheet is in frame, well-lit and in focus, then try again.',
-    )
-  }
-
-  const result = calculateScore(rawAnswers, rows)
-  const violations: RuleViolation[] = (data.rule_violations ?? []).map((v: RawViolation) => ({
-    question_number: v.question_number ?? null,
-    violation: v.violation,
-    confidence: v.confidence ?? null,
-    applied: false,
-  }))
+  const parsed = validateRecognition(data, rows.map((r) => r.question_number))
+  const result = calculateScore(parsed.answers, rows)
+  const violations: RuleViolation[] = parsed.rule_violations.map((v) => ({ ...v, applied: false }))
   return { result, violations }
 }
 

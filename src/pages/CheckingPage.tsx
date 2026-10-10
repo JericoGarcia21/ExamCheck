@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { Card, CardContent } from '../components/ui/card'
-import { Badge } from '../components/ui/badge'
+import SessionListCard from '../components/SessionListCard'
 import { Skeleton } from '../components/ui/skeleton'
 
 export default function CheckingPage() {
@@ -28,8 +27,8 @@ export default function CheckingPage() {
       {isLoading && (
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i}>
-              <CardContent className="flex items-center justify-between py-4">
+            <Card key={i} size="sm">
+              <CardContent className="flex flex-col gap-3">
                 <div className="space-y-2">
                   <Skeleton className="h-4 w-40" />
                   <Skeleton className="h-3 w-52" />
@@ -50,25 +49,11 @@ export default function CheckingPage() {
         </Card>
       )}
 
-      <div className="space-y-3">
+      <div className="grid gap-3">
         {data?.map((s) => (
-          <Link key={s.id} to={`/sessions/${s.id}`}>
-            <Card className="hover:bg-muted/50">
-              <CardContent className="flex items-center justify-between py-4">
-                <div>
-                  <p className="font-medium">{s.session_name || 'Untitled session'}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {s.classes?.block_name} · {s.session_date}
-                  </p>
-                </div>
-                <span>
-                  <Badge variant={s.answer_key_confirmed ? 'default' : 'secondary'}>
-                    {s.answer_key_confirmed ? 'Key confirmed ✓' : 'Draft'}
-                  </Badge>
-                </span>
-              </CardContent>
-            </Card>
-          </Link>
+          <SessionListCard key={s.id} to={"/sessions/" + s.id} title={s.session_name}
+            block={s.classes?.block_name} schoolYear={s.classes?.school_year}
+            date={s.session_date} confirmed={s.answer_key_confirmed} />
         ))}
       </div>
     </section>

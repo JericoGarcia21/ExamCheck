@@ -15,14 +15,14 @@ export default defineConfig(({ command }) => ({
     // generating a cert during CI builds can fail the build.
     ...(command === 'serve' ? [basicSsl()] : []),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'ExamCheck',
         short_name: 'ExamCheck',
         description: 'Install ExamCheck on your device for faster access.',
-        theme_color: '#2563eb',
-        background_color: '#f9fafb',
+        theme_color: '#f8fafc',
+        background_color: '#f8fafc',
         display: 'standalone',
         orientation: 'any',
         start_url: '/',
@@ -62,14 +62,14 @@ export default defineConfig(({ command }) => ({
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': path.resolve(import.meta.dirname, './src'),
     },
   },
   build: {
     chunkSizeWarningLimit: 600,
     rolldownOptions: {
       output: {
-        advancedChunks: {
+        codeSplitting: {
           groups: [
             { name: 'react-vendor', test: /node_modules[\\/](react|react-dom|react-router|scheduler)[\\/]/ },
             { name: 'supabase-vendor', test: /node_modules[\\/]@supabase[\\/]/ },

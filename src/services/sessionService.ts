@@ -58,40 +58,19 @@ export async function saveAnswerKeys(
     rubric?: string | null
     max_points?: number
   }[],
+  confirm = false,
+  rules?: string,
 ): Promise<void> {
-  const { error: deleteError } = await supabase
-    .from('answer_keys')
-    .delete()
-    .eq('checking_session_id', sessionId)
-  if (deleteError) throw deleteError
-
-  // deduplicate by question_number, keep the last one entered
-  const byNumber = new Map<number, (typeof keys)[number]>()
-  for (const k of keys) {
-    if (k.question_number > 0) byNumber.set(k.question_number, k)
-  }
-
-  const rows = [...byNumber.values()]
-    .sort((a, b) => a.question_number - b.question_number)
-    .map((k) => ({ ...k, checking_session_id: sessionId }))
-
-  if (rows.length === 0) return
-  const { error } = await supabase.from('answer_keys').insert(rows)
-  if (error) throw error
+  const { error } = await supabase.rpc('save_answer_key_atomic', {
+    p_session_id: sessionId, p_keys: keys, p_confirm: confirm, p_rules: rules ?? null,
+  })
+  if (error) throw new Error('Could not confirm the answer key was saved. Reload to check its status, or retry.')
 }
 
 export async function saveRules(sessionId: string, rules: string): Promise<void> {
   const { error } = await supabase
     .from('checking_sessions')
     .update({ rules: rules.trim() || null })
-    .eq('id', sessionId)
-  if (error) throw error
-}
-
-export async function confirmAnswerKey(sessionId: string): Promise<void> {
-  const { error } = await supabase
-    .from('checking_sessions')
-    .update({ answer_key_confirmed: true, status: 'answer_key_confirmed' })
     .eq('id', sessionId)
   if (error) throw error
 }

@@ -61,7 +61,7 @@ Develop slowly but surely: finish and test one phase before starting the next. E
 
 - [x] Confidence scores per answer; flag uncertain (shown on every result row, <70% flagged red)
 - [x] Review screen: accept / edit answer / skip (modal with progress "Q x of N")
-- [x] Low-confidence AI interpretations never auto-accepted (review is optional, teacher decides)
+- [x] Low-confidence AI interpretations require explicit teacher review before final save
 - [x] Manual score adjustment by teacher (override final score before save)
 
 **Status:** ✅ DONE (confidence shown per answer + average; review modal; teacher score override; build + typecheck PASS)
@@ -84,8 +84,23 @@ Develop slowly but surely: finish and test one phase before starting the next. E
 - [x] vite-plugin-pwa: manifest, service worker, offline shell
 - [x] Installable on phone/tablet; camera-optimized checking UI
 - [x] Error handling, loading/empty states, responsive checks
-- [x] Final QA pass per AGENT_SKILLS.md §46 checklist
+- [ ] Live authenticated mobile/browser QA pass per AGENT_SKILLS.md §46 checklist
 
 **Status:** ✅ DONE (real PNG/maskable icons, update handling, offline + install UI, error boundaries, route code-splitting, on-demand xlsx; build + typecheck PASS)
 
-**Deliverables:** Installable PWA, polished UI, all QA checks passing.
+**Deliverables:** Installable PWA, polished UI, automated QA verified; live acceptance pending.
+
+## QA remediation — 2026-10-10
+
+- [x] Student/result identity and stale recognition protection
+- [x] Atomic submission and answer-key persistence
+- [x] Numeric scores and database class/ownership enforcement
+- [x] Code and answer-key parsing correctness regressions
+- [x] Consistent teacher review and final-save gating
+- [x] Validated roster import preview and safe CSV output
+- [x] Authenticated, bounded AI reader with per-user usage limits
+- [x] Paper upload, accessible review dialog, and explicit PWA update prompt
+- [x] Strict TypeScript, Deno checking, regression suite, and CI workflow
+- [ ] Apply migrations 0006/0007 to the live project
+- [ ] Deploy updated reader and frontend together
+- [ ] Run authenticated browser/mobile acceptance checklist in QA_REPORT.md

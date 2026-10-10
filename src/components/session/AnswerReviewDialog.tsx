@@ -2,10 +2,11 @@ import { Button } from '../ui/button'
 import { Label } from '../ui/label'
 import { Input } from '../ui/input'
 import { Textarea } from '../ui/textarea'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import type { ReviewMode } from '../../hooks/useAnswerReview'
 
 interface AnswerReviewDialogProps {
+  allowPoints: boolean
   mode: ReviewMode
   question: number | null
   index: number
@@ -25,6 +26,7 @@ interface AnswerReviewDialogProps {
 }
 
 export default function AnswerReviewDialog({
+  allowPoints,
   mode,
   question,
   index,
@@ -43,15 +45,15 @@ export default function AnswerReviewDialog({
   onClose,
 }: AnswerReviewDialogProps) {
   if (mode === 'none') return null
-  const isEssay = maxPoints !== null && maxPoints > 1
+  const isEssay = allowPoints
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>{mode === 'view' ? 'Review Answer' : 'Edit Answer'}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-h-[85vh] overflow-auto sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{mode === 'view' ? 'Review Answer' : 'Edit Answer'}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
             Question <strong>{question}</strong>
             <span className="ml-2 text-xs">
@@ -106,6 +108,7 @@ export default function AnswerReviewDialog({
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Your interpretation:</p>
                 <Textarea
+                  aria-label="Your interpretation of the answer"
                   value={studentAnswer}
                   onChange={(e) => onStudentAnswerChange(e.target.value)}
                   rows={2}
@@ -116,14 +119,16 @@ export default function AnswerReviewDialog({
                 <div className="space-y-1">
                   <Label className="text-sm">Points (0–{maxPoints})</Label>
                   <Input
+                    aria-label="Awarded points"
+                    step="any"
                     type="number"
                     min={0}
-                    max={maxPoints}
+                    max={maxPoints ?? undefined}
                     value={points}
                     onChange={(e) => onPointsChange(e.target.value)}
                   />
                   <Label className="text-sm">Feedback (optional)</Label>
-                  <Textarea value={feedback} onChange={(e) => onFeedbackChange(e.target.value)} rows={2} />
+                  <Textarea aria-label="Feedback" value={feedback} onChange={(e) => onFeedbackChange(e.target.value)} rows={2} />
                 </div>
               )}
               <div className="flex justify-end gap-2">
@@ -134,8 +139,8 @@ export default function AnswerReviewDialog({
               </div>
             </>
           )}
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }

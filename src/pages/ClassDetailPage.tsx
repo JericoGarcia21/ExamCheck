@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { getClass } from '../services/classService'
@@ -19,34 +19,40 @@ import { Badge } from '../components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog'
 import { Label } from '../components/ui/label'
 import { Skeleton } from '../components/ui/skeleton'
+import { detectNameColumn, previewRoster, validateRosterFile } from '../lib/rosterImport'
 import { Plus } from 'lucide-react'
 
 export default function ClassDetailPage() {
   const { classId } = useParams<{ classId: string }>()
   const queryClient = useQueryClient()
+  const [importRows, setImportRows] = useState<unknown[][] | null>(null)
+  const [importColumn, setImportColumn] = useState(0)
+  const [importHeader, setImportHeader] = useState(true)
+  const [importLoading, setImportLoading] = useState(false)
   const [pasteText, setPasteText] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [sessionOpen, setSessionOpen] = useState(false)
   const [newSessionName, setNewSessionName] = useState('')
 
-  const { data: classRow } = useQuery({
+  const { data: classRow, error: classError } = useQuery({
     queryKey: ['class', classId],
     queryFn: () => getClass(classId!),
     enabled: !!classId,
   })
 
-  const { data: students } = useQuery({
+  const { data: students, error: studentsError } = useQuery({
     queryKey: ['students', classId],
     queryFn: () => listStudents(classId!),
     enabled: !!classId,
   })
 
-  const { data: sessions } = useQuery({
+  const { data: sessions, error: sessionsError } = useQuery({
     queryKey: ['sessions', classId],
     queryFn: () => listSessions(classId!),
     enabled: !!classId,
   })
 
+  const importPreview = useMemo(() => previewRoster(importRows ?? [], importColumn, importHeader, (students ?? []).map((s) => s.name)), [importRows, importColumn, importHeader, students])
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['students', classId] })
 
   const addMutation = useMutation({
@@ -56,25 +62,33 @@ export default function ClassDetailPage() {
     },
     onSuccess: () => {
       invalidate()
+      setImportRows(null)
       setPasteText('')
       setError(null)
     },
     onError: (e) => setError(e.message),
   })
 
-  const deleteMutation = useMutation({ mutationFn: deleteStudent, onSuccess: invalidate })
+  const deleteMutation = useMutation({ mutationFn: deleteStudent, onSuccess: invalidate, onError: () => setError('Could not delete the student. Please retry.') })
   const deleteAllMutation = useMutation({
     mutationFn: () => deleteAllStudents(classId!),
+    onError: () => setError('Could not delete the roster. Please retry.'),
     onSuccess: invalidate,
   })
   const renameMutation = useMutation({
     mutationFn: ({ id, name }: { id: string; name: string }) => renameStudent(id, name),
+    onError: () => setError('Could not rename the student. Please retry.'),
     onSuccess: invalidate,
   })
 
   const sessionMutation = useMutation({
     mutationFn: (name: string) => createSession(classId!, name),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sessions', classId] }),
+    onError: () => setError('Could not save the session. Please retry.'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sessions', classId] })
+      setNewSessionName('')
+      setSessionOpen(false)
+    },
   })
 
   const deleteSessionMutation = useMutation({
@@ -94,34 +108,27 @@ export default function ClassDetailPage() {
 
   async function handleExcel(file: File) {
     setError(null)
+    setImportLoading(true)
     try {
+      validateRosterFile(file)
       const XLSX = await import('xlsx')
-      const buffer = await file.arrayBuffer()
-      const workbook = XLSX.read(buffer)
+      const workbook = XLSX.read(await file.arrayBuffer())
       const sheet = workbook.Sheets[workbook.SheetNames[0]]
+      if (!sheet) throw new Error('The workbook has no worksheet.')
       const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 })
-      const names: string[] = []
-      for (const row of rows) {
-        for (const cell of row) {
-          if (typeof cell === 'string' && cell.trim().length > 0 && /[a-zA-Z]/.test(cell)) {
-            names.push(cell)
-            break
-          }
-        }
-      }
-      const parsed = parseStudentNames(names.join('\n'))
-      if (parsed.length === 0) {
-        setError('No student names found in the file.')
-        return
-      }
-      addMutation.mutate(parsed)
-    } catch {
-      setError('Could not read the Excel file.')
-    }
+      if (rows.length > 5000) throw new Error('Import up to 5,000 rows at a time.')
+      const detected = detectNameColumn(rows)
+      setImportColumn(detected.column)
+      setImportHeader(detected.hasHeader)
+      setImportRows(rows)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not read the file.')
+    } finally { setImportLoading(false) }
   }
 
   return (
     <section className="space-y-4">
+      {(classError || studentsError || sessionsError) && <p role="alert" className="text-destructive">Could not load the class. Check your connection and reload.</p>}
       <div>
         <Link to="/classes" className="text-sm text-primary">&larr; Back to classes</Link>
         <h2 className="mt-1 text-2xl font-semibold tracking-tight">
@@ -149,6 +156,7 @@ export default function ClassDetailPage() {
             <label className="cursor-pointer rounded-md border px-4 py-2 text-center text-sm font-medium hover:bg-muted/50">
               Import Excel/CSV
               <input
+                disabled={importLoading || addMutation.isPending}
                 type="file"
                 accept=".xlsx,.xls,.csv"
                 className="hidden"
@@ -156,6 +164,21 @@ export default function ClassDetailPage() {
               />
             </label>
           </div>
+          {importLoading && <p role="status">Reading roster…</p>}
+          {importRows && (
+            <div className="space-y-2 rounded border p-3">
+              <Label htmlFor="name-column">Student name column</Label>
+              <select id="name-column" className="w-full rounded border p-2" value={importColumn} onChange={(e) => setImportColumn(Number(e.target.value))}>
+                {Array.from({ length: Math.max(...importRows.map((r) => r.length), 1) }, (_, i) => <option key={i} value={i}>Column {i + 1}: {String(importRows[0]?.[i] ?? '')}</option>)}
+              </select>
+              <label className="flex items-center gap-2"><input type="checkbox" checked={importHeader} onChange={(e) => setImportHeader(e.target.checked)} />First row is a header</label>
+              <p>{importPreview.names.length} new students · {importPreview.duplicates} duplicates skipped · {importPreview.rejected} invalid rows skipped</p>
+              <ul className="max-h-40 overflow-auto text-sm">{importPreview.names.map((n) => <li key={n}>{n}</li>)}</ul>
+              <p className="text-xs text-muted-foreground">Names matching the existing roster are skipped. Check students who share a name before importing.</p>
+              <Button disabled={addMutation.isPending || importPreview.names.length === 0} onClick={() => addMutation.mutate(importPreview.names)}>Confirm import</Button>
+              <Button variant="outline" onClick={() => setImportRows(null)}>Cancel</Button>
+            </div>
+          )}
           {error && <p className="text-sm text-destructive">{error}</p>}
         </CardContent>
       </Card>
@@ -168,7 +191,7 @@ export default function ClassDetailPage() {
               <button
                 className="text-xs text-destructive"
                 onClick={() => {
-                  if (window.confirm(`Delete ALL ${students.length} students in this class?`)) {
+                  if (window.confirm(`Delete ALL ${students.length} students and their historical grades? This cannot be undone.`)) {
                     deleteAllMutation.mutate()
                   }
                 }}
@@ -194,7 +217,7 @@ export default function ClassDetailPage() {
           )}
           {students?.map((s, i) => (
             <div key={s.id} className="flex items-center gap-3 px-4 py-2">
-              <span className="w-8 text-sm text-muted-foreground">{s.student_number ?? formatStudentNumber(i)}</span>
+              <span className="w-8 text-sm text-muted-foreground">{formatStudentNumber(i)}</span>
               <span className="flex-1 text-sm">{s.name}</span>
               <button
                 className="text-xs text-primary"
@@ -208,7 +231,7 @@ export default function ClassDetailPage() {
               <button
                 className="text-xs text-destructive"
                 onClick={() => {
-                  if (window.confirm(`Delete ${s.name}?`)) deleteMutation.mutate(s.id)
+                  if (window.confirm(`Delete ${s.name} and all their historical grades? This cannot be undone.`)) deleteMutation.mutate(s.id)
                 }}
               >
                 Delete
@@ -283,8 +306,6 @@ export default function ClassDetailPage() {
               const name = newSessionName.trim()
               if (!name) return
               sessionMutation.mutate(name)
-              setNewSessionName('')
-              setSessionOpen(false)
             }}
             className="space-y-3"
           >
@@ -297,7 +318,8 @@ export default function ClassDetailPage() {
                 onChange={(e) => setNewSessionName(e.target.value)}
               />
             </div>
-            <Button type="submit" className="w-full">Create session</Button>
+            <Button type="submit" disabled={sessionMutation.isPending} className="w-full">Create session</Button>
+            {sessionMutation.error && <p role="alert" className="text-destructive">Could not create the session. Please retry.</p>}
           </form>
         </DialogContent>
       </Dialog>

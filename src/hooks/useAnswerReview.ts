@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { displayConfidence } from '../lib/confidence'
+import { needsTeacherReview } from '../lib/confidence'
 import { normalizeAnswer, type ScoredAnswer } from '../lib/scoring'
 import type { KeyRow } from '../lib/answerKey'
 
@@ -48,7 +48,7 @@ export function useAnswerReview({ rows, details, updateDetail }: UseAnswerReview
 
   const open = useCallback(() => {
     const list = detailsRef.current
-      .filter((d) => d.needs_review || displayConfidence(d) < 0.7)
+      .filter(needsTeacherReview)
       .map((d) => d.question_number)
     if (list.length === 0) return
     setQueue(list)
@@ -62,6 +62,7 @@ export function useAnswerReview({ rows, details, updateDetail }: UseAnswerReview
     const keyItem = rowsRef.current.find((r) => r.question_number === question)
     const patch: Partial<ScoredAnswer> = {
       review_status: mode === 'view' ? 'accepted' : 'edited',
+      needs_review: false,
     }
 
     if (mode === 'edit') {
@@ -86,8 +87,7 @@ export function useAnswerReview({ rows, details, updateDetail }: UseAnswerReview
 
     const next = index + 1
     if (next < queue.length) {
-      // Defer so the edited detail is committed before the next card reads it.
-      setTimeout(() => openAt(queue, next), 0)
+      openAt(queue, next)
       return
     }
     setMode('none')

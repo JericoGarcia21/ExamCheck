@@ -1,0 +1,2 @@
+[functions.read-answers]
+verify_jwt = true

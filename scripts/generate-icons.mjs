@@ -58,7 +58,7 @@ function coverage(dist, half) {
 }
 
 // Draws the icon scaled to `size`. `pad` shrinks the artwork for maskable icons.
-function drawIcon(size, pad) {
+function drawIcon(size, pad, opaque = false) {
   const rgba = Buffer.alloc(size * size * 4)
   const S = size
   const inset = S * pad
@@ -71,17 +71,14 @@ function drawIcon(size, pad) {
   // Checkmark geometry (relative to the inner box)
   const w = x1 - x0
   const h = y1 - y0
-  const cx = x0 + w * 0.5
-  const cy = y0 + h * 0.54
   const ax = x0 + w * 0.24
   const ay = y0 + h * 0.53
   const bx = x0 + w * 0.42
   const by = y0 + h * 0.72
   const ccx = x0 + w * 0.78
   const ccy = y0 + h * 0.30
-  const stroke = w * 0.085
+  const stroke = w * 0.055
 
-  const blue = [37, 99, 235]
   const white = [255, 255, 255]
 
   for (let y = 0; y < S; y++) {
@@ -101,10 +98,12 @@ function drawIcon(size, pad) {
         Math.min(distToSegment(px, py, ax, ay, bx, by), distToSegment(px, py, bx, by, ccx, ccy)) - stroke
       const chkA = coverage(chk, 0.75)
 
-      const r = blue[0] + (white[0] - blue[0]) * chkA
-      const g = blue[1] + (white[1] - blue[1]) * chkA
-      const b = blue[2] + (white[2] - blue[2]) * chkA
-      const a = Math.max(bgA, chkA * bgA) * 255
+      const gradient = py / S
+      const base = [59 - 30 * gradient, 130 - 52 * gradient, 246 - 30 * gradient]
+      const r = base[0] + (white[0] - base[0]) * chkA
+      const g = base[1] + (white[1] - base[1]) * chkA
+      const b = base[2] + (white[2] - base[2]) * chkA
+      const a = (opaque ? 1 : bgA) * 255
 
       const i = (y * S + x) * 4
       rgba[i] = Math.round(r)
@@ -121,7 +120,7 @@ mkdirSync('public', { recursive: true })
 writeFileSync('public/pwa-192x192.png', drawIcon(192, 0.02))
 writeFileSync('public/pwa-512x512.png', drawIcon(512, 0.02))
 // Maskable icons need extra safe-zone padding
-writeFileSync('public/maskable-512x512.png', drawIcon(512, 0.14))
+writeFileSync('public/maskable-512x512.png', drawIcon(512, 0.14, true))
 // Apple touch icon
-writeFileSync('public/apple-touch-icon.png', drawIcon(180, 0.02))
+writeFileSync('public/apple-touch-icon.png', drawIcon(180, 0, true))
 console.log('icons written')

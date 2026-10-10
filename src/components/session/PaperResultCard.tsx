@@ -2,11 +2,12 @@ import { Button } from '../ui/button'
 import { Label } from '../ui/label'
 import { Input } from '../ui/input'
 import { Badge } from '../ui/badge'
-import { displayConfidence } from '../../lib/confidence'
+import { displayConfidence, needsTeacherReview } from '../../lib/confidence'
 import type { ScoreResult, ScoredAnswer } from '../../lib/scoring'
 import type { RuleViolation } from '../../lib/readPaper'
 
 interface PaperResultCardProps {
+  saving: boolean
   studentName: string
   result: ScoreResult
   effectiveScore: number
@@ -23,6 +24,7 @@ interface PaperResultCardProps {
 }
 
 export default function PaperResultCard({
+  saving,
   studentName,
   result,
   effectiveScore,
@@ -71,6 +73,7 @@ export default function PaperResultCard({
           </Label>
           <Input
             id="scoreOverride"
+            step="any"
             type="number"
             min={0}
             max={result.total}
@@ -139,7 +142,7 @@ export default function PaperResultCard({
                     <span className="ml-1 text-destructive">✗ ({d.correct_answer})</span>
                   )}
                   {forced && <span className="ml-1 text-destructive">(rule)</span>}
-                  {d.needs_review && (
+                  {needsTeacherReview(d) && (
                     <Badge className="ml-1" variant="destructive">
                       review
                     </Badge>
@@ -148,13 +151,15 @@ export default function PaperResultCard({
                 <span className="w-16 text-xs">
                   {d.max_points > 1 ? (
                     <input
+                      aria-label={`Points for question ${d.question_number}`}
+                      step="any"
                       type="number"
                       min={0}
                       max={d.max_points}
                       value={d.points_awarded}
                       onChange={(e) => {
                         const pts = Math.max(0, Math.min(d.max_points, Number(e.target.value) || 0))
-                        onUpdateDetail(d.question_number, { points_awarded: pts, is_correct: pts >= d.max_points })
+                        onUpdateDetail(d.question_number, { points_awarded: pts, is_correct: pts >= d.max_points, needs_review: false, review_status: 'edited' })
                       }}
                       className="h-7 w-14 rounded border px-1"
                     />
@@ -183,8 +188,8 @@ export default function PaperResultCard({
               Review {reviewCount} answer{reviewCount === 1 ? '' : 's'} needing attention
             </Button>
           )}
-          <Button className="w-full" onClick={onSave}>
-            Save result
+          <Button className="w-full" disabled={saving || reviewCount > 0} onClick={onSave}>
+            {saving ? 'Saving…' : 'Save final result'}
           </Button>
         </div>
     </div>

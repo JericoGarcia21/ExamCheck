@@ -1,12 +1,18 @@
-/**
- * Fallback confidence for display when the AI did not provide one.
- * Clear multiple-choice / true-false readings are reliable; free text is not.
- */
+export const REVIEW_CONFIDENCE_THRESHOLD = 0.7
+
 export function displayConfidence(d: { confidence?: number | null; student_answer: string }): number {
-  if (d.confidence !== undefined && d.confidence !== null) return d.confidence
-  const t = d.student_answer.trim()
-  if (!t) return 0.1
-  if (/^[a-e]$/i.test(t)) return 0.85
-  if (/^(true|false|t|f)$/i.test(t)) return 0.85
-  return 0.6
+  return typeof d.confidence === 'number' && Number.isFinite(d.confidence)
+    ? Math.max(0, Math.min(1, d.confidence)) : 0
+}
+
+export function needsTeacherReview(d: {
+  confidence?: number | null
+  student_answer: string | null
+  needs_review?: boolean | null
+  review_status?: string | null
+}): boolean {
+  if (d.review_status === 'accepted' || d.review_status === 'edited') return false
+  return d.needs_review === true || !d.student_answer?.trim() ||
+    typeof d.confidence !== 'number' || !Number.isFinite(d.confidence) ||
+    d.confidence < REVIEW_CONFIDENCE_THRESHOLD
 }
