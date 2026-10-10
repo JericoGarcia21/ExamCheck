@@ -64,7 +64,7 @@ export default function ClassesPage() {
           <p className="text-sm text-muted-foreground">No classes yet. Tap + to create your first one.</p>
         )}
         {classes?.map((c) => (
-          <Link key={c.id} to={`/classes/${c.id}`}>
+          <Link key={c.id} to={`/classes/${c.id}`} className="block">
             <Card className="hover:bg-muted/50">
               <CardContent className="flex items-center justify-between py-4">
                 <span className="font-medium">{c.block_name}</span>

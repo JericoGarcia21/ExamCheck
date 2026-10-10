@@ -80,3 +80,10 @@ test('invalid multiple-choice and true/false readings cannot receive automatic c
   assert.equal(result.score,0)
   assert.equal(result.details.every(needsTeacherReview),true)
 })
+
+test('answer-key tables preserve answers and sequential numbering across restarted sections', () => {
+  const rows = parseAnswerKeyText('No. | Ans. | No. | Ans.\n--- | --- | --- | ---\n1 | A | 2 | B\n# Identification\n1\t42\t2\t3.14\n1. 2026')
+  assert.deepEqual(rows.map(row => row.question_number), [1, 2, 3, 4, 5])
+  assert.deepEqual(rows.map(row => row.correct_answer), ['A', 'B', '42', '3.14', '2026'])
+  assert.equal(rows[2].question_type, 'identification')
+})

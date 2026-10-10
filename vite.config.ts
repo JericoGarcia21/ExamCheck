@@ -20,7 +20,7 @@ export default defineConfig(({ command }) => ({
       manifest: {
         name: 'ExamCheck',
         short_name: 'ExamCheck',
-        description: 'Install ExamCheck on your device for faster access.',
+        description: 'Check exam papers faster with ExamCheck.',
         theme_color: '#f8fafc',
         background_color: '#f8fafc',
         display: 'standalone',
