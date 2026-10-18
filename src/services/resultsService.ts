@@ -1,4 +1,5 @@
 import { needsTeacherReview } from '../lib/confidence'
+import { percentageFor } from '../lib/grading'
 import { supabase } from '../lib/supabase'
 import type { AnswerRow, ResultRow, SessionWithClass, SubmissionRow } from '../types'
 
@@ -80,7 +81,7 @@ export async function listSessionResults(sessionId: string): Promise<ResultRow[]
         studentNumber: student.student_number ?? null,
         score,
         total,
-        percentage: total > 0 ? Math.round((score / total) * 100) : 0,
+        percentage: percentageFor(score, total),
         needsReview: (sub?.answers ?? []).some(needsTeacherReview),
         checked: !!sub,
       }

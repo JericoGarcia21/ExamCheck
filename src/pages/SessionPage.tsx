@@ -11,7 +11,8 @@ import {
 } from '../services/sessionService'
 import { listStudents } from '../services/studentService'
 import { saveSubmission } from '../services/submissionService'
-import { calculateScore, sumPoints, type AnswerKind, type ScoredAnswer, type StudentAnswer } from '../lib/scoring'
+import { calculateScore, sumPoints, type AnswerKind, type ScoredAnswer } from '../lib/scoring'
+import { restoreSavedResult } from '../lib/savedResult'
 import { parseAnswerKeyText, type KeyRow } from '../lib/answerKey'
 import { needsTeacherReview } from '../lib/confidence'
 import { readPaperAnswers, extractFunctionError, type RuleViolation } from '../lib/readPaper'
@@ -103,30 +104,31 @@ function SessionContent() {
 
   // For already-checked students, don't force the camera flow. Let the teacher
   // see the saved result and/or edit the answer text directly.
-  const { data: savedAnswers, isLoading: savedLoading, error: savedError } = useQuery({
+  const { data: savedResult, isLoading: savedLoading, error: savedError } = useQuery({
     queryKey: ['savedAnswers', sessionId, selectedStudent],
     queryFn: async () => {
-      if (!selectedStudent) return []
+      if (!selectedStudent) throw new Error('Select a student first.')
       const { data: subs, error: subError } = await supabase
         .from('submissions')
-        .select('id')
+        .select('id, score, calculated_score')
         .eq('checking_session_id', sessionId!)
         .eq('student_id', selectedStudent)
         .order('created_at', { ascending: false })
         .limit(1)
         .single()
       if (subError) throw subError
-      if (!subs) return []
       const { data: answers, error: ansError } = await supabase
         .from('answers')
         .select('*')
         .eq('submission_id', subs.id)
         .order('question_number', { ascending: true })
       if (ansError) throw ansError
-      return answers ?? []
+      return { answers: answers ?? [], score: subs.score, calculatedScore: subs.calculated_score }
     },
     enabled: !!sessionId && !!selectedStudent && isCheckedStudent,
   })
+
+  const savedAnswers = savedResult?.answers
 
   const rows: KeyRow[] =
     draft ??
@@ -315,7 +317,7 @@ function SessionContent() {
   }
 
   function toggleViolation(index: number) {
-    setRuleViolations((prev) => prev.map((v, i) => (i === index ? { ...v, applied: !v.applied } : v)))
+    setRuleViolations((prev) => prev.map((v, i) => (i === index && v.question_number !== null ? { ...v, applied: !v.applied } : v)))
   }
 
   async function handleSaveResult() {
@@ -497,18 +499,10 @@ function SessionContent() {
                         size="sm"
                         onClick={() => {
                           if (!savedAnswers?.length) { setEditError('Saved answers are unavailable. Please reload and retry.'); return }
-                          const stuAnswers: StudentAnswer[] = savedAnswers.map((a) => ({
-                            question_number: a.question_number,
-                            student_answer: editAnswers[a.question_number] ?? a.student_answer ?? '',
-                            confidence: a.confidence ?? undefined,
-                          }))
-                          const scored = calculateScore(stuAnswers, rows)
-                          const restored = scored.details.map((d) => {
-                            const saved = savedAnswers?.find((a) => a.question_number === d.question_number)
-                            return saved?.student_answer === d.student_answer ? { ...d, points_awarded: saved.points_awarded ?? d.points_awarded, is_correct: saved.is_correct ?? d.is_correct, confidence: saved.confidence ?? undefined, review_status: saved.review_status, needs_review: saved.needs_review ?? false, feedback: saved.feedback ?? undefined } : { ...d, review_status: 'pending', needs_review: true }
-                          })
+                          const restored = restoreSavedResult(rows, savedAnswers, editAnswers, savedResult!.score, savedResult!.calculatedScore)
                           setResultStudent(selectedStudent)
-                          setPaperResult({ ...scored, details: restored })
+                          setPaperResult(restored.result)
+                          setScoreOverride(restored.scoreOverride)
                           setRuleViolations([])
                         }}
                       >

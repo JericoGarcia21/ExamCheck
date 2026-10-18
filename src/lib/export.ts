@@ -1,6 +1,6 @@
 import { escapeCsvCell } from './csv'
 import type { AnswerRow, ResultRow } from '../types'
-import { remarkFor } from './grading'
+import { formatPercentage, remarkFor } from './grading'
 
 // xlsx is a large dependency used only when a teacher exports. Load it on demand
 // so it never lands in the initial bundle.
@@ -48,7 +48,7 @@ export function buildTableRows(results: ResultRow[]): TableRow[] {
     no: i + 1,
     student: r.studentName,
     score: r.checked ? r.score : '—',
-    percentage: r.checked ? `${r.percentage}%` : '—',
+    percentage: r.checked ? formatPercentage(r.percentage) : '—',
     remarks: remarkFor(r),
   }))
 }

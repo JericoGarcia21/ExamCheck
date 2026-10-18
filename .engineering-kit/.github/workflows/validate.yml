@@ -1,0 +1,24 @@
+name: Validate toolkit
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  validate:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/validate.mjs
+      - run: npm test
+      - run: npm run test:package
+
+# Major action tags are maintained upstream. Projects requiring immutable pins
+# should replace them with reviewed full commit SHAs and automate updates.

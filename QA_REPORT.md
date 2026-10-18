@@ -13,34 +13,6 @@ The findings below are the original review. Source fixes have been implemented i
 - Existing grades are preserved. No live database or student records were changed.
 - Rollout steps and known limits are documented in README.md.
 
-## Verification after remediation
-
-- `npm run verify`: PASS.
-- Regression tests: 30 PASS (11 local PostgreSQL/RLS/transaction tests, 11 grading/import/export/validation tests, 8 reader-handler tests with mocked upstream services).
-- Strict TypeScript: PASS.
-- Edge Function Deno check: PASS.
-- Lint: PASS, zero errors and zero warnings.
-- Production build and service-worker generation: PASS, no build warnings.
-- `npm audit --omit=dev --audit-level=high`: PASS, zero production vulnerabilities.
-- Git whitespace check: PASS.
-- CI workflow added; a hosted CI run has not been performed in this session.
-- Live database deployment, OAuth/provider calls, and browser/device acceptance: NOT VERIFIED.
-
-## Pending live acceptance checklist
-
-Use synthetic records in a named test class and record the device/browser and outcome.
-
-1. Sign in as Teacher A; create a class, preview/import a roster with headers and duplicates, and confirm a multipart key with numeric answers.
-2. Capture or upload a paper; switch students before/during reading and verify no result can be saved under the wrong student. Try duplicate capture/save clicks.
-3. Accept/edit low-confidence, missing, coding, and essay answers. Verify final save remains disabled until all review is resolved and does not reopen accepted items.
-4. Save a fractional essay grade and a teacher-adjusted final score; reload and verify class results, per-answer breakdown, and Excel/CSV/PDF exports.
-5. Interrupt the network during recognition and saving; verify useful recovery and preservation of previously saved answers. Retry and verify one submission per student.
-6. Sign in as Teacher B and verify Teacher A's roster/results are inaccessible; verify anonymous reads and writes are denied in the deployed project.
-7. Test camera denial, retake, upload limits, rotation, and handwriting recognition on target phones. Check keyboard focus/labels and horizontal overflow on small screens.
-8. Install the PWA, reload offline, reconnect, and trigger an update with unsaved grading work. Verify the update waits for explicit reload.
-9. Confirm deleted-student/session warnings explain historical-grade loss; use only disposable synthetic records for deletion checks.
-10. Inspect browser console/network and deployed function logs for errors and sensitive response content.
-
 ## Assessment
 
 Feature phases are implemented, but this review does not support production QA sign-off. Resolve the P1 grade integrity and persistence findings before relying on real grades.
@@ -179,13 +151,3 @@ Before release, test OAuth cancellation/expiry, network loss during recognition/
 4. Automated regression suite and authenticated mobile/PWA acceptance testing.
 
 Production acceptance: no unresolved P1 findings; failed saves preserve prior records; final grades are teacher-approved and reload/export consistently; invalid student/session combinations are rejected; the synthetic end-to-end workflow and two-teacher authorization tests pass.
-
-## Dashboard deployment follow-up
-
-The dashboard deployment failed because the uploaded entry referenced an absent
-`../_shared/validation.ts`. Added a generated, self-contained
-`supabase/functions/read-answers/dashboard.ts` for copying into the editor.
-The canonical handler and shared validation remain maintained in their original files.
-Bundle freshness is enforced by verification, and reader-handler tests now exercise
-the actual dashboard artifact. All 31 tests, lint, Deno checks, and build pass.
-Live redeployment has not been performed by this agent.

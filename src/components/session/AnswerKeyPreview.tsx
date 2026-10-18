@@ -62,6 +62,7 @@ export default function AnswerKeyPreview({ rows, locked, editable, rules, onUpda
                 {editable && !locked && row.question_type === 'essay' && (
                   <div className="flex gap-2 pl-10">
                     <Input
+                      aria-label={`Maximum points for question ${row.question_number}`}
                       type="number"
                       min={1}
                       className="h-8 w-20"
@@ -71,6 +72,7 @@ export default function AnswerKeyPreview({ rows, locked, editable, rules, onUpda
                       }
                     />
                     <Textarea
+                      aria-label={`Grading rubric for question ${row.question_number}`}
                       className="min-h-8 flex-1 font-mono text-xs"
                       rows={2}
                       placeholder="Rubric for this essay question (used to award partial credit)"

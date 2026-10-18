@@ -23,4 +23,25 @@ Keyboard skip link, focus indicators, reduced-motion handling, native button sem
 
 ## Verification
 
+### Checking screen refinement (2026-10-18)
+
+The student picker now pairs a visible search label with roster progress and
+explicit selected/checked states. Selection is exposed through aria-pressed.
+Roster rows have a minimum 48px height and allow long names to wrap.
+
+Paper review separates the student identity, review status, and final-score
+summary. The summary previews a valid teacher override; invalid overrides have
+associated inline help and disable saving. On phones, each answer stacks its
+text, points, and confidence; above 640px those fields align into columns.
+Answer text preserves line breaks and wraps long code. Penalty controls and point
+inputs have minimum 44px heights. Rubric and maximum-point inputs have explicit
+accessible names. Existing routes, theme, and grading behavior are retained.
+
+Accessibility review scope: student selection, paper review, and answer-key essay
+fields. WCAG 2.2 AA is the target baseline, not a compliance claim. Source and
+server-rendered checks cover labels, selected state, validation associations,
+and disabled saving. Browser inventory returned no connected surfaces; narrow
+viewport rendering, zoom, keyboard/focus order, contrast measurement, and screen
+reader behavior remain NOT VERIFIED. No browser screenshots were produced.
+
 TypeScript, lint, regression tests, and production build are checked for this redesign. A rendered desktop/mobile browser review remains pending because this session has no available browser surface.

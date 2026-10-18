@@ -14,7 +14,7 @@ import {
   exportStudentExcel,
   type ExportMeta,
 } from '../lib/export'
-import { PASSING_PERCENTAGE, remarkFor } from '../lib/grading'
+import { formatPercentage, PASSING_PERCENTAGE, remarkFor } from '../lib/grading'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
@@ -124,8 +124,8 @@ export default function SessionResultsPage() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <Stat label="Checked" value={`${checkedRows.length} / ${rows.length}`} loading={loadingResults} />
         <Stat label="Average" value={`${average}%`} loading={loadingResults} />
-        <Stat label="Highest" value={`${highest}%`} loading={loadingResults} />
-        <Stat label="Lowest" value={`${lowest}%`} loading={loadingResults} />
+        <Stat label="Highest" value={formatPercentage(highest)} loading={loadingResults} />
+        <Stat label="Lowest" value={formatPercentage(lowest)} loading={loadingResults} />
         <Stat label={`Passed (≥${PASSING_PERCENTAGE}%)`} value={`${passRate}%`} loading={loadingResults} />
       </div>
 
@@ -233,7 +233,7 @@ export default function SessionResultsPage() {
                           r.checked && r.percentage < PASSING_PERCENTAGE ? 'text-destructive' : 'text-muted-foreground'
                         }`}
                       >
-                        {r.checked ? `${r.percentage}%` : '—'}
+                        {r.checked ? formatPercentage(r.percentage) : '—'}
                       </td>
                       <td className="px-2 py-2">
                         <span
@@ -275,7 +275,7 @@ export default function SessionResultsPage() {
             <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm">
-                  Final score: <strong>{detail.score} / {detail.total}</strong> ({detail.percentage}%)
+                  Final score: <strong>{detail.score} / {detail.total}</strong> ({formatPercentage(detail.percentage)})
                   {detail.needsReview && (
                     <Badge variant="destructive" className="ml-2">
                       needs review

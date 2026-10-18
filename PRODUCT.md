@@ -1,3 +1,4 @@
+sop
 # ExamCheck
 
 ExamCheck is a React and TypeScript PWA for teachers checking existing exam papers. Teachers manage class rosters, create checking sessions, verify answer keys, capture papers, review uncertain recognition, save deterministic scores, and export results. Supabase provides authentication and data. Teachers remain the authority on uncertain answers. Images are temporary.

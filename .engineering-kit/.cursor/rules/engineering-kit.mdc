@@ -1,0 +1,6 @@
+---
+description: Engineering toolkit workflow and evidence requirements
+alwaysApply: true
+---
+
+Read AGENTS.md in the repository root. For new products use templates/project-initialization.md and references/workflow.md. Load only relevant skills. Preserve existing behavior, record actual verification, and require authorization before live deployment.

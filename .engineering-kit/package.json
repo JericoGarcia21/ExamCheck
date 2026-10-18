@@ -1,0 +1,31 @@
+{
+  "name": "fullstack-ai-engineering-kit",
+  "version": "0.1.0",
+  "description": "Reusable AI engineering skills, workflows, templates, and a workspace installer.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Jerico B. Garcia",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JericoGarcia21/fullstack-ai-engineering-kit.git"
+  },
+  "homepage": "https://github.com/JericoGarcia21/fullstack-ai-engineering-kit#readme",
+  "bugs": "https://github.com/JericoGarcia21/fullstack-ai-engineering-kit/issues",
+  "bin": {
+    "fullstack-ai-engineering-kit": "bin/cli.mjs"
+  },
+  "engines": { "node": ">=22" },
+  "files": [
+    "bin/", "scripts/", "skills/", "templates/", "checklists/", "references/",
+    "examples/", "docs/", "AGENTS.md", "CLAUDE.md", "CONTRIBUTING.md",
+    ".github/workflows/validate.yml", ".cursor/rules/engineering-kit.mdc"
+  ],
+  "scripts": {
+    "test": "node --test scripts/validate.test.mjs scripts/install.test.mjs scripts/workspace.test.mjs",
+    "validate": "node scripts/validate.mjs",
+    "test:package": "node scripts/package-smoke.mjs",
+    "tree": "node scripts/tree.mjs --write",
+    "prepack": "npm run validate && npm test"
+  },
+  "keywords": ["agent-skills", "codex", "claude-code", "cursor", "opencode", "fullstack", "ai"]
+}

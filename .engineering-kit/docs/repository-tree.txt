@@ -1,0 +1,141 @@
+fullstack-ai-engineering-kit/
+├── .cursor/
+│   └── rules/
+│       └── engineering-kit.mdc
+├── .gitattributes
+├── .github/
+│   └── workflows/
+│       └── validate.yml
+├── .gitignore
+├── AGENTS.md
+├── bin/
+│   └── cli.mjs
+├── checklists/
+│   ├── frontend-ux.md
+│   ├── release-readiness.md
+│   └── security.md
+├── CLAUDE.md
+├── CONTRIBUTING.md
+├── docs/
+│   ├── agent-compatibility.md
+│   ├── license.md
+│   ├── package-installation.md
+│   ├── portable-master-instructions.md
+│   ├── repository-tree.txt
+│   ├── skill-catalog.md
+│   ├── validation-results.md
+│   └── validation.md
+├── examples/
+│   ├── agent-evaluation.md
+│   └── club-booking/
+│       ├── api-contract.md
+│       ├── architecture.md
+│       ├── database-design.md
+│       ├── implementation-plan.md
+│       ├── readiness.md
+│       ├── README.md
+│       └── requirements.md
+├── LICENSE
+├── package.json
+├── README.md
+├── references/
+│   ├── deployment-targets.md
+│   ├── sources.md
+│   └── workflow.md
+├── scripts/
+│   ├── install.mjs
+│   ├── install.test.mjs
+│   ├── package-smoke.mjs
+│   ├── tree.mjs
+│   ├── validate.mjs
+│   ├── validate.test.mjs
+│   ├── workspace.mjs
+│   └── workspace.test.mjs
+├── skills/
+│   ├── accessibility-review/
+│   │   ├── references/
+│   │   │   └── guide.md
+│   │   └── SKILL.md
+│   ├── backend-api-engineering/
+│   │   ├── references/
+│   │   │   └── guide.md
+│   │   └── SKILL.md
+│   ├── code-audit/
+│   │   ├── references/
+│   │   │   └── guide.md
+│   │   └── SKILL.md
+│   ├── database-engineering/
+│   │   ├── references/
+│   │   │   └── guide.md
+│   │   └── SKILL.md
+│   ├── debugging/
+│   │   ├── references/
+│   │   │   └── guide.md
+│   │   └── SKILL.md
+│   ├── devops-deployment/
+│   │   ├── references/
+│   │   │   └── guide.md
+│   │   └── SKILL.md
+│   ├── documentation/
+│   │   ├── references/
+│   │   │   └── guide.md
+│   │   └── SKILL.md
+│   ├── frontend-design/
+│   │   ├── references/
+│   │   │   └── guide.md
+│   │   └── SKILL.md
+│   ├── frontend-engineering/
+│   │   ├── references/
+│   │   │   └── guide.md
+│   │   └── SKILL.md
+│   ├── fullstack-development/
+│   │   ├── references/
+│   │   │   └── guide.md
+│   │   └── SKILL.md
+│   ├── performance-optimization/
+│   │   ├── references/
+│   │   │   └── guide.md
+│   │   └── SKILL.md
+│   ├── project-discovery/
+│   │   ├── references/
+│   │   │   └── guide.md
+│   │   └── SKILL.md
+│   ├── qa-testing/
+│   │   ├── references/
+│   │   │   └── guide.md
+│   │   └── SKILL.md
+│   ├── release-readiness/
+│   │   ├── references/
+│   │   │   └── guide.md
+│   │   └── SKILL.md
+│   ├── requirements-engineering/
+│   │   ├── references/
+│   │   │   └── guide.md
+│   │   └── SKILL.md
+│   ├── security-engineering/
+│   │   ├── references/
+│   │   │   └── guide.md
+│   │   └── SKILL.md
+│   └── system-architecture/
+│       ├── references/
+│       │   └── guide.md
+│       └── SKILL.md
+└── templates/
+    ├── acceptance-criteria.md
+    ├── accessibility-report.md
+    ├── api-contract.md
+    ├── architecture.md
+    ├── code-audit-report.md
+    ├── database-design.md
+    ├── debugging-report.md
+    ├── deployment-checklist.md
+    ├── design-brief.md
+    ├── documentation-plan.md
+    ├── implementation-plan.md
+    ├── performance-report.md
+    ├── project-brief.md
+    ├── project-initialization.md
+    ├── qa-test-plan.md
+    ├── release-readiness.md
+    ├── requirements.md
+    └── threat-model.md

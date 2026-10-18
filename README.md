@@ -247,6 +247,20 @@ Original AI confidence remains visible after review. Fractional final scores are
 supported, and the database also records the sum of the answer points separately
 from a teacher-adjusted final score.
 
+Pass/fail uses the unrounded percentage with a 75% threshold: 74.5/100 fails,
+while 75/100 passes. Results and exports display percentages to at most two
+decimal places; display rounding does not change the grading decision.
+
+Recalculating a saved result preserves its teacher-adjusted final score. The
+final-score field shows the saved override; clear it explicitly to use the new
+system score instead. Unchanged answers retain their reviewed points and
+feedback, while edited answer text requires a fresh review. Rule violations
+without an identified question are advisory and cannot be marked wrong.
+
+The installed `.engineering-kit` and `.agents` folders are excluded from product
+lint. See [IMPROVEMENTS.md](IMPROVEMENTS.md) for the audit fixes, verification
+evidence, and remaining browser acceptance checks.
+
 Existing grades are not automatically recalculated. Review legacy sessions whose
 keys had numeric answers, restarted numbering, or coding normalization errors;
 create a new checking session when a confirmed key needs correction.

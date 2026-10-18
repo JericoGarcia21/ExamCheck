@@ -1,5 +1,6 @@
 import { Input } from '../ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
+import { Label } from '../ui/label'
 import type { StudentRow } from '../../types'
 
 interface StudentPickerProps {
@@ -24,16 +25,21 @@ export default function StudentPicker({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Who are you checking?</CardTitle>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <CardTitle>Choose a student</CardTitle>
+          <span className="text-sm text-muted-foreground">{(students ?? []).filter(s => doneIds.has(s.id)).length} / {students?.length ?? 0} checked</span>
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <Input placeholder="Search student name..." value={search} onChange={(e) => onSearchChange(e.target.value)} />
+        <Label htmlFor="student-search">Search the class roster</Label>
+        <Input id="student-search" placeholder="Type a student’s name" value={search} onChange={(e) => onSearchChange(e.target.value)} />
         <div className="max-h-64 divide-y overflow-y-auto rounded-md border">
           {filtered.map((s) => (
             <button
               key={s.id}
               type="button"
-              className={`block w-full px-3 py-2 text-left text-sm hover:bg-muted/50 ${
+              aria-pressed={selectedId === s.id}
+              className={`flex min-h-12 w-full items-center justify-between gap-3 px-3 py-3 text-left text-sm hover:bg-muted/50 ${
                 selectedId === s.id
                   ? 'bg-primary/10 font-medium text-primary'
                   : doneIds.has(s.id)
@@ -42,12 +48,12 @@ export default function StudentPicker({
               }`}
               onClick={() => onSelect(s)}
             >
-              {s.name}
-              {doneIds.has(s.id) && <span className="float-right text-green-600">✓ Checked</span>}
+              <span className="min-w-0 break-words">{s.name}</span>
+              <span className="shrink-0 text-xs font-medium">{selectedId === s.id ? 'Selected' : doneIds.has(s.id) ? 'Checked' : 'Not checked'}</span>
             </button>
           ))}
           {filtered.length === 0 && (
-            <p className="px-3 py-4 text-center text-sm text-muted-foreground">No students found.</p>
+            <p role="status" className="px-3 py-4 text-center text-sm text-muted-foreground">{search ? 'No matching students. Try another name.' : 'No students yet. Add a roster from your class page.'}</p>
           )}
         </div>
       </CardContent>
