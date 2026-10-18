@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -13,25 +13,26 @@ import { Label } from '../components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '../components/ui/dialog'
 import { Skeleton } from '../components/ui/skeleton'
 
-const schema = z.object({ block_name: z.string().trim().min(1, 'Required'), school_year: z.string().trim().min(4, 'Required') })
+const schema = z.object({
+  block_name: z.string().trim().min(1, 'Required'),
+  start_year: z.number({ error: 'Choose a valid starting year.' }).int().min(1000).max(9998),
+})
 type FormValues = z.infer<typeof schema>
 
 export default function ClassesPage() {
   const [currentYear] = useState(() => new Date().getFullYear())
-  const academicYears = Array.from({ length: 16 }, (_, index) => {
-    const startYear = currentYear - 10 + index
-    return `${startYear}–${startYear + 1}`
-  })
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
   const [archived, setArchived] = useState(false)
   const [archiveTarget, setArchiveTarget] = useState<ClassRow | null>(null)
   const [notice, setNotice] = useState('')
   const { data: classes, isLoading, error } = useQuery({ queryKey: ['classes', archived ? 'archived' : 'active'], queryFn: () => listClasses(archived) })
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, reset, control, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { block_name: '', school_year: `${currentYear}–${currentYear + 1}` },
+    defaultValues: { block_name: '', start_year: currentYear },
   })
+  const startYear = useWatch({ control, name: 'start_year' })
+  const validYear = Number.isInteger(startYear) && startYear >= 1000 && startYear <= 9998
   const mutation = useMutation({
     mutationFn: createClass,
     onSuccess: () => { void queryClient.invalidateQueries({ queryKey: ['classes'] }); reset(); setOpen(false); setArchived(false); setNotice('Class created.') },
@@ -55,14 +56,13 @@ export default function ClassesPage() {
           <DialogTrigger className="inline-flex min-h-11 w-fit items-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"><Plus className="size-4" /> New class</DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>New class</DialogTitle><DialogDescription>Create a class to organize students and exam sessions.</DialogDescription></DialogHeader>
-            <form onSubmit={handleSubmit(values => mutation.mutate(values))} className="space-y-4">
+            <form onSubmit={handleSubmit(values => mutation.mutate({ block_name: values.block_name, school_year: `${values.start_year}–${values.start_year + 1}` }))} className="space-y-4">
               <div className="space-y-2"><Label htmlFor="block_name">Block name</Label><Input id="block_name" placeholder="21-ITEW-01" {...register('block_name')} />{errors.block_name && <p className="text-xs text-destructive">{errors.block_name.message}</p>}</div>
               <div className="space-y-2">
-                <Label htmlFor="school_year">Academic year</Label>
-                <select id="school_year" {...register('school_year')} aria-invalid={!!errors.school_year} aria-describedby={errors.school_year ? 'school-year-error' : undefined} className="min-h-11 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50">
-                  {academicYears.map(year => <option key={year} value={year}>{year}</option>)}
-                </select>
-                {errors.school_year && <p id="school-year-error" className="text-xs text-destructive">{errors.school_year.message}</p>}
+                <Label htmlFor="start_year">Academic year starts in</Label>
+                <Input id="start_year" type="number" min={1000} max={9998} step={1} {...register('start_year', { valueAsNumber: true })} aria-invalid={!!errors.start_year} aria-describedby={errors.start_year ? 'school-year-preview school-year-error' : 'school-year-preview'} className="min-h-11" />
+                <p id="school-year-preview" className="text-sm text-muted-foreground" aria-live="polite">{validYear ? `Academic year: ${startYear}–${startYear + 1}` : 'Choose a four-digit starting year. The ending year is automatic.'}</p>
+                {errors.start_year && <p id="school-year-error" className="text-xs text-destructive">{errors.start_year.message}</p>}
               </div>
               <Button type="submit" disabled={mutation.isPending} className="w-full">{mutation.isPending ? 'Creating…' : 'Create class'}</Button>
               {mutation.error && <p role="alert" className="text-sm text-destructive">{mutation.error.message}</p>}
