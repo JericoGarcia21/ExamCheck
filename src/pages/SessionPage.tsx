@@ -179,7 +179,10 @@ function SessionContent() {
       const parsed = draft ?? (rows.length ? rows : parseAnswerKeyText(pasteText))
       await saveAnswerKeys(sessionId!, parsed, true, effectiveRules)
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['session', sessionId] }),
+    onSuccess: () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['session', sessionId] }),
+      queryClient.invalidateQueries({ queryKey: ['allSessions'] }),
+    ]),
     onError: (e) => setError(e.message),
   })
 

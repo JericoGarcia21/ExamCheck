@@ -1,0 +1,26 @@
+# ExamCheck interface
+
+The workspace uses a fixed forest-green navigation rail on desktop, with a white contextual top bar and mist-green working canvas. Below 768px the rail becomes a mobile header and a bottom navigation bar with safe-area padding. Pages retain familiar web controls and existing routes.
+
+## Tokens
+
+- Canvas: #f3f6f5. Working surfaces: #ffffff. Text: #203c35. Secondary text: #596e65.
+- Primary action: #17664d with white text. Border: #d9e3dd. Input border: #ccd9d1. Focus: #28785b.
+- Navigation: #163e32 with #c7d9d0 text; selected item #e4eedf with #173e31 text.
+- Dashboard checking area: #e1ecdf with #203f30 text. Confirmed keys use green status labels; draft keys use amber labels. Labels always name the state.
+- Self-hosted Geist Variable throughout. Main title 26–34px, section titles 16px, body 13–14px, metadata 11–12px. Tight heading tracking, normal body spacing, tabular counts.
+- Surfaces 12–14px radius, controls 8px; default buttons at least 44px tall. Surfaces use borders rather than decorative shadows.
+
+## Composition and behavior
+
+Dashboard: heading and class action, real class/session summary, checking call to action, recent sessions, and a setup guide. Its connected Capture / Review / Save sequence explains the real workflow. Counts and recent sessions use existing services and shared query keys; session creation, deletion, and key confirmation refresh the dashboard. No demo data ships.
+
+Lists share a bordered white surface, generous rows, explicit key status, and visible focus. Session names wrap. Checking includes search by session, class, or school year and distinguishes failed, empty, and unmatched requests.
+
+Sign-in uses a forest introduction panel and white role-selection panel. Existing Google OAuth and role behavior are preserved. On phones the introduction becomes a compact section above the controls. Splash colors, favicon, and generated PWA icons share the palette. Raster icons come from scripts/generate-icons.mjs; no generated photographic assets are used.
+
+Keyboard skip link, focus indicators, reduced-motion handling, native button semantics, error messages, and mobile bottom padding are required.
+
+## Verification
+
+TypeScript, lint, regression tests, and production build are checked for this redesign. A rendered desktop/mobile browser review remains pending because this session has no available browser surface.

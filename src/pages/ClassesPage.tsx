@@ -42,7 +42,7 @@ export default function ClassesPage() {
   return (
     <section className="space-y-6">
       <div className="page-heading">
-        <div><h2 className="text-2xl font-semibold tracking-tight md:text-3xl">Classes</h2><p className="mt-2 text-sm text-muted-foreground">Your class rosters and checking sessions.</p></div>
+        <div><h1 className="page-title">Classes</h1><p className="page-description">Your class rosters and checking sessions.</p></div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger className="inline-flex min-h-11 w-fit items-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"><Plus className="size-4" /> New class</DialogTrigger>
           <DialogContent>
@@ -65,7 +65,7 @@ export default function ClassesPage() {
       {archiveMutation.error && !archiveTarget && <p role="alert" className="text-sm text-destructive">Could not restore the class. {archiveMutation.error.message}</p>}
       {archived && <p className="text-sm leading-relaxed text-muted-foreground">Archived classes keep their students, sessions, and grades. Restore a class whenever you need it again.</p>}
 
-      {isLoading ? <div className="session-list" aria-busy="true" aria-label="Loading classes">{Array.from({ length: 3 }).map((_, index) => <div key={index} className="space-y-3 border-b p-5 last:border-0"><Skeleton className="h-4 w-32" /><Skeleton className="h-3 w-24" /></div>)}</div> : !error && classes?.length === 0 ? <div className="rounded-lg border border-dashed px-5 py-10"><h3 className="text-sm font-semibold">{archived ? 'No archived classes' : 'No classes yet'}</h3><p className="mt-2 text-sm text-muted-foreground">{archived ? 'Classes you archive will be kept here.' : 'Create your first class, then add your student roster.'}</p></div> : !error && (
+      {isLoading ? <div className="session-list" aria-busy="true" aria-label="Loading classes">{Array.from({ length: 3 }).map((_, index) => <div key={index} className="space-y-3 border-b p-5 last:border-0"><Skeleton className="h-4 w-32" /><Skeleton className="h-3 w-24" /></div>)}</div> : !error && classes?.length === 0 ? <div className="workspace-empty"><h3 className="text-sm font-semibold">{archived ? 'No archived classes' : 'No classes yet'}</h3><p className="mt-2 text-sm text-muted-foreground">{archived ? 'Classes you archive will be kept here.' : 'Create your first class, then add your student roster.'}</p>{!archived && <button type="button" className="action-link action-link-outline" onClick={() => setOpen(true)}><Plus size={16} aria-hidden="true" />Create your first class</button>}</div> : !error && (
         <div className="session-list">
           {classes?.map(row => <div key={row.id} className="flex flex-wrap items-center gap-x-4 border-b px-4 py-3 last:border-0 md:px-6">
             <Link to={'/classes/' + row.id} className="group flex min-w-0 flex-1 items-center gap-3 rounded-md py-2 outline-none focus-visible:ring-2 focus-visible:ring-ring"><div className="min-w-0 flex-1"><h3 className="break-words text-[15px] font-semibold group-hover:text-primary">{row.block_name}</h3><p className="mt-1 text-sm text-muted-foreground">{row.school_year}</p>{row.archived_at && <p className="mt-1 text-xs text-muted-foreground">Archived {new Date(row.archived_at).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })}</p>}</div><ChevronRight className="size-4 shrink-0 text-muted-foreground" /></Link>

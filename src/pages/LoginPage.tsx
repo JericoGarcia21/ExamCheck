@@ -36,10 +36,9 @@ export default function LoginPage() {
         <section className="login-intro" aria-labelledby="login-welcome">
           <div className="login-brand">
             <span className="login-brand-icon"><ClipboardCheck size={23} aria-hidden="true" /></span>
-            <span>Exam<span className="text-blue-600">Check</span></span>
+            <span>ExamCheck<span className="brand-dot">.</span></span>
           </div>
           <div className="login-pitch">
-            <span className="login-eyebrow">A LITTLE LESS GRADING. A LOT MORE TEACHING.</span>
             <h1 id="login-welcome">Your papers.<br />A clearer picture.</h1>
             <p>Turn exam papers into results you can review, organize, and put to work.</p>
             <div className="login-preview" aria-hidden="true">
@@ -57,7 +56,6 @@ export default function LoginPage() {
 
         <section className="login-panel" aria-labelledby="login-title">
           <div className="login-form">
-            <span className="login-eyebrow">LET’S GET STARTED</span>
             <h2 id="login-title">{role === 'teacher' ? 'Welcome, teacher.' : role === 'tech' ? 'For the curious minds.' : 'Welcome to ExamCheck.'}</h2>
             <p className="login-description">{role === 'teacher' ? 'Sign in to start checking papers and keep your classes in one place.' : role === 'tech' ? 'Here’s what’s coming for IT and computer science users.' : 'Choose the option that best describes you to get started.'}</p>
 
@@ -90,7 +88,7 @@ export default function LoginPage() {
 
             {role === 'tech' && (
               <div className="login-actions">
-                <div className="login-coming-soon"><span className="login-coming-badge">COMING SOON</span><h3>Make it your own.</h3><p>Custom Ollama API setup is planned for a future update. Check back for more ways to connect your own tools.</p></div>
+                <div className="login-coming-soon"><span className="login-coming-badge">Coming soon</span><h3>Make it your own.</h3><p>Custom Ollama API setup is planned for a future update. Check back for more ways to connect your own tools.</p></div>
                 <button type="button" onClick={resetRole} className="login-back"><ArrowLeft size={15} aria-hidden="true" /> Back to role selection</button>
               </div>
             )}

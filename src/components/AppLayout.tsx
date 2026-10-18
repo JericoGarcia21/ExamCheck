@@ -1,11 +1,12 @@
-import { NavLink, Outlet } from 'react-router-dom'
-import { Home, BookOpen, ClipboardCheck, BarChart3, WifiOff } from 'lucide-react'
+import { useState } from 'react'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Home, BookOpen, ClipboardCheck, BarChart3, WifiOff, LogOut, ChevronRight, ScanLine } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useOnlineStatus } from '../hooks/useOnlineStatus'
 import ErrorBoundary from './ErrorBoundary'
 
 const links = [
-  { to: '/', label: 'Home', icon: Home },
+  { to: '/', label: 'Overview', icon: Home },
   { to: '/classes', label: 'Classes', icon: BookOpen },
   { to: '/checking', label: 'Checking', icon: ClipboardCheck },
   { to: '/results', label: 'Results', icon: BarChart3 },
@@ -13,76 +14,47 @@ const links = [
 
 export default function AppLayout() {
   const online = useOnlineStatus()
+  const { pathname } = useLocation()
+  const [signingOut, setSigningOut] = useState(false)
+  const [signOutError, setSignOutError] = useState(false)
+  const activePage = pathname.startsWith('/sessions') ? 'Checking' : links.find(link => link.to !== '/' && pathname.startsWith(link.to))?.label ?? 'Overview'
+
+  async function signOut() {
+    setSigningOut(true)
+    setSignOutError(false)
+    try {
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+      window.location.href = '/login'
+    } catch {
+      setSigningOut(false)
+      setSignOutError(true)
+    }
+  }
 
   return (
-    <div className="min-h-screen text-foreground pb-24 md:pb-10">
-      <header className="sticky top-0 z-10 border-b border-border bg-card">
-        <div className="mx-auto flex w-full max-w-2xl items-center justify-between px-4 py-3 md:max-w-5xl">
-          <h1 className="font-heading text-lg font-semibold">
-            <span className="text-primary">Exam</span>Check
-          </h1>
-          <nav aria-label="Main navigation" className="hidden items-center gap-1 text-sm md:flex">
-            {links.map((link) => (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                end={link.to === '/'}
-                className={({ isActive }) =>
-                  `rounded-md px-3 py-1.5 transition-colors ${
-                    isActive
-                      ? 'bg-primary/10 font-medium text-primary'
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                  }`
-                }
-              >
-                {link.label}
-              </NavLink>
-            ))}
-          </nav>
-          <button
-            onClick={async () => {
-              await supabase.auth.signOut()
-              window.location.href = '/login'
-            }}
-            className="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
-          >
-            Sign out
-          </button>
-        </div>
-
-        {!online && (
-          <div className="flex items-center justify-center gap-2 bg-amber-100 px-4 py-1.5 text-xs text-amber-900">
-            <WifiOff className="h-3.5 w-3.5" />
-            You are offline. Checking papers needs an internet connection.
-          </div>
-        )}
-      </header>
-
-      <main className="mx-auto w-full max-w-2xl px-4 py-6 md:max-w-5xl md:px-6 md:py-10">
-        <ErrorBoundary>
-          <Outlet />
-        </ErrorBoundary>
-      </main>
-
-      <nav aria-label="Mobile navigation" className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card md:hidden">
-        <div className="mx-auto flex max-w-5xl items-stretch justify-around px-2 pt-1 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
-          {links.map((link) => (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              end={link.to === '/'}
-              className={({ isActive }) =>
-                `flex flex-1 flex-col items-center gap-0.5 rounded-lg py-2 text-xs transition-colors ${
-                  isActive ? 'bg-primary/5 font-medium text-primary' : 'text-muted-foreground'
-                }`
-              }
-            >
-              <link.icon className="h-5 w-5" />
-              {link.label}
-            </NavLink>
-          ))}
-        </div>
-      </nav>
+    <div className="workspace">
+      <a className="skip-link" href="#main-content">Skip to content</a>
+      <aside className="workspace-sidebar">
+        <Link to="/" className="workspace-brand" aria-label="ExamCheck home"><ClipboardCheck size={27} aria-hidden="true" /><span>ExamCheck<span className="brand-dot">.</span></span></Link>
+        <p className="workspace-caption">Your teacher workspace</p>
+        <nav aria-label="Main navigation" className="workspace-nav">
+          {links.map(link => <NavLink key={link.to} to={link.to} end={link.to === '/'} className={({ isActive }) => 'workspace-nav-link' + (isActive || (link.to === '/checking' && pathname.startsWith('/sessions')) ? ' is-active' : '')}><link.icon size={19} aria-hidden="true" /><span>{link.label}</span><ChevronRight className="nav-chevron" size={15} aria-hidden="true" /></NavLink>)}
+        </nav>
+        <div className="sidebar-note"><ScanLine size={22} aria-hidden="true" /><p>Paper to results.<br /><span>With you in control.</span></p></div>
+        <div className="sidebar-footer"><span className="teacher-avatar" aria-hidden="true"><BookOpen size={19} /></span><div><strong>Teacher workspace</strong><span>ExamCheck</span></div></div>
+      </aside>
+      <div className="workspace-body">
+        <header className="workspace-topbar">
+          <Link to="/" className="mobile-brand"><ClipboardCheck size={23} aria-hidden="true" />ExamCheck<span className="brand-dot">.</span></Link>
+          <div className="workspace-breadcrumb"><span>Workspace</span><ChevronRight size={14} aria-hidden="true" /><strong>{activePage}</strong></div>
+          <div className="workspace-account"><span className={'connection-status' + (!online ? ' is-offline' : '')}><span aria-hidden="true" />{online ? 'Online' : 'Offline'}</span><button type="button" onClick={() => void signOut()} disabled={signingOut} className="signout-button"><LogOut size={16} aria-hidden="true" /><span>{signingOut ? 'Signing out…' : 'Sign out'}</span></button></div>
+        </header>
+        {!online && <div role="status" className="workspace-notice"><WifiOff size={16} aria-hidden="true" />You are offline. Checking papers needs an internet connection.</div>}
+        {signOutError && <p role="alert" className="workspace-notice">Could not sign out. Check your connection and try again.</p>}
+        <main id="main-content" tabIndex={-1} className="workspace-main"><ErrorBoundary><Outlet /></ErrorBoundary></main>
+      </div>
+      <nav aria-label="Mobile navigation" className="workspace-mobile-nav">{links.map(link => <NavLink key={link.to} to={link.to} end={link.to === '/'} className={({ isActive }) => 'mobile-nav-link' + (isActive || (link.to === '/checking' && pathname.startsWith('/sessions')) ? ' is-active' : '')}><link.icon size={21} aria-hidden="true" /><span>{link.label}</span></NavLink>)}</nav>
     </div>
   )
 }

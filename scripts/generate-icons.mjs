@@ -64,9 +64,9 @@ function drawIcon(size, maskable = false) {
     for (let x = 0; x < size; x++) {
       const t = (x + y) / (2 * (size - 1))
       const i = (y * size + x) * 4
-      rgba[i] = Math.round(37 + (117 - 37) * t)
-      rgba[i + 1] = Math.round(99 + (88 - 99) * t)
-      rgba[i + 2] = Math.round(235 + (238 - 235) * t)
+      rgba[i] = Math.round(23 + (22 - 23) * t)
+      rgba[i + 1] = Math.round(102 + (62 - 102) * t)
+      rgba[i + 2] = Math.round(77 + (50 - 77) * t)
       rgba[i + 3] = maskable
         ? 255
         : Math.round(coverage(roundedRectDistance(x + 0.5, y + 0.5, 0, 0, size, size, backgroundRadius), 0.75) * 255)
@@ -110,19 +110,19 @@ function drawIcon(size, maskable = false) {
     return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - radius
   }
 
-  const paperShadow = maskable ? [27, 43, 112] : [18, 48, 133]
+  const paperShadow = maskable ? [22, 62, 50] : [22, 62, 50]
   rect(0.28, 0.205, 0.705, 0.755, 0.065, paperShadow, 0.24)
   rect(0.28, 0.19, 0.705, 0.74, 0.065, [255, 255, 255])
 
-  const rule = [191, 210, 250]
+  const rule = [198, 220, 202]
   line(0.375, 0.37, 0.61, 0.37, 0.022, rule)
   line(0.375, 0.465, 0.61, 0.465, 0.022, rule)
   line(0.375, 0.56, 0.55, 0.56, 0.022, rule)
 
-  circle(0.685, 0.68, 0.17, [27, 43, 112], 0.24)
+  circle(0.685, 0.68, 0.17, [22, 62, 50], 0.24)
   circle(0.68, 0.66, 0.165, [255, 255, 255])
-  line(0.605, 0.665, 0.655, 0.715, 0.038, [37, 99, 235])
-  line(0.655, 0.715, 0.765, 0.585, 0.038, [37, 99, 235])
+  line(0.605, 0.665, 0.655, 0.715, 0.038, [23, 102, 77])
+  line(0.655, 0.715, 0.765, 0.585, 0.038, [23, 102, 77])
 
   return encodePng(size, size, rgba)
 }

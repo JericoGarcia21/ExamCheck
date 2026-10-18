@@ -16,7 +16,7 @@ import { Input } from '../components/ui/input'
 import { Textarea } from '../components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import { Label } from '../components/ui/label'
 import { Skeleton } from '../components/ui/skeleton'
 import { detectNameColumn, previewRoster, validateRosterFile } from '../lib/rosterImport'
@@ -86,6 +86,7 @@ export default function ClassDetailPage() {
     onError: () => setError('Could not save the session. Please retry.'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions', classId] })
+      void queryClient.invalidateQueries({ queryKey: ['allSessions'] })
       setNewSessionName('')
       setSessionOpen(false)
     },
@@ -93,7 +94,10 @@ export default function ClassDetailPage() {
 
   const deleteSessionMutation = useMutation({
     mutationFn: deleteSession,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sessions', classId] }),
+    onSuccess: () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['sessions', classId] }),
+      queryClient.invalidateQueries({ queryKey: ['allSessions'] }),
+    ]),
   })
 
   function handlePasteSubmit() {
@@ -138,6 +142,59 @@ export default function ClassDetailPage() {
       </div>
 
       {classRow?.archived_at && <div className="rounded-lg border bg-muted/50 p-4"><p className="text-sm font-medium">This class is archived</p><p className="mt-1 text-sm text-muted-foreground">Its students and exam history are still here. <Link to="/classes" className="font-medium text-primary">Restore it from the Archived tab.</Link></p></div>}
+
+      <Card>
+        <CardHeader>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle>Checking sessions</CardTitle>
+            <Button type="button" onClick={() => setSessionOpen(true)}>
+              <Plus className="size-4" aria-hidden="true" /> New session
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="divide-y">
+            {!sessions && (
+              <>
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex items-center justify-between py-2.5">
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-5 w-24" />
+                  </div>
+                ))}
+              </>
+            )}
+            {sessions?.length === 0 && (
+              <p className="py-4 text-center text-sm text-muted-foreground">No sessions yet.</p>
+            )}
+            {sessions?.map((s) => (
+              <Link
+                key={s.id}
+                to={`/sessions/${s.id}`}
+                className="flex items-center justify-between py-2 text-sm hover:bg-muted/50"
+              >
+                <span className="font-medium">{s.session_name || 'Untitled session'}</span>
+                <span className="flex items-center gap-3">
+                  <Badge variant={s.answer_key_confirmed ? 'default' : 'secondary'}>
+                    {s.answer_key_confirmed ? 'Key confirmed ✓' : s.status}
+                  </Badge>
+                  <button
+                    className="text-xs text-destructive"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      if (window.confirm(`Delete session "${s.session_name || 'Untitled'}"?`)) {
+                        deleteSessionMutation.mutate(s.id)
+                      }
+                    }}
+                  >
+                    Delete
+                  </button>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -243,61 +300,8 @@ export default function ClassDetailPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Checking sessions</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="divide-y">
-            {!sessions && (
-              <>
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="flex items-center justify-between py-2.5">
-                    <Skeleton className="h-4 w-40" />
-                    <Skeleton className="h-5 w-24" />
-                  </div>
-                ))}
-              </>
-            )}
-            {sessions?.length === 0 && (
-              <p className="py-4 text-center text-sm text-muted-foreground">No sessions yet.</p>
-            )}
-            {sessions?.map((s) => (
-              <Link
-                key={s.id}
-                to={`/sessions/${s.id}`}
-                className="flex items-center justify-between py-2 text-sm hover:bg-muted/50"
-              >
-                <span className="font-medium">{s.session_name || 'Untitled session'}</span>
-                <span className="flex items-center gap-3">
-                  <Badge variant={s.answer_key_confirmed ? 'default' : 'secondary'}>
-                    {s.answer_key_confirmed ? 'Key confirmed ✓' : s.status}
-                  </Badge>
-                  <button
-                    className="text-xs text-destructive"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      if (window.confirm(`Delete session "${s.session_name || 'Untitled'}"?`)) {
-                        deleteSessionMutation.mutate(s.id)
-                      }
-                    }}
-                  >
-                    Delete
-                  </button>
-                </span>
-              </Link>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
 
       <Dialog open={sessionOpen} onOpenChange={setSessionOpen}>
-        <DialogTrigger
-          aria-label="New session"
-          className="fixed bottom-24 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:scale-105"
-        >
-          <Plus className="h-6 w-6" />
-        </DialogTrigger>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>New session</DialogTitle>

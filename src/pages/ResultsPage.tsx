@@ -34,8 +34,8 @@ export default function ResultsPage() {
     <section className="space-y-6">
       <div className="page-heading">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">Results</h2>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Review checked papers and export your class grades.</p>
+          <h1 className="page-title">Results</h1>
+          <p className="page-description">Review checked papers and export your class grades.</p>
         </div>
         {!isLoading && !error && <p className="text-xs text-muted-foreground"><span className="font-medium tabular-nums text-foreground">{data?.length ?? 0}</span> sessions{!countsPending && !countsError && <> · <span className="font-medium tabular-nums text-foreground">{totalChecked}</span> papers checked</>}</p>}
       </div>
@@ -56,7 +56,7 @@ export default function ResultsPage() {
       {isLoading ? (
         <div className="session-list" aria-label="Loading sessions" aria-busy="true">{Array.from({ length: 3 }).map((_, index) => <div key={index} className="space-y-3 border-b p-5 last:border-0"><Skeleton className="h-4 w-40" /><Skeleton className="h-3 w-52 max-w-full" /><Skeleton className="h-3 w-24" /></div>)}</div>
       ) : !error && data?.length === 0 ? (
-        <div className="rounded-lg border border-dashed px-5 py-10">
+        <div className="workspace-empty">
           <h3 className="text-sm font-semibold">Your results will appear here</h3>
           <p className="mt-2 text-sm text-muted-foreground">Create a session in one of your classes to start checking papers.</p>
           <Link to="/classes" className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary">Go to classes <ArrowRight className="size-4" /></Link>
