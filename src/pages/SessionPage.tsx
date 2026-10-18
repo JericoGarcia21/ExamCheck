@@ -432,14 +432,6 @@ function SessionContent() {
         />
       )}
 
-      <AnswerKeyPreview
-        rows={rows}
-        locked={locked}
-        editable={!!draft}
-        rules={session?.rules}
-        onUpdate={updateDraft}
-      />
-
       {locked && (
         <>
           <StudentPicker
@@ -569,6 +561,14 @@ function SessionContent() {
           </Card>
         </>
       )}
+
+      <AnswerKeyPreview
+        rows={rows}
+        locked={locked}
+        editable={!!draft}
+        rules={session?.rules}
+        onUpdate={updateDraft}
+      />
 
       <AnswerReviewDialog
         allowPoints={reviewDetail?.max_points !== undefined && (reviewDetail.max_points > 1 || rows.find((r) => r.question_number === review.question)?.question_type === 'essay')}
