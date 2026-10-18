@@ -30,6 +30,7 @@ export default function ClassDetailPage() {
   const [importHeader, setImportHeader] = useState(true)
   const [importLoading, setImportLoading] = useState(false)
   const [pasteText, setPasteText] = useState('')
+  const [showPastePreview, setShowPastePreview] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sessionOpen, setSessionOpen] = useState(false)
   const [newSessionName, setNewSessionName] = useState('')
@@ -53,6 +54,8 @@ export default function ClassDetailPage() {
   })
 
   const importPreview = useMemo(() => previewRoster(importRows ?? [], importColumn, importHeader, (students ?? []).map((s) => s.name)), [importRows, importColumn, importHeader, students])
+  const pastePreview = useMemo(() => previewRoster(parseStudentNames(pasteText).map(name => [name]), 0, false, (students ?? []).map(student => student.name)), [pasteText, students])
+  const pastePreviewStudents = useMemo(() => buildStudentSeeds(pastePreview.names, students?.length ?? 0), [pastePreview.names, students?.length])
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['students', classId] })
 
   const addMutation = useMutation({
@@ -64,6 +67,7 @@ export default function ClassDetailPage() {
       invalidate()
       setImportRows(null)
       setPasteText('')
+      setShowPastePreview(false)
       setError(null)
     },
     onError: (e) => setError(e.message),
@@ -101,13 +105,8 @@ export default function ClassDetailPage() {
   })
 
   function handlePasteSubmit() {
-    const existingNames = new Set((students ?? []).map((s) => s.name.toLowerCase().trim()))
-    const names = parseStudentNames(pasteText).filter((n) => !existingNames.has(n.toLowerCase().trim()))
-    if (names.length === 0) {
-      setError('No new student names found (duplicates are skipped).')
-      return
-    }
-    addMutation.mutate(names)
+    setError(null)
+    setShowPastePreview(true)
   }
 
   async function handleExcel(file: File) {
@@ -203,14 +202,14 @@ export default function ClassDetailPage() {
         <CardContent className="space-y-3">
           <Textarea
             value={pasteText}
-            onChange={(e) => setPasteText(e.target.value)}
+            onChange={(e) => { setPasteText(e.target.value); setShowPastePreview(false) }}
             rows={6}
             className="max-h-60 overflow-y-auto"
             placeholder={'GARCIA, JERICO B.\nCRUZ, JUAN D.\nAQUINO, PAOLO R.'}
           />
           <div className="flex flex-col gap-2">
-            <Button onClick={handlePasteSubmit} disabled={addMutation.isPending}>
-              Add from pasted names
+            <Button onClick={handlePasteSubmit} disabled={addMutation.isPending || !students || !pasteText.trim()}>
+              Preview class list
             </Button>
             <label className="cursor-pointer rounded-md border px-4 py-2 text-center text-sm font-medium hover:bg-muted/50">
               Import Excel/CSV
@@ -223,6 +222,18 @@ export default function ClassDetailPage() {
               />
             </label>
           </div>
+          {showPastePreview && (
+            <div className="space-y-3 rounded-lg border p-4" aria-label="Class list preview">
+              <h3 className="text-sm font-semibold">Class list preview</h3>
+              <p className="text-sm" role="status">{pastePreview.names.length} new students ready to add.</p>
+              <p className="text-xs text-muted-foreground">Repeated names are included once. {pastePreview.duplicates} already in this class and {pastePreview.rejected} invalid entries skipped.</p>
+              {pastePreviewStudents.length ? <ol className="max-h-60 divide-y overflow-y-auto text-sm">{pastePreviewStudents.map(student => <li key={student.name} className="flex gap-3 py-2"><span className="shrink-0 tabular-nums text-muted-foreground">{student.student_number}</span><span className="min-w-0 break-words">{student.name}</span></li>)}</ol> : <p className="text-sm text-muted-foreground">No new students to add. Edit the list and preview it again.</p>}
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={() => addMutation.mutate(pastePreview.names)} disabled={addMutation.isPending || !students || pastePreview.names.length === 0}>{addMutation.isPending ? 'Adding students…' : 'Confirm and add students'}</Button>
+                <Button variant="outline" onClick={() => setShowPastePreview(false)} disabled={addMutation.isPending}>Back to editing</Button>
+              </div>
+            </div>
+          )}
           {importLoading && <p role="status">Reading roster…</p>}
           {importRows && (
             <div className="space-y-2 rounded border p-3">

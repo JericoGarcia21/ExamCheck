@@ -76,12 +76,14 @@ function parseNumberedTableLine(line: string, currentKind: AnswerKind | null): K
  * handled correctly. Optional `# Heading` lines set the type for the questions
  * that follow them. Number/answer tables with repeated columns are also
  * supported, such as `No. | Ans. | No. | Ans.`.
+ * The selected default kind applies until an explicit section heading changes it;
+ * `any` keeps automatic detection for answers without a heading.
  */
-export function parseAnswerKeyText(text: string): KeyRow[] {
+export function parseAnswerKeyText(text: string, defaultKind: AnswerKind | 'any' = 'any'): KeyRow[] {
   const lines = text.split(/\r?\n/)
   const rows: KeyRow[] = []
   let autoNumber = 0
-  let currentKind: AnswerKind | null = null
+  let currentKind: AnswerKind | null = defaultKind === 'any' ? null : defaultKind
 
   for (const rawLine of lines) {
     const line = rawLine.trim()

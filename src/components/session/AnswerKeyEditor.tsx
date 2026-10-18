@@ -3,7 +3,7 @@ import { Button } from '../ui/button'
 import { Label } from '../ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
-import { ANSWER_KINDS } from '../../lib/scoring'
+import { ANSWER_KINDS, type AnswerKind } from '../../lib/scoring'
 
 interface AnswerKeyEditorProps {
   pasteText: string
@@ -11,8 +11,8 @@ interface AnswerKeyEditorProps {
   rules: string
   onRulesChange: (value: string) => void
   onSaveRules: () => void
-  expectedStyle: string
-  onExpectedStyleChange: (value: string) => void
+  expectedStyle: AnswerKind | 'any'
+  onExpectedStyleChange: (value: AnswerKind | 'any') => void
   checkResult: string[] | null
   onCheck: () => void
   onPreview: () => void
@@ -70,10 +70,12 @@ export default function AnswerKeyEditor({
         </Button>
         <div className="flex flex-col gap-2">
           <div>
-            <Label htmlFor="style">Expected answer style (used by the checker)</Label>
-            <Select value={expectedStyle} onValueChange={(v) => onExpectedStyleChange(v ?? 'any')}>
-              <SelectTrigger id="style">
-                <SelectValue placeholder="Any" />
+            <Label htmlFor="style">Answer type</Label>
+            <Select value={expectedStyle} onValueChange={(v) => {
+              if (v === 'any' || ANSWER_KINDS.some(kind => kind.value === v)) onExpectedStyleChange(v as AnswerKind | 'any')
+            }}>
+              <SelectTrigger id="style" className="min-h-11 w-full max-w-full">
+                <SelectValue placeholder="Any">{ANSWER_KINDS.find(kind => kind.value === expectedStyle)?.label ?? 'Any'}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="any">Any</SelectItem>
@@ -84,6 +86,7 @@ export default function AnswerKeyEditor({
                 ))}
               </SelectContent>
             </Select>
+            <p className="mt-2 text-xs text-muted-foreground">Applies to the preview and saved answer key. Any detects each answer automatically; # headings set the type for their section.</p>
           </div>
           <Button variant="outline" onClick={onCheck}>
             Check answer key

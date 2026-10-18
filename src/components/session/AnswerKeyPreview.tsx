@@ -30,9 +30,9 @@ export default function AnswerKeyPreview({ rows, locked, editable, rules, onUpda
           <div className="max-h-96 divide-y overflow-y-auto text-sm">
             {rows.map((row) => (
               <div key={row.question_number} className="space-y-1 py-2">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="w-8 text-right text-muted-foreground">{row.question_number}.</span>
-                  <span className="flex-1 font-medium">{row.correct_answer}</span>
+                  <span className="min-w-0 flex-1 whitespace-pre-wrap break-words font-medium">{row.correct_answer}</span>
                   {editable && !locked ? (
                     <Select
                       value={row.question_type}
@@ -43,8 +43,8 @@ export default function AnswerKeyPreview({ rows, locked, editable, rules, onUpda
                         })
                       }
                     >
-                      <SelectTrigger className="h-8 w-44">
-                        <SelectValue />
+                      <SelectTrigger className="h-8 w-44 max-w-full" aria-label={`Question ${row.question_number} answer type`}>
+                        <SelectValue>{ANSWER_KINDS.find(kind => kind.value === row.question_type)?.label ?? row.question_type}</SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {ANSWER_KINDS.map((k) => (
@@ -55,7 +55,7 @@ export default function AnswerKeyPreview({ rows, locked, editable, rules, onUpda
                       </SelectContent>
                     </Select>
                   ) : (
-                    <Badge variant="outline">{row.question_type}</Badge>
+                    <Badge variant="outline">{ANSWER_KINDS.find(kind => kind.value === row.question_type)?.label ?? row.question_type}</Badge>
                   )}
                   {row.max_points > 1 && <span className="text-xs text-muted-foreground">{row.max_points} pts</span>}
                 </div>

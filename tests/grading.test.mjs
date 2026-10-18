@@ -26,6 +26,24 @@ test('numeric answers and restarted sections are preserved in reading order', ()
   assert.deepEqual(parseAnswerKeyText('1. A\n2. B\n1. True\n2. False').map(r=>r.question_number),[1,2,3,4])
   assert.equal(parseAnswerKeyText('# Essay\n1. Explain inheritance')[0].question_type,'essay')
 })
+
+test('selected answer types apply to plain lists and tables rather than guessing identification', () => {
+  for (const kind of ['multiple_choice', 'true_false', 'identification', 'coding', 'essay']) {
+    for (const text of ['1. Custom answer\n2. Another answer', 'No. | Ans.\n1 | Custom answer\n2 | Another answer']) {
+      const rows = parseAnswerKeyText(text, kind)
+      assert.equal(rows.length, 2)
+      assert.equal(rows.every(row => row.question_type === kind), true)
+      assert.equal(rows.every(row => row.max_points === (kind === 'essay' ? 10 : 1)), true)
+    }
+  }
+})
+
+test('automatic detection and explicit section headings retain their answer types', () => {
+  assert.deepEqual(parseAnswerKeyText('A\nFalse\nEncapsulation', 'any').map(row => row.question_type), ['multiple_choice', 'true_false', 'identification'])
+  const mixed = parseAnswerKeyText('return value;\n# Essay\nExplain inheritance\n# True / False\nTrue', 'coding')
+  assert.deepEqual(mixed.map(row => row.question_type), ['coding', 'essay', 'true_false'])
+  assert.deepEqual(mixed.map(row => row.max_points), [1, 10, 1])
+})
 test('teacher decisions resolve review without rewriting AI confidence', () => {
   for (const review_status of ['accepted','edited']) assert.equal(needsTeacherReview({student_answer:'B',confidence:0.1,needs_review:true,review_status}),false)
   assert.equal(needsTeacherReview({student_answer:'B',confidence:0.1}),true)

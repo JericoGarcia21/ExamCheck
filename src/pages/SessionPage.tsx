@@ -40,7 +40,7 @@ function SessionContent() {
   const [pasteText, setPasteText] = useState('')
   const [rules, setRules] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [expectedStyle, setExpectedStyle] = useState('any')
+  const [expectedStyle, setExpectedStyle] = useState<AnswerKind | 'any'>('any')
   const [checkResult, setCheckResult] = useState<string[] | null>(null)
 
   // Current paper
@@ -141,6 +141,26 @@ function SessionContent() {
   const effectiveRules = rules ?? session?.rules ?? ''
   const locked = session?.answer_key_confirmed === true
 
+  function editableKeyRows() {
+    return draft ?? (pasteText.trim() ? parseAnswerKeyText(pasteText, expectedStyle) : rows)
+  }
+
+  function handleExpectedStyleChange(value: AnswerKind | 'any') {
+    setExpectedStyle(value)
+    setCheckResult(null)
+    setError(null)
+    if (pasteText.trim()) {
+      setDraft(parseAnswerKeyText(pasteText, value))
+    } else if (value !== 'any' && rows.length) {
+      setDraft(rows.map(row => ({
+        ...row,
+        question_type: value,
+        max_points: value === 'essay' ? Math.max(10, row.max_points) : 1,
+        rubric: value === 'essay' ? row.rubric : null,
+      })))
+    }
+  }
+
   // A violation only affects the score when the teacher applies it.
   const appliedViolationNumbers = useMemo(
     () =>
@@ -165,7 +185,7 @@ function SessionContent() {
   const effectiveScore = sumPoints(effectiveDetails)
 
   const saveMutation = useMutation({
-    mutationFn: () => saveAnswerKeys(sessionId!, rows),
+    mutationFn: (parsed: KeyRow[]) => saveAnswerKeys(sessionId!, parsed),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['answerKeys', sessionId] })
       setDraft(null)
@@ -175,11 +195,11 @@ function SessionContent() {
   })
 
   const confirmMutation = useMutation({
-    mutationFn: async () => {
-      const parsed = draft ?? (rows.length ? rows : parseAnswerKeyText(pasteText))
+    mutationFn: async (parsed: KeyRow[]) => {
       await saveAnswerKeys(sessionId!, parsed, true, effectiveRules)
     },
     onSuccess: () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['answerKeys', sessionId] }),
       queryClient.invalidateQueries({ queryKey: ['session', sessionId] }),
       queryClient.invalidateQueries({ queryKey: ['allSessions'] }),
     ]),
@@ -213,21 +233,19 @@ function SessionContent() {
     : 0
 
   function handleCheck() {
-    const parsed = parseAnswerKeyText(pasteText)
+    const parsed = editableKeyRows()
     const problems: string[] = []
     if (parsed.length === 0) problems.push('No answers found in the paste.')
-    if (expectedStyle === 'multiple_choice') {
-      parsed.forEach((r) => {
+    parsed.forEach((r) => {
+      if (r.question_type === 'multiple_choice') {
         if (!/^[A-Za-z]$/.test(r.correct_answer))
           problems.push(`Q${r.question_number}: "${r.correct_answer}" is not a single letter.`)
-      })
-    }
-    if (expectedStyle === 'true_false') {
-      parsed.forEach((r) => {
-        if (!/^(true|false)$/i.test(r.correct_answer))
+      }
+      if (r.question_type === 'true_false') {
+        if (!/^(true|false|t|f)$/i.test(r.correct_answer))
           problems.push(`Q${r.question_number}: "${r.correct_answer}" is not True/False.`)
-      })
-    }
+      }
+    })
     for (let i = 1; i < parsed.length; i++) {
       if (parsed[i].question_number !== parsed[i - 1].question_number + 1) {
         problems.push(`Question numbers are not sequential around Q${parsed[i].question_number}.`)
@@ -237,7 +255,7 @@ function SessionContent() {
   }
 
   function handlePreview() {
-    const parsed = parseAnswerKeyText(pasteText)
+    const parsed = parseAnswerKeyText(pasteText, expectedStyle)
     if (parsed.length === 0) {
       setError('No answers found. Use one answer per line, e.g. "B", "True", "Encapsulation".')
       return
@@ -247,13 +265,13 @@ function SessionContent() {
   }
 
   function handleConfirm() {
-    const parsed = draft ?? (rows.length ? rows : parseAnswerKeyText(pasteText))
+    const parsed = editableKeyRows()
     if (parsed.length === 0) {
       setError('Paste the answer key before confirming.')
       return
     }
     setDraft(parsed)
-    confirmMutation.mutate()
+    confirmMutation.mutate(parsed)
   }
 
   async function handleCapture(b64: string) {
@@ -386,7 +404,7 @@ function SessionContent() {
       {!locked && (
         <AnswerKeyEditor
           pasteText={pasteText}
-          onPasteTextChange={setPasteText}
+          onPasteTextChange={value => { setPasteText(value); setDraft(null); setCheckResult(null) }}
           rules={effectiveRules}
           onRulesChange={setRules}
           onSaveRules={() =>
@@ -395,11 +413,16 @@ function SessionContent() {
               .catch((e) => setError(e.message))
           }
           expectedStyle={expectedStyle}
-          onExpectedStyleChange={setExpectedStyle}
+          onExpectedStyleChange={handleExpectedStyleChange}
           checkResult={checkResult}
           onCheck={handleCheck}
           onPreview={handlePreview}
-          onSaveDraft={() => saveMutation.mutate()}
+          onSaveDraft={() => {
+            const parsed = editableKeyRows()
+            if (!parsed.length) { setError('Paste the answer key before saving.'); return }
+            setDraft(parsed)
+            saveMutation.mutate(parsed)
+          }}
           onConfirm={handleConfirm}
           savePending={saveMutation.isPending}
           confirmPending={confirmMutation.isPending}
