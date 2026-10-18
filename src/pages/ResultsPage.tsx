@@ -1,3 +1,4 @@
+import { Button } from '../components/ui/button'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, X, ArrowRight } from 'lucide-react'
@@ -44,7 +45,7 @@ export default function ResultsPage() {
         <div className="relative md:max-w-sm">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
           <input type="search" aria-label="Search sessions or classes" placeholder="Search sessions or classes" value={search} onChange={event => setSearch(event.target.value)} className="h-11 w-full rounded-lg border bg-card pl-10 pr-10 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/15 [&::-webkit-search-cancel-button]:appearance-none" />
-          {search && <button type="button" aria-label="Clear search" onClick={() => setSearch('')} className="absolute right-1 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-muted"><X className="size-4" /></button>}
+          {search && <Button variant="ghost" size="icon" type="button" aria-label="Clear search" onClick={() => setSearch('')} className="absolute right-1 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-muted"><X className="size-4" /></Button>}
         </div>
         <div className="flex flex-wrap gap-5 border-b" role="group" aria-label="Filter sessions">
           {filters.map(item => <button key={item.value} type="button" aria-pressed={filter === item.value} onClick={() => setFilter(item.value)} className={'min-h-11 border-b-2 px-0.5 text-[13px] transition-colors ' + (filter === item.value ? 'border-primary font-medium text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}>{item.label}</button>)}

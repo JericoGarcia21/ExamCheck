@@ -1,3 +1,4 @@
+import { Button } from './ui/button'
 import { useState } from 'react'
 import { Download, X, Share, MoreVertical } from 'lucide-react'
 import { useInstallPrompt } from '../hooks/useInstallPrompt'
@@ -51,9 +52,9 @@ export default function InstallPrompt() {
               How?
             </button>
           )}
-          <button onClick={close} aria-label="Dismiss install prompt" className="flex size-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
+          <Button variant="ghost" size="icon" onClick={close} aria-label="Dismiss install prompt" className="flex size-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
             <X className="h-4 w-4" />
-          </button>
+          </Button>
         </span>
       </div>
 
