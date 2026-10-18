@@ -169,6 +169,10 @@ Deno.serve(async (req) => {
     let lastStatus = 0
     for (const model of GEMINI_MODELS) {
       for (let attempt = 0; attempt < 2; attempt++) {
+        // Recheck before every provider attempt, including retries/fallbacks.
+        const accessResponse = await api('/rest/v1/rpc/teacher_enabled', { method: 'POST', body: '{}' })
+        if (!accessResponse.ok) return fail('Could not verify app access. Please retry.', 503)
+        if (await accessResponse.json() !== true) return fail('The app or your account is paused. Contact your administrator.', 403)
         response = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
           {

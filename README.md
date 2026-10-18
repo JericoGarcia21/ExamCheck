@@ -1,5 +1,7 @@
 # ExamCheck
 
+Admin account management, usage analytics, and the global pause switch: see [admin setup](docs/admin-setup.md) before deploying migration 0009 and the updated app/reader.
+
 A teacher-focused PWA for checking **handwritten exam papers faster**. Snap a
 photo of a student's answer sheet, let an AI vision model read the answers, and
 ExamCheck compares them against your answer key and computes the score — while

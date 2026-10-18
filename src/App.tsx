@@ -16,6 +16,7 @@ const CheckingPage = lazy(() => import('./pages/CheckingPage'))
 const ResultsPage = lazy(() => import('./pages/ResultsPage'))
 const SessionResultsPage = lazy(() => import('./pages/SessionResultsPage'))
 const LoginPage = lazy(() => import('./pages/LoginPage'))
+const AdminPage = lazy(() => import('./pages/AdminPage'))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,6 +45,7 @@ export default function App() {
               }
             >
               <Route path="/" element={<DashboardPage />} />
+              <Route path="/admin" element={<AdminPage />} />
               <Route path="/classes" element={<ClassesPage />} />
               <Route path="/classes/:classId" element={<ClassDetailPage />} />
               <Route path="/sessions/:sessionId" element={<SessionPage />} />

@@ -18,6 +18,8 @@ function mockBackend(t,options={}) {
     if(String(url).includes('/checking_sessions?')) return Response.json(options.denied?[]:[{answer_key_confirmed:true,rules:'Stored rules'}])
     if(String(url).includes('/answer_keys?')) return Response.json([{question_number:1,question_type:'essay',max_points:10,rubric:'Stored rubric'},{question_number:2,question_type:'multiple_choice',max_points:1}])
     if(String(url).endsWith('/rpc/consume_reader_quota')) return Response.json(!options.quotaExceeded)
+    if(String(url).endsWith('/rpc/teacher_enabled')) return Response.json(!options.paused,{status:options.accessUnavailable?503:200})
+    if(String(url).includes('generativelanguage.googleapis.com') && options.pauseOnRetry) { options.paused=true; return Response.json({error:'Retry'}, {status:503}) }
     if(String(url).includes('generativelanguage.googleapis.com')) return Response.json({candidates:[{content:{parts:[{text:JSON.stringify(options.recognition??{answers:[{question_number:1,student_answer:'Essay response',confidence:0.8,points:2.5},{question_number:2,student_answer:'B',confidence:0.9}],rule_violations:[]})}]}}]})
     throw new Error('Unexpected URL')
   })
@@ -38,6 +40,21 @@ test('quota rejects processing before any paid call',async(t)=>{
   const calls=mockBackend(t,{quotaExceeded:true})
   assert.equal((await handler(request())).status,429)
   assert.equal(calls.some(c=>c.url.includes('googleapis')),false)
+})
+test('paused app blocks paid requests even after quota was admitted',async(t)=>{
+  const calls=mockBackend(t,{paused:true})
+  assert.equal((await handler(request())).status,403)
+  assert.equal(calls.some(c=>c.url.includes('googleapis')),false)
+})
+test('unavailable access check fails closed before a paid request',async(t)=>{
+  const calls=mockBackend(t,{accessUnavailable:true})
+  assert.equal((await handler(request())).status,503)
+  assert.equal(calls.some(c=>c.url.includes('googleapis')),false)
+})
+test('pause during a provider failure prevents retries and fallback charges',async(t)=>{
+  const calls=mockBackend(t,{pauseOnRetry:true})
+  assert.equal((await handler(request())).status,403)
+  assert.equal(calls.filter(c=>c.url.includes('googleapis')).length,1)
 })
 test('invalid image or session is rejected before quota and provider calls',async(t)=>{
   const calls=mockBackend(t)
