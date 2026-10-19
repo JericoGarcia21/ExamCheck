@@ -7,6 +7,7 @@ import { buildTableRows } from '../src/lib/export.ts'
 import { restoreSavedResult } from '../src/lib/savedResult.ts'
 import { needsTeacherReview } from '../src/lib/confidence.ts'
 import PaperResultCard from '../src/components/session/PaperResultCard.tsx'
+import AnswerKeyPreview from '../src/components/session/AnswerKeyPreview.tsx'
 import StudentPicker from '../src/components/session/StudentPicker.tsx'
 
 const rows = [{ question_number: 1, correct_answer: 'Explain', question_type: 'essay', max_points: 10 }]
@@ -85,4 +86,17 @@ test('student picker exposes search label, selection and roster progress', () =>
   assert.match(markup, /aria-pressed="true"/)
   assert.match(markup, /Selected/)
   assert.match(markup, /1 \/ 2 checked/)
+})
+
+
+test('saved draft answer keys expose answer, type, points and rubric editing while confirmed keys are read-only', () => {
+  const props = { rows, locked: false, editable: true, rules: null, onUpdate() {} }
+  const editable = renderToStaticMarkup(createElement(AnswerKeyPreview, props))
+  assert.match(editable, /Correct answer for question 1/)
+  assert.match(editable, /Question 1 answer type/)
+  assert.match(editable, /Maximum points for question 1/)
+  assert.match(editable, /Grading rubric for question 1/)
+  const confirmed = renderToStaticMarkup(createElement(AnswerKeyPreview, { ...props, locked: true }))
+  assert.doesNotMatch(confirmed, /<textarea/)
+  assert.doesNotMatch(confirmed, /<input/)
 })

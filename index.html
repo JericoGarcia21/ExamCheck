@@ -11,17 +11,17 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="ExamCheck" />
-    <style>html{background:#f3f6f5}body{margin:0}.app-splash{box-sizing:border-box;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(32px + env(safe-area-inset-top)) 24px calc(32px + env(safe-area-inset-bottom));background:#f3f6f5;color:#203c35;font-family:system-ui,sans-serif;text-align:center}.app-splash img{width:80px;height:80px;border-radius:20px;box-shadow:0 12px 28px #17664d26}.app-splash h1{margin:24px 0 8px;font-size:30px;font-weight:700;letter-spacing:-1px}.app-splash p{margin:0;color:#596e65;font-size:14px}.app-splash-loader{width:24px;height:24px;margin-top:32px;border:2px solid #d9e3dd;border-top-color:#17664d;border-radius:50%;animation:splash-spin 1s linear infinite}@keyframes splash-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.app-splash-loader{animation:none;border-color:#17664d}}</style>
+    <style>html{background:#f3f6f5}body{margin:0}.app-splash{box-sizing:border-box;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(32px + env(safe-area-inset-top)) 24px calc(32px + env(safe-area-inset-bottom));background:#f3f6f5;color:#203c35;font-family:'Geist Variable',system-ui,sans-serif;text-align:center}.app-splash img{width:88px;height:88px}.app-splash h1{margin:24px 0 8px;font-size:30px;font-weight:700;letter-spacing:-1px}.app-splash p{margin:0;color:#596e65;font-size:14px}.app-splash .app-splash-status{margin-top:12px;font-size:12px}.app-splash-loader{width:24px;height:24px;margin-top:32px;border:2px solid #d9e3dd;border-top-color:#17664d;border-radius:50%;animation:splash-spin 1s linear infinite}@keyframes splash-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.app-splash-loader{animation:none;border-color:#17664d}}</style>
     <title>ExamCheck</title>
   </head>
   <body>
     <div id="root">
       <div class="app-splash" role="status" aria-live="polite">
-        <img src="/favicon.svg" alt="" width="80" height="80" />
+        <img src="/favicon.svg" alt="" width="88" height="88" />
         <h1>ExamCheck</h1>
         <p>More time for teaching.</p>
         <span class="app-splash-loader" aria-hidden="true"></span>
-        <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)">Loading ExamCheck</span>
+        <p class="app-splash-status">Opening your workspace...</p>
       </div>
     </div>
     <noscript>Enable JavaScript to use ExamCheck.</noscript>

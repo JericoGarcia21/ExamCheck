@@ -1,6 +1,6 @@
 import { Button } from './ui/button'
 import { useState } from 'react'
-import { Download, X, Share, MoreVertical } from 'lucide-react'
+import { X, Share, MoreVertical } from 'lucide-react'
 import { useInstallPrompt } from '../hooks/useInstallPrompt'
 
 const DISMISS_KEY = 'examcheck:install-dismissed'
@@ -30,7 +30,7 @@ export default function InstallPrompt() {
     <div className="border-b border-border bg-card px-4 py-2 text-xs text-muted-foreground">
       <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-2 md:max-w-5xl">
         <span className="flex items-center gap-2">
-          <Download className="h-3.5 w-3.5 shrink-0" />
+          <img src="/favicon.svg" width="32" height="32" className="shrink-0" alt="" />
           <span>
             <strong className="text-foreground">ExamCheck on your home screen</strong>
           </span>
@@ -39,7 +39,7 @@ export default function InstallPrompt() {
           {canPrompt && (
             <button
               onClick={() => install()}
-              className="min-h-9 rounded-md bg-primary px-3 py-1 font-medium text-primary-foreground"
+              className="min-h-11 rounded-md bg-primary px-3 py-1 font-medium text-primary-foreground"
             >
               Install
             </button>
@@ -47,19 +47,19 @@ export default function InstallPrompt() {
           {!canPrompt && isIos && (
             <button
               onClick={() => setShowIosHelp((v) => !v)}
-              className="rounded bg-primary px-2.5 py-1 font-medium text-primary-foreground"
+              aria-expanded={showIosHelp} aria-controls="ios-install-help" className="min-h-11 rounded-md bg-primary px-2.5 py-1 font-medium text-primary-foreground"
             >
               How?
             </button>
           )}
-          <Button variant="ghost" size="icon" onClick={close} aria-label="Dismiss install prompt" className="flex size-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
+          <Button variant="ghost" size="icon" onClick={close} aria-label="Dismiss install prompt" className="flex size-11 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
             <X className="h-4 w-4" />
           </Button>
         </span>
       </div>
 
       {showIosHelp && isIos && (
-        <div className="mx-auto mt-2 w-full max-w-2xl rounded-md border border-primary/20 bg-card p-3 text-foreground md:max-w-5xl">
+        <div id="ios-install-help" className="mx-auto mt-2 w-full max-w-2xl rounded-md border border-primary/20 bg-card p-3 text-foreground md:max-w-5xl">
           <p className="flex items-center gap-2 text-sm font-medium">
             Install on iPhone / iPad
           </p>

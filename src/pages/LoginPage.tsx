@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { ArrowLeft, ArrowRight, BookOpen, Check, ClipboardCheck, Code, LoaderCircle, ScanLine, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, ArrowRight, BookOpen, Check, Code, LoaderCircle, ScanLine, ShieldCheck } from 'lucide-react'
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
@@ -35,7 +35,7 @@ export default function LoginPage() {
       <div className="login-shell">
         <section className="login-intro" aria-labelledby="login-welcome">
           <div className="login-brand">
-            <span className="login-brand-icon"><ClipboardCheck size={23} aria-hidden="true" /></span>
+            <span className="login-brand-icon"><img className="brand-mark" src="/favicon.svg" width="40" height="40" alt="" /></span>
             <span>ExamCheck<span className="brand-dot">.</span></span>
           </div>
           <div className="login-pitch">

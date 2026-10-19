@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Skeleton } from '../components/ui/skeleton'
 
 const schema = z.object({
-  block_name: z.string().trim().min(1, 'Required'),
+  block_name: z.string().trim().min(1, 'Required').max(200, 'Use 200 characters or fewer'),
   start_year: z.number({ error: 'Choose a valid starting year.' }).int().min(1000).max(9998),
 })
 type FormValues = z.infer<typeof schema>

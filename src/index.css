@@ -65,7 +65,7 @@
     --accent-foreground: #174d39;
     --destructive: oklch(0.577 0.245 27.325);
     --border: #d9e3dd;
-    --input: #ccd9d1;
+    --input: #81958a;
     --ring: #28785b;
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
@@ -370,3 +370,20 @@ a { text-underline-offset: 4px; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0s !important; animation-duration: 0s !important; } }
 
 .workspace-sidebar a:focus-visible { outline-color: #c1dcb4; }
+
+/* Consistent identity and safe areas across web and installed app. */
+.brand-mark { display: block; flex-shrink: 0; }
+.workspace-body, .workspace-main, .page-heading > div { min-width: 0; }
+.page-title, .page-description, .session-row, .dashboard-start-copy { overflow-wrap: anywhere; }
+input, textarea, select { scroll-margin-block: 100px; }
+@media (max-width: 767px) {
+ .workspace-topbar { padding-top: calc(12px + env(safe-area-inset-top)); padding-left: max(20px, env(safe-area-inset-left)); padding-right: max(20px, env(safe-area-inset-right)); }
+ .workspace-mobile-nav { padding-left: max(10px, env(safe-area-inset-left)); padding-right: max(10px, env(safe-area-inset-right)); }
+ .mobile-nav-link { min-width: 0; font-size: 11px; }
+ .page-heading > .action-link { align-self: flex-start; }
+ input, textarea, select { font-size: 16px; }
+}
+@media (max-width: 640px) {
+ .login-intro { padding-top: calc(27px + env(safe-area-inset-top)); }
+ .login-panel { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+}

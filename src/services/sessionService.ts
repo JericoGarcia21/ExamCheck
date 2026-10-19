@@ -74,3 +74,26 @@ export async function saveRules(sessionId: string, rules: string): Promise<void>
     .eq('id', sessionId)
   if (error) throw error
 }
+
+export async function updateSession(id: string, input: { session_name: string; session_date: string }): Promise<SessionRow> {
+  const { data, error } = await supabase.from('checking_sessions').update(input).eq('id', id).select().single()
+  if (error) throw new Error('Could not save session details. Check your connection and access, then retry.')
+  return data
+}
+
+export async function copySession(input: { sourceId: string; classId: string; name: string; copyId: string }): Promise<string> {
+  const { data, error } = await supabase.rpc('copy_session', {
+    p_source_id: input.sourceId, p_class_id: input.classId, p_name: input.name.trim(), p_copy_id: input.copyId,
+  })
+  if (error) throw new Error(error.code === '22023'
+    ? 'Use a name up to 200 characters and a saved key with 1-300 questions and rules up to 10,000 characters.'
+    : 'Could not copy the session. Check your connection and class access, then retry.')
+  return data
+}
+
+export async function reopenAnswerKey(sessionId: string): Promise<void> {
+  const { error } = await supabase.rpc('reopen_answer_key', { p_session_id: sessionId })
+  if (error) throw new Error(error.code === '55000'
+    ? 'This session already has graded papers. Copy it as a new draft to revise the answer key.'
+    : 'Could not reopen the answer key. Check your connection and access, then retry.')
+}

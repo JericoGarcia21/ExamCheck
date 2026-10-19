@@ -62,11 +62,10 @@ function drawIcon(size, maskable = false) {
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      const t = (x + y) / (2 * (size - 1))
       const i = (y * size + x) * 4
-      rgba[i] = Math.round(23 + (22 - 23) * t)
-      rgba[i + 1] = Math.round(102 + (62 - 102) * t)
-      rgba[i + 2] = Math.round(77 + (50 - 77) * t)
+      rgba[i] = 23
+      rgba[i + 1] = 102
+      rgba[i + 2] = 77
       rgba[i + 3] = maskable
         ? 255
         : Math.round(coverage(roundedRectDistance(x + 0.5, y + 0.5, 0, 0, size, size, backgroundRadius), 0.75) * 255)
@@ -110,8 +109,6 @@ function drawIcon(size, maskable = false) {
     return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - radius
   }
 
-  const paperShadow = maskable ? [22, 62, 50] : [22, 62, 50]
-  rect(0.28, 0.205, 0.705, 0.755, 0.065, paperShadow, 0.24)
   rect(0.28, 0.19, 0.705, 0.74, 0.065, [255, 255, 255])
 
   const rule = [198, 220, 202]
@@ -119,7 +116,6 @@ function drawIcon(size, maskable = false) {
   line(0.375, 0.465, 0.61, 0.465, 0.022, rule)
   line(0.375, 0.56, 0.55, 0.56, 0.022, rule)
 
-  circle(0.685, 0.68, 0.17, [22, 62, 50], 0.24)
   circle(0.68, 0.66, 0.165, [255, 255, 255])
   line(0.605, 0.665, 0.655, 0.715, 0.038, [23, 102, 77])
   line(0.655, 0.715, 0.765, 0.585, 0.038, [23, 102, 77])
@@ -131,5 +127,7 @@ mkdirSync('public', { recursive: true })
 writeFileSync('public/pwa-192x192.png', drawIcon(192))
 writeFileSync('public/pwa-512x512.png', drawIcon(512))
 writeFileSync('public/maskable-512x512.png', drawIcon(512, true))
-writeFileSync('public/apple-touch-icon.png', drawIcon(180))
+writeFileSync('public/apple-touch-icon.png', drawIcon(180, true))
 console.log('icons written')
+
+writeFileSync('public/favicon.svg', `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><rect width="1000" height="1000" rx="220" fill="#17664d"/><rect x="280" y="190" width="425" height="550" rx="65" fill="#fff"/><path d="M375 370h235M375 465h235M375 560h175" fill="none" stroke="#c6dcca" stroke-width="22" stroke-linecap="round"/><circle cx="680" cy="660" r="165" fill="#fff"/><path d="m605 665 50 50 110-130" fill="none" stroke="#17664d" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/></svg>` )

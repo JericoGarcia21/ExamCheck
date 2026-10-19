@@ -5,6 +5,7 @@ import CameraCapture, { type CameraCaptureHandle } from '../components/CameraCap
 import { supabase } from '../lib/supabase'
 import {
   getSession,
+  reopenAnswerKey,
   listAnswerKeys,
   saveAnswerKeys,
   saveRules,
@@ -21,6 +22,7 @@ import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { AlertCircle, CheckCircle2, Camera } from 'lucide-react'
+import SessionActions from '../components/SessionActions'
 import AnswerKeyEditor from '../components/session/AnswerKeyEditor'
 import AnswerKeyPreview from '../components/session/AnswerKeyPreview'
 import StudentPicker from '../components/session/StudentPicker'
@@ -41,6 +43,7 @@ function SessionContent() {
   const [pasteText, setPasteText] = useState('')
   const [rules, setRules] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [keyNotice, setKeyNotice] = useState('')
   const [expectedStyle, setExpectedStyle] = useState<AnswerKind | 'any'>('any')
   const [checkResult, setCheckResult] = useState<string[] | null>(null)
 
@@ -187,24 +190,45 @@ function SessionContent() {
   const effectiveScore = sumPoints(effectiveDetails)
 
   const saveMutation = useMutation({
-    mutationFn: (parsed: KeyRow[]) => saveAnswerKeys(sessionId!, parsed),
+    mutationFn: (parsed: KeyRow[]) => saveAnswerKeys(sessionId!, parsed, false, effectiveRules),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['answerKeys', sessionId] })
       setDraft(null)
+      setPasteText('')
+      setKeyNotice('Answer key draft saved.')
       setError(null)
     },
     onError: (e) => setError(e.message),
+  })
+
+  const reopenMutation = useMutation({
+    mutationFn: () => reopenAnswerKey(sessionId!),
+    onSuccess: async () => {
+      setDraft(null); setPasteText(''); setRules(null); setError(null)
+      setKeyNotice('Answer key returned to draft. Edit and confirm it again before checking papers.')
+      setSelectedStudent(null); setPaperResult(null); setPreview(null)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['session', sessionId] }),
+        queryClient.invalidateQueries({ queryKey: ['answerKeys', sessionId] }),
+        queryClient.invalidateQueries({ queryKey: ['allSessions'] }),
+        queryClient.invalidateQueries({ queryKey: ['sessions'] }),
+      ])
+    },
   })
 
   const confirmMutation = useMutation({
     mutationFn: async (parsed: KeyRow[]) => {
       await saveAnswerKeys(sessionId!, parsed, true, effectiveRules)
     },
-    onSuccess: () => Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['answerKeys', sessionId] }),
-      queryClient.invalidateQueries({ queryKey: ['session', sessionId] }),
-      queryClient.invalidateQueries({ queryKey: ['allSessions'] }),
-    ]),
+    onSuccess: () => {
+      setKeyNotice('Answer key confirmed.')
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['answerKeys', sessionId] }),
+        queryClient.invalidateQueries({ queryKey: ['session', sessionId] }),
+        queryClient.invalidateQueries({ queryKey: ['allSessions'] }),
+        queryClient.invalidateQueries({ queryKey: ['sessions'] }),
+      ])
+    },
     onError: (e) => setError(e.message),
   })
 
@@ -257,7 +281,7 @@ function SessionContent() {
   }
 
   function handlePreview() {
-    const parsed = parseAnswerKeyText(pasteText, expectedStyle)
+    const parsed = editableKeyRows()
     if (parsed.length === 0) {
       setError('No answers found. Use one answer per line, e.g. "B", "True", "Encapsulation".')
       return
@@ -403,10 +427,19 @@ function SessionContent() {
       </div>
 
       {saveMessage && <div role="status" className="flex items-center gap-2 rounded border border-green-600/30 bg-green-50 p-3 text-sm text-green-700"><CheckCircle2 className="h-4 w-4" />{saveMessage}</div>}
+      {session && <SessionActions session={session} />}
+      {keyNotice && <p role="status" className="text-sm text-muted-foreground">{keyNotice}</p>}
+
+      {locked && <div className="space-y-2 rounded-lg border bg-card p-4">
+        <p className="text-sm text-muted-foreground">{doneIds.size ? 'This key is used by saved papers. Copy the session as a new draft to revise it while preserving these results.' : 'Need to correct the key? Return it to draft, edit it, then confirm again before checking papers.'}</p>
+        {!doneIds.size && <Button variant="outline" disabled={reopenMutation.isPending || paperLoading || saving || !!submissionsError || !doneSubmissions} onClick={() => { if (window.confirm('Return this answer key to draft? Checking will pause until you confirm it again. Any unsaved paper review will be discarded.')) reopenMutation.mutate() }}>{reopenMutation.isPending ? 'Opening draft...' : 'Edit confirmed answer key'}</Button>}
+        {reopenMutation.error && <p role="alert" className="text-sm text-destructive">{reopenMutation.error.message}</p>}
+      </div>}
+
       {!locked && (
         <AnswerKeyEditor
           pasteText={pasteText}
-          onPasteTextChange={value => { setPasteText(value); setDraft(null); setCheckResult(null) }}
+          onPasteTextChange={value => { setPasteText(value); setDraft(null); setCheckResult(null); setKeyNotice('') }}
           rules={effectiveRules}
           onRulesChange={setRules}
           onSaveRules={() =>
@@ -426,8 +459,8 @@ function SessionContent() {
             saveMutation.mutate(parsed)
           }}
           onConfirm={handleConfirm}
-          savePending={saveMutation.isPending}
-          confirmPending={confirmMutation.isPending}
+          savePending={saveMutation.isPending || confirmMutation.isPending}
+          confirmPending={confirmMutation.isPending || saveMutation.isPending}
           error={error}
         />
       )}
@@ -561,6 +594,8 @@ function SessionContent() {
           </Card>
         </>
       )}
+
+      {!locked && rows.length > 0 && !draft && <Button variant="outline" onClick={() => { setDraft(rows.map(row => ({ ...row }))); setPasteText(''); setError(null); setKeyNotice('') }}>Edit saved answer key</Button>}
 
       <AnswerKeyPreview
         rows={rows}

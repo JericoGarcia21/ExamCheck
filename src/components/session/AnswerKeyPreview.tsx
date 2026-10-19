@@ -32,7 +32,7 @@ export default function AnswerKeyPreview({ rows, locked, editable, rules, onUpda
               <div key={row.question_number} className="space-y-1 py-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="w-8 text-right text-muted-foreground">{row.question_number}.</span>
-                  <span className="min-w-0 flex-1 whitespace-pre-wrap break-words font-medium">{row.correct_answer}</span>
+                  {editable && !locked ? <Textarea aria-label={`Correct answer for question ${row.question_number}`} className="min-w-0 flex-1 font-mono text-sm" rows={2} maxLength={20000} value={row.correct_answer} onChange={e => onUpdate(row.question_number, { correct_answer: e.target.value })} /> : <span className="min-w-0 flex-1 whitespace-pre-wrap break-words font-medium">{row.correct_answer}</span>}
                   {editable && !locked ? (
                     <Select
                       value={row.question_type}

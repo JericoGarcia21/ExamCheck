@@ -39,7 +39,7 @@ export default function AppLayout() {
     <div className="workspace">
       <a className="skip-link" href="#main-content">Skip to content</a>
       <aside className="workspace-sidebar">
-        <Link to="/" className="workspace-brand" aria-label="ExamCheck home"><ClipboardCheck size={27} aria-hidden="true" /><span>ExamCheck<span className="brand-dot">.</span></span></Link>
+        <Link to="/" className="workspace-brand" aria-label="ExamCheck home"><img className="brand-mark" src="/favicon.svg" width="36" height="36" alt="" /><span>ExamCheck<span className="brand-dot">.</span></span></Link>
         <p className="workspace-caption">Your teacher workspace</p>
         <nav aria-label="Main navigation" className="workspace-nav">
           {navigation.map(link => <NavLink key={link.to} to={link.to} end={link.to === '/'} className={({ isActive }) => 'workspace-nav-link' + (isActive || (link.to === '/checking' && pathname.startsWith('/sessions')) ? ' is-active' : '')}><link.icon size={19} aria-hidden="true" /><span>{link.label}</span><ChevronRight className="nav-chevron" size={15} aria-hidden="true" /></NavLink>)}
@@ -49,7 +49,7 @@ export default function AppLayout() {
       </aside>
       <div className="workspace-body">
         <header className="workspace-topbar">
-          <Link to="/" className="mobile-brand"><ClipboardCheck size={23} aria-hidden="true" />ExamCheck<span className="brand-dot">.</span></Link>
+          <Link to="/" className="mobile-brand"><img className="brand-mark" src="/favicon.svg" width="32" height="32" alt="" />ExamCheck<span className="brand-dot">.</span></Link>
           <div className="workspace-breadcrumb"><span>Workspace</span><ChevronRight size={14} aria-hidden="true" /><strong>{activePage}</strong></div>
           <div className="workspace-account"><span className={'connection-status' + (!online ? ' is-offline' : '')}><span aria-hidden="true" />{online ? 'Online' : 'Offline'}</span><button type="button" onClick={() => void signOut()} disabled={signingOut} className="signout-button"><LogOut size={16} aria-hidden="true" /><span>{signingOut ? 'Signing out…' : 'Sign out'}</span></button></div>
         </header>

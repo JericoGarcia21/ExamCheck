@@ -45,3 +45,28 @@ viewport rendering, zoom, keyboard/focus order, contrast measurement, and screen
 reader behavior remain NOT VERIFIED. No browser screenshots were produced.
 
 TypeScript, lint, regression tests, and production build are checked for this redesign. A rendered desktop/mobile browser review remains pending because this session has no available browser surface.
+
+## Identity and responsive refinement - 2026-10-19
+
+User requested consistent web/mobile design, installed PWA identity, and splash.
+Inspected the local navigation, login, dashboard, install prompt, HTML and React
+splash, manifest configuration, favicon, and raster icon generator. These existing
+screens supply the visual reference: forest green, Geist, restrained surfaces.
+
+Implemented one paper/check mark across login, desktop/mobile navigation, install
+banner, favicon, and generated PWA assets. SVG and PNG use the same normalized
+geometry and solid #17664d background. Apple touch icon has an opaque full-bleed
+background; the maskable asset retains generous mark clearance. Startup HTML and
+React loading use the same 88px mark and visible workspace-loading message, with
+reduced-motion support. Native OS launch screens remain browser/platform controlled.
+
+Preserved routes, authentication, grading and permissions. Improved input boundary
+contrast, mobile input text sizing, long-content wrapping, header/navigation safe
+areas, install control targets and expanded-state semantics. Existing error, empty,
+success and disabled states are retained. No new dependencies or API changes.
+
+Validation: lint passed; all 46 existing tests passed. Browser inventory returned
+no apps or browsers, so rendered layouts at 320/390/768/1440px, keyboard navigation,
+200% zoom, screen reader behavior, and native installed launch remain unverified.
+The next acceptance step is a connected desktop/mobile visual review and actual
+PWA install check. No deployment performed.
