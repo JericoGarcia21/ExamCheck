@@ -13,10 +13,12 @@ Use for the task described above. Read relevant project instructions, existing a
 ## Workflow
 
 1. Inspect existing screens, brand, user tasks, real content, and accessibility needs. Preserve functioning interaction patterns unless the requested outcome needs change.
+   For a new interface or substantial redesign, read [reference research and visual direction](references/visual-direction.md). Use supplied references or research relevant real interfaces when browsing is available; record what was actually inspected. Establish a specific visual direction before building screens.
 2. Choose layout and density from the workflow: a comparison task may need a table; a guided action may need a focused form. Establish typography, spacing, color, radius, and focus tokens.
 3. Avoid arbitrary gradients, glow, excessive whitespace, oversized rounding, meaningless icons, repetitive cards, and visually uniform sections. Make contextual actions and content hierarchy explicit.
 4. Specify empty, loading, validation, error, success, disabled, and permission states. Define mobile reflow, long-content behavior, keyboard order, and semantic structure.
 5. Deliver a design brief or reviewable mockup with rationale and state coverage. Validate using realistic content, narrow viewports, keyboard navigation, and contrast; label unverified checks.
+   Compare rendered screens with the brief and reference observations. Correct generic composition, weak hierarchy, and inconsistent details before handoff; do not claim visual verification from source code alone.
 
 ## Outputs and handoff
 

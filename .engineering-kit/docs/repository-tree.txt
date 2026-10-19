@@ -82,7 +82,8 @@ fullstack-ai-engineering-kit/
 │   │   └── SKILL.md
 │   ├── frontend-design/
 │   │   ├── references/
-│   │   │   └── guide.md
+│   │   │   ├── guide.md
+│   │   │   └── visual-direction.md
 │   │   └── SKILL.md
 │   ├── frontend-engineering/
 │   │   ├── references/

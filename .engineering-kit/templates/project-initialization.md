@@ -10,6 +10,7 @@ Existing repository or stack: [existing system or new project]
 Constraints: [budget, hosting, timeline, team experience, privacy]
 Deliverables and success measure: [what completion looks like]
 Known roles, integrations, and sensitive data: [known facts]
+Design references and brand: [optional URLs, screenshots, existing brand, or delegate visual direction]
 
 Read the toolkit AGENTS.md and references/workflow.md. Collect enough context;
 ask concise questions only where answers materially change behavior or architecture.
@@ -20,6 +21,10 @@ Separate MVP, optional, future, and excluded scope. Recommend a proportionate st
 with alternatives, data/permission boundaries, failure behavior, hosting limits,
 and feature-based slices. Present a readiness summary with assumptions, blockers,
 security/QA needs, and decisions requiring approval.
+For a user-facing interface, use frontend-design to establish a specific visual
+direction grounded in real content and inspected references when available.
+Include a design brief and representative screen in the plan; avoid defaulting
+to a generic landing page or dashboard composition. Label unverified references.
 Stop before product implementation until necessary decisions are approved.
 Do not deploy or modify live infrastructure. Never fabricate test or audit results.
 ```

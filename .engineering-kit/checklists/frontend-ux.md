@@ -2,6 +2,8 @@
 
 - [ ] Primary tasks and contextual actions are clear with realistic content.
 - [ ] Typography, spacing, hierarchy, density and tokens serve the workflow and existing brand.
+- [ ] New or redesigned interfaces have a specific visual direction; inspected references and their applied principles are recorded, or unavailable research is labeled.
+- [ ] Rendered representative screens were compared with that direction at desktop and mobile widths; visual evidence and remaining gaps are recorded.
 - [ ] No arbitrary gradients, glow, oversized rounding, excessive whitespace, meaningless icons, or repetitive cards.
 - [ ] Empty, loading, validation, error, success, disabled and forbidden states are useful.
 - [ ] Mobile reflow, long text, slow requests, retries and duplicate submission are handled.
