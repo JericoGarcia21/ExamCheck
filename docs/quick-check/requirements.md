@@ -2,6 +2,8 @@
 
 Status: proposed, 2026-10-20. Owner: project owner. Requirements only; implementation and deployment are not approved by this document.
 
+Follow-up: the user subsequently requested implementation and specified a default of five scans with an admin-editable allowance. See `implementation.md` for the built scope, resolved input decisions, server enforcement and remaining release checks. Deployment has not been authorized or performed by this implementation task.
+
 ## Outcome and existing behavior
 
 Confirmed request: visitors can upload an answer key, upload or photograph an answer sheet, and check it without logging in. Treat this as an additional Quick Check workflow; retain the existing signed-in classes, sessions, and saved results.

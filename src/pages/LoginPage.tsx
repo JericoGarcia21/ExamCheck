@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { ArrowLeft, ArrowRight, BookOpen, Check, Code, LoaderCircle, ScanLine, ShieldCheck } from 'lucide-react'
 
@@ -56,6 +57,7 @@ export default function LoginPage() {
 
         <section className="login-panel" aria-labelledby="login-title">
           <div className="login-form">
+            <Link to="/quick-check" className="action-link action-link-outline mb-6">Quick Check — no login needed</Link>
             <h2 id="login-title">{role === 'teacher' ? 'Welcome, teacher.' : role === 'tech' ? 'For the curious minds.' : 'Welcome to ExamCheck.'}</h2>
             <p className="login-description">{role === 'teacher' ? 'Sign in to start checking papers and keep your classes in one place.' : role === 'tech' ? 'Here’s what’s coming for IT and computer science users.' : 'Choose the option that best describes you to get started.'}</p>
 

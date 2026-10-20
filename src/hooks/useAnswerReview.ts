@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { needsTeacherReview } from '../lib/confidence'
-import { answersMatch, type ScoredAnswer } from '../lib/scoring'
+import { calculateScore, type ScoredAnswer } from '../lib/scoring'
 import type { KeyRow } from '../lib/answerKey'
 
 export type ReviewMode = 'none' | 'view' | 'edit'
@@ -76,9 +76,11 @@ export function useAnswerReview({ rows, rules = '', details, updateDetail }: Use
         patch.is_correct = pts >= current.max_points
         patch.feedback = feedback.trim() || undefined
       } else if (keyItem) {
-        const correct = answersMatch(ans, keyItem, rules)
-        patch.is_correct = correct
-        patch.points_awarded = correct ? current.max_points : 0
+        const scored = calculateScore([{question_number: question, student_answer: ans, confidence: current.confidence}], [keyItem], rules).details[0]
+        patch.is_correct = scored.is_correct
+        patch.points_awarded = scored.points_awarded
+        patch.feedback = scored.feedback
+        patch.consideration_reason = undefined
       }
       patch.needs_review = false
     }
@@ -110,6 +112,10 @@ export function useAnswerReview({ rows, rules = '', details, updateDetail }: Use
     queue,
     index,
     open,
+    openQuestion: (questionNumber: number) => {
+      setQueue([questionNumber])
+      openAt([questionNumber], 0)
+    },
     submit,
     close,
   }

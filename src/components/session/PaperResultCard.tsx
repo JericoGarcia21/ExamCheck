@@ -22,6 +22,8 @@ interface PaperResultCardProps {
   onReview: () => void
   onSave: () => void
   onUpdateDetail: (questionNumber: number, patch: Partial<ScoredAnswer>) => void
+  saveLabel?: string
+  onEditAnswer?: (questionNumber: number) => void
 }
 
 export default function PaperResultCard({
@@ -38,6 +40,8 @@ export default function PaperResultCard({
   onReview,
   onSave,
   onUpdateDetail,
+  saveLabel = 'Save final result',
+  onEditAnswer,
 }: PaperResultCardProps) {
   const [answerFilter, setAnswerFilter] = useState<'all' | 'review' | 'incorrect'>('all')
   const override = scoreOverride.trim() === '' ? null : Number(scoreOverride)
@@ -198,6 +202,7 @@ export default function PaperResultCard({
                   <span className="mt-1 block whitespace-pre-wrap font-medium">{d.student_answer || 'No answer detected'}</span>
                   <span className="mt-2 block whitespace-pre-wrap text-xs text-muted-foreground">Answer key: {d.correct_answer}</span>
                   {d.feedback && <span className="mt-2 block whitespace-pre-wrap text-xs text-muted-foreground">{d.feedback}</span>}
+                  {onEditAnswer && <button className="mt-2 block text-xs underline underline-offset-4" onClick={()=>onEditAnswer(d.question_number)}>Edit reading for question {d.question_number}</button>}
                   <span className={`mt-2 inline-block text-xs font-medium ${d.is_correct ? 'text-primary' : 'text-destructive'}`}>{d.is_correct ? 'Full credit' : d.points_awarded > 0 ? 'Partial credit' : 'No credit'}</span>
                   {needsTeacherReview(d) && (
                     <Badge className="ml-2" variant="secondary">
@@ -250,7 +255,7 @@ export default function PaperResultCard({
             </Button>
           )}
           <Button className="min-h-11 w-full" disabled={saving || attentionCount > 0 || !overrideValid} onClick={onSave}>
-            {saving ? 'Saving…' : 'Save final result'}
+            {saving ? 'Saving…' : saveLabel}
           </Button>
         </div>
     </div>

@@ -222,6 +222,8 @@ project's privacy rules. Only the extracted answers and scores are saved.
 
 ## Status
 
+Guest **Quick Check** is available in the source at `/quick-check`, linked from login. It supports answer-key photos/paste, sheet photos, review and CSV download without login. Default allowance is **5 scans per network per UTC day**, editable by admins. It requires migration `0011_quick_check.sql` and the new public `quick-check` Edge Function; see [setup and verification gaps](docs/quick-check/implementation.md). The authenticated `read-answers` function retains JWT verification.
+
 Feature phases 0–7 are implemented. QA fixes are covered by automated regression
 checks; live deployment and authenticated mobile/browser acceptance testing remain
 pending. See [QA_REPORT.md](QA_REPORT.md) for evidence and remaining limits.

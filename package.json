@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "icons": "node scripts/generate-icons.mjs",
     "test": "node --import ./scripts/register-typescript.mjs --test tests/*.test.mjs",
-    "check:edge": "deno check supabase/functions/read-answers/index.ts supabase/functions/read-answers/dashboard.ts",
+    "check:edge": "deno check supabase/functions/read-answers/index.ts supabase/functions/read-answers/dashboard.ts supabase/functions/quick-check/index.ts supabase/functions/quick-check/dashboard.ts",
     "verify": "npm run bundle:reader -- --check && npm run lint && npm test && npm run check:edge && npm run build",
     "bundle:reader": "node scripts/bundle-reader.mjs"
   },

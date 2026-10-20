@@ -15,7 +15,7 @@ const save=async(score=2.5,items=answers,student=SA)=>db.query('select public.sa
 
 before(async()=>{
   db=new PGlite()
-  await db.exec(`create role anon; create role authenticated; create schema auth;
+  await db.exec(`create role anon; create role authenticated; create role service_role; create schema auth;
     create table auth.users(id uuid primary key,email text,raw_user_meta_data jsonb default '{}');
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
     grant usage on schema public,auth to anon,authenticated; grant execute on function auth.uid() to anon,authenticated;`)
@@ -25,7 +25,7 @@ before(async()=>{
     await db.exec(sql.replace('create extension if not exists "pgcrypto";',''))
   }
   await db.exec('grant select,insert,update,delete on all tables in schema public to anon,authenticated;')
-  for(const name of ['0006_qa_integrity.sql','0007_reader_limits.sql','0008_class_archive.sql','0009_admin.sql','0010_session_copy_and_details.sql']) await db.exec(await readFile(new URL('../supabase/migrations/'+name,import.meta.url),'utf8'))
+  for(const name of ['0006_qa_integrity.sql','0007_reader_limits.sql','0008_class_archive.sql','0009_admin.sql','0010_session_copy_and_details.sql','0011_quick_check.sql']) await db.exec(await readFile(new URL('../supabase/migrations/'+name,import.meta.url),'utf8'))
   await db.query('insert into auth.users(id,email) values ($1,$2),($3,$4)',[A,'a@example.test',B,'b@example.test'])
   await db.query('insert into public.classes(id,teacher_id,block_name,school_year) values ($1,$2,$3,$4),($5,$6,$7,$4),($8,$2,$9,$4)',[CA,A,'A','2026',CB,B,'B',CA2,'A2'])
   await db.query('insert into public.students(id,class_id,name,sort_name) values ($1,$2,$3,$3),($4,$5,$6,$6),($7,$8,$9,$9)',[SA,CA,'Student A',SB,CB,'Student B',SA2,CA2,'Student A2'])
@@ -34,6 +34,9 @@ before(async()=>{
   await db.query('select public.save_answer_key_atomic($1,$2::jsonb,true,$3)',[SESSION,JSON.stringify(keys),'No erasures'])
 })
 after(async()=>{await db?.close()})
+
+// Guest tests are registered after the existing scenarios below so their admin
+// audit entries do not change the earlier exact-count assertions.
 
 test('atomic result saves retain fractional grades and overwrite without duplicates',async()=>{
   await asUser(A);await save()
@@ -269,4 +272,32 @@ test('confirmed keys reopen before grading, require confirmation again, and cann
   await db.exec('reset role; update public.app_control set paused=true')
   await asUser(A);await assert.rejects(db.query('select public.reopen_answer_key($1)',[source]))
   await db.exec('reset role; update public.app_control set paused=false')
+})
+
+test('guest default is five; only admins change it and only service role admits scans', async()=>{
+  await asUser(null,'anon')
+  assert.equal((await db.query('select public.quick_check_settings() s')).rows[0].s.daily_limit,5)
+  await assert.rejects(db.query('select public.admin_set_quick_check_limit(2)'))
+  await assert.rejects(db.query('select public.consume_quick_check_quota($1,100)',['a'.repeat(64)]))
+  await assert.rejects(db.query('select * from public.quick_check_usage'))
+  await asUser(A)
+  await assert.rejects(db.query('select public.admin_set_quick_check_limit(2)'))
+  await asUser(B)
+  await assert.rejects(db.query('select public.admin_set_quick_check_limit(-1)'))
+  await assert.rejects(db.query('select public.admin_set_quick_check_limit(101)'))
+  await db.query('select public.admin_set_quick_check_limit(2)')
+  await db.exec('reset role; grant usage on schema public to service_role; set role service_role')
+  const consume=(hash,limit=3)=>db.query('select public.consume_quick_check_quota($1,$2) ok',[hash.repeat(64),limit]).then(r=>r.rows[0].ok)
+  const admitted=await Promise.all([consume('a'),consume('a'),consume('a')])
+  assert.equal(admitted.filter(Boolean).length,2)
+  assert.equal(await consume('b'),true)
+  assert.equal(await consume('c'),false)
+  await assert.rejects(db.query('select public.consume_quick_check_quota($1,3)',['invalid']))
+  await asUser(B);await db.query('select public.admin_set_paused(true)')
+  await db.exec('reset role; set role service_role')
+  assert.equal(await consume('d',100),false)
+  await asUser(B);await db.query('select public.admin_set_paused(false)');await db.query('select public.admin_set_quick_check_limit(0)')
+  await db.exec('reset role; set role service_role')
+  assert.equal(await consume('d',100),false)
+  await asUser(B);await db.query('select public.admin_set_quick_check_limit(5)')
 })

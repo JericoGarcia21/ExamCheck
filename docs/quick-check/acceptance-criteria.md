@@ -2,6 +2,8 @@
 
 Status: proposed requirements; none of these new feature tests has been executed.
 
+Implementation follow-up: backend/schema acceptance checks have now run; see `implementation.md`. The original planning evidence below is retained for history. Interactive browser/device and real-provider acceptance remain unverified.
+
 | Case | Requirement | Given / When / Then | Verification |
 | --- | --- | --- | --- |
 | AC-01 | QC-01 | Given no login, when opening Quick Check directly or from the login page, then key input is accessible without redirecting to login; protected account pages still require login. | Route integration |

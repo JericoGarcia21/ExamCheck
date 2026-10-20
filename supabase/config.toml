@@ -1,2 +1,6 @@
 [functions.read-answers]
 verify_jwt = true
+
+# Public endpoint has its own bounded guest admission; signed-in reader stays protected.
+[functions.quick-check]
+verify_jwt = false

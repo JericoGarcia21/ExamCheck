@@ -17,6 +17,7 @@ const ResultsPage = lazy(() => import('./pages/ResultsPage'))
 const SessionResultsPage = lazy(() => import('./pages/SessionResultsPage'))
 const LoginPage = lazy(() => import('./pages/LoginPage'))
 const AdminPage = lazy(() => import('./pages/AdminPage'))
+const QuickCheckPage = lazy(() => import('./pages/QuickCheckPage'))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,6 +38,7 @@ export default function App() {
         <Suspense fallback={<AppSplash />}>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/quick-check" element={<QuickCheckPage />} />
             <Route
               element={
                 <RequireAuth>
