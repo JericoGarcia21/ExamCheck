@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { needsTeacherReview } from '../lib/confidence'
-import { normalizeAnswer, type ScoredAnswer } from '../lib/scoring'
+import { answersMatch, type ScoredAnswer } from '../lib/scoring'
 import type { KeyRow } from '../lib/answerKey'
 
 export type ReviewMode = 'none' | 'view' | 'edit'
 
 interface UseAnswerReviewParams {
   rows: KeyRow[]
+  rules?: string
   /** Current in-memory details, so edits always apply to fresh state. */
   details: ScoredAnswer[]
   updateDetail: (questionNumber: number, patch: Partial<ScoredAnswer>) => void
@@ -16,7 +17,7 @@ interface UseAnswerReviewParams {
  * Owns the uncertain/essay review flow: which questions are queued, the current
  * position, the editable fields, and applying the teacher's decision.
  */
-export function useAnswerReview({ rows, details, updateDetail }: UseAnswerReviewParams) {
+export function useAnswerReview({ rows, rules = '', details, updateDetail }: UseAnswerReviewParams) {
   const [mode, setMode] = useState<ReviewMode>('none')
   const [question, setQuestion] = useState<number | null>(null)
   const [studentAnswer, setStudentAnswer] = useState('')
@@ -68,16 +69,14 @@ export function useAnswerReview({ rows, details, updateDetail }: UseAnswerReview
     if (mode === 'edit') {
       const ans = studentAnswer.trim()
       patch.student_answer = ans
-      const isEssay = current.max_points > 1 || keyItem?.question_type === 'essay'
+      const isEssay = keyItem?.question_type === 'essay'
       if (isEssay) {
         const pts = Math.max(0, Math.min(current.max_points, Number(points) || 0))
         patch.points_awarded = pts
         patch.is_correct = pts >= current.max_points
         patch.feedback = feedback.trim() || undefined
       } else if (keyItem) {
-        const correct =
-          normalizeAnswer(ans, keyItem.question_type) ===
-          normalizeAnswer(keyItem.correct_answer, keyItem.question_type)
+        const correct = answersMatch(ans, keyItem, rules)
         patch.is_correct = correct
         patch.points_awarded = correct ? current.max_points : 0
       }
@@ -93,7 +92,7 @@ export function useAnswerReview({ rows, details, updateDetail }: UseAnswerReview
     setMode('none')
     setQuestion(null)
     setQueue([])
-  }, [question, mode, studentAnswer, points, feedback, updateDetail, index, queue, openAt])
+  }, [question, mode, studentAnswer, points, feedback, updateDetail, index, queue, openAt, rules])
 
   const close = useCallback(() => setMode('none'), [])
 

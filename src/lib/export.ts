@@ -175,7 +175,7 @@ export async function exportStudentExcel(
     [`SESSION: ${meta.sessionName} — ${meta.sessionDate}`],
     [`STUDENT: ${studentName}`],
     [],
-    ['Q', 'Student answer', 'Answer key', 'Result', 'Points', 'AI confidence'],
+    ['Q', 'Student answer', 'Answer key', 'Result', 'Points', 'Reading confidence (RF)'],
   ]
   const rows = buildAnswerRows(answers).map((a) => [
     a.question,

@@ -66,7 +66,7 @@ export default function AnswerKeyEditor({
           rows={3}
           placeholder={'Example rules:\n- No erasures\n- Uppercase letters only\n- No tampering'}
         />
-        <p className="text-xs text-muted-foreground">These rules are checked against the whole paper, not an individual question or section.</p>
+        <p className="text-xs text-muted-foreground">Uppercase-only rules reject answers containing lowercase letters. Other rules are checked against the whole paper for teacher review.</p>
         <Button variant="outline" onClick={onSaveRules}>
           Save rules
         </Button>

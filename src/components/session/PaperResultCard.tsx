@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Button } from '../ui/button'
 import { Label } from '../ui/label'
 import { Input } from '../ui/input'
@@ -38,6 +39,7 @@ export default function PaperResultCard({
   onSave,
   onUpdateDetail,
 }: PaperResultCardProps) {
+  const [answerFilter, setAnswerFilter] = useState<'all' | 'review' | 'incorrect'>('all')
   const override = scoreOverride.trim() === '' ? null : Number(scoreOverride)
   const overrideValid = override === null || (Number.isFinite(override) && override >= 0 && override <= result.total)
   const finalScore = override !== null && overrideValid ? override : effectiveScore
@@ -53,22 +55,28 @@ export default function PaperResultCard({
   )
   const pendingRuleCount = ruleViolations.filter((violation) => violation.status === 'pending').length
   const attentionCount = reviewCount + considerations.length + pendingRuleCount
+  const answerReviewCount = effectiveDetails.filter(needsTeacherReview).length
+  const incorrectCount = effectiveDetails.filter((detail) => !detail.is_correct).length
+  const visibleDetails = effectiveDetails.filter((detail) =>
+    answerFilter === 'review' ? needsTeacherReview(detail) : answerFilter === 'incorrect' ? !detail.is_correct : true,
+  )
 
   return (
     <div className="paper-review space-y-5 rounded-xl border bg-card p-4 lg:p-5" aria-label="Paper review">
       <div className="paper-review-heading">
-        <div className="min-w-0"><p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Paper review</p><h3 className="mt-1 break-words text-xl font-semibold">{studentName}</h3><p className="mt-1 text-sm text-muted-foreground">{attentionCount > 0 ? `${attentionCount} item${attentionCount === 1 ? '' : 's'} need your attention before saving.` : 'All answers and overall rules reviewed. Ready to save.'}</p></div>
+        <div className="min-w-0 flex-1"><p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Checking result</p><h3 className="mt-2 break-words text-2xl font-semibold tracking-tight">{studentName}</h3><p className="mt-2 text-sm text-muted-foreground">{attentionCount > 0 ? `${attentionCount} item${attentionCount === 1 ? '' : 's'} need your attention before saving.` : 'All answers and overall rules reviewed. Ready to save.'}</p><Badge variant="secondary" className="mt-3">{attentionCount > 0 ? 'Review required' : 'Ready to save'}</Badge></div>
         <div className="paper-score-summary"><span className="text-xs font-medium text-muted-foreground">Final score</span><strong>{finalScore}<span> / {result.total}</span></strong><span className="text-sm text-muted-foreground">{percent}{override !== null && overrideValid ? ' · Teacher adjusted' : ' · System score'}</span></div>
       </div>
 
-      {avgPct !== null && (
-        <p className={`text-sm font-medium ${avgPct < 70 ? 'text-destructive' : 'text-muted-foreground'}`}>
-          AI reading confidence: {avgPct}% average
-          {lowCount > 0 && ` · ${lowCount} below 70%`}
-        </p>
-      )}
+      <dl className="result-metrics">
+        <div><dt>Questions</dt><dd>{effectiveDetails.length}</dd></div>
+        <div><dt>Full credit</dt><dd>{effectiveDetails.filter((detail) => detail.is_correct).length}</dd></div>
+        <div><dt>Need review</dt><dd>{answerReviewCount}</dd></div>
+        <div><dt>Reading confidence (RF)</dt><dd>{avgPct === null ? '—' : `${avgPct}%`}<span> average</span></dd></div>
+      </dl>
+      <p className="text-xs text-muted-foreground">Confidence describes how clearly AI read the handwriting, not whether the answer is correct.{lowCount > 0 && ` ${lowCount} reading${lowCount === 1 ? ' is' : 's are'} below 70% confidence.`}</p>
 
-      <div className="flex flex-col gap-3 rounded-xl border bg-card p-3 sm:flex-row sm:items-end">
+      <div className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-4 sm:flex-row sm:items-end">
         <div className="text-sm">
           <p className="text-xs text-muted-foreground">System score</p>
           <p className="font-semibold">
@@ -134,7 +142,7 @@ export default function PaperResultCard({
         {ruleViolations.length > 0 && (
           <div className="rounded-xl border p-3 text-xs">
             <p className="font-medium">Overall paper rules — review each one</p>
-            <p className="mt-1 text-muted-foreground">Rules apply to the whole paper, never an individual question. Confirming a violation does not change the score automatically; use the teacher final score for any penalty.</p>
+            <p className="mt-1 text-muted-foreground">Uppercase-only rules are already applied to answer scores. These overall paper checks require teacher review. Confirming a violation does not change the score automatically; use the teacher final score for any additional penalty.</p>
             <ul className="mt-1 space-y-1">
               {ruleViolations.map((v, i) => (
                 <li key={i} className="flex flex-wrap items-center gap-2 py-2">
@@ -154,17 +162,26 @@ export default function PaperResultCard({
           </div>
         )}
 
+        <section aria-labelledby="answer-breakdown-heading">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-4">
+          <div><h4 id="answer-breakdown-heading" className="font-semibold">Answer breakdown</h4><p className="mt-1 text-xs text-muted-foreground">Compare the reading with your answer key.</p></div>
+          <div className="flex flex-wrap gap-1" role="group" aria-label="Filter answers">
+            {([{ value: 'all', label: 'All', count: effectiveDetails.length }, { value: 'review', label: 'Needs review', count: answerReviewCount }, { value: 'incorrect', label: 'Incorrect', count: incorrectCount }] as const).map((filter) => (
+              <Button key={filter.value} size="sm" variant={answerFilter === filter.value ? 'secondary' : 'ghost'} aria-pressed={answerFilter === filter.value} onClick={() => setAnswerFilter(filter.value)}>{filter.label} <span className="tabular-nums">{filter.count}</span></Button>
+            ))}
+          </div>
+        </div>
         <div className="answer-review-columns border-b py-2 text-xs font-semibold text-muted-foreground" aria-hidden="true">
           <span className="w-6 text-right">No.</span>
           <span className="flex-1">Answer</span>
           <span className="w-16">Score</span>
           <span className="ml-1 whitespace-nowrap" title="How sure the AI is that it read the answer correctly">
-            AI Confidence
+            RF
           </span>
         </div>
 
         <ol className="divide-y text-sm">
-          {effectiveDetails.map((d) => {
+          {visibleDetails.map((d) => {
             const conf = displayConfidence(d)
             const confidencePct = Math.round(conf * 100)
             const low = conf < 0.7
@@ -172,19 +189,19 @@ export default function PaperResultCard({
               <li
                 key={d.question_number}
                 className={`answer-review-row ${
-                  low || d.needs_review ? 'border-l-2 border-destructive pl-2' : ''
+                  needsTeacherReview(d) ? 'answer-review-pending' : ''
                 }`}
               >
                 <span className="answer-review-number text-muted-foreground"><span className="sr-only">Question </span>{d.question_number}.</span>
                 <span className="answer-review-text">
-                  <span className="whitespace-pre-wrap">{d.student_answer || 'No answer detected'}</span>
-                  {d.is_correct && <span className="ml-2 text-xs font-medium text-primary">Correct</span>}
-                  {!d.is_correct && !d.needs_review && (
-                    <span className="mt-1 block whitespace-pre-wrap text-xs text-destructive">Answer key: {d.correct_answer}</span>
-                  )}
+                  <span className="block text-xs text-muted-foreground">Student answer</span>
+                  <span className="mt-1 block whitespace-pre-wrap font-medium">{d.student_answer || 'No answer detected'}</span>
+                  <span className="mt-2 block whitespace-pre-wrap text-xs text-muted-foreground">Answer key: {d.correct_answer}</span>
+                  {d.feedback && <span className="mt-2 block whitespace-pre-wrap text-xs text-muted-foreground">{d.feedback}</span>}
+                  <span className={`mt-2 inline-block text-xs font-medium ${d.is_correct ? 'text-primary' : 'text-destructive'}`}>{d.is_correct ? 'Full credit' : d.points_awarded > 0 ? 'Partial credit' : 'No credit'}</span>
                   {needsTeacherReview(d) && (
-                    <Badge className="ml-1" variant="destructive">
-                      review
+                    <Badge className="ml-2" variant="secondary">
+                      Needs review
                     </Badge>
                   )}
                 </span>
@@ -213,16 +230,20 @@ export default function PaperResultCard({
                   className={`answer-review-confidence whitespace-nowrap rounded px-2 py-1 text-xs font-semibold ${
                     low ? 'bg-destructive/10 text-destructive' : 'bg-muted text-muted-foreground'
                   }`}
-                  title={`AI confidence: ${confidencePct}%`}
+                  title={`Reading confidence (RF): ${confidencePct}%`}
                 >
-                  AI {confidencePct}%
+                  RF {confidencePct}%
                 </span>
               </li>
             )
           })}
         </ol>
+        {visibleDetails.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground" role="status">{effectiveDetails.length === 0 ? 'No answers to display.' : 'No answers match this filter.'}</p>}
+        <p className="border-t pt-3 text-xs text-muted-foreground" role="status">Showing {visibleDetails.length} of {effectiveDetails.length} answers</p>
+        </section>
 
-        <div className="flex flex-col gap-2">
+        <div className="result-actions flex flex-col gap-2 border-t pt-4">
+          <p className="text-xs text-muted-foreground">{attentionCount > 0 ? 'Resolve the review items above to enable saving.' : 'Your reviewed result is ready to save.'}</p>
           {reviewCount > 0 && (
             <Button variant="outline" onClick={onReview}>
               Review {reviewCount} answer{reviewCount === 1 ? '' : 's'} needing attention

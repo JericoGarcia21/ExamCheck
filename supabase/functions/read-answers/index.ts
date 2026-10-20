@@ -21,7 +21,7 @@ interface KeyItem {
 /** How each answer kind should be read. */
 const KIND_RULES: Record<AnswerKind, string> = {
   multiple_choice: 'read a single letter (A, B, C, D or E) only — never a word or code',
-  true_false: 'read exactly "True" or "False"',
+  true_false: 'read the written True/False or T/F answer VERBATIM, preserving its exact letter case; never change "TRUE" to "True" or expand "T" to "True"',
   identification: 'read the written word or short phrase',
   coding: 'read the code VERBATIM, including punctuation and any error text; do not fix or simplify it',
   essay: 'read the full written response',
@@ -90,13 +90,14 @@ function buildPrompt(totalItems: number, keys: KeyItem[], rules: string): string
   const rulesPrompt = rules
     ? ' Also check the WHOLE PAPER against these overall rules and list any violations you are CONFIDENT about: "' +
       rules +
-      '". These rules apply to the paper as a whole, never to an individual question or section. Put them in a separate array "rule_violations" and include a "confidence" from 0 to 1 for each violation. Do not include a question_number.'
+      '". Check uppercase-only instructions strictly against the actual written letter case, including True/False answers. The application enforces uppercase-only answer scoring separately. Report overall paper violations in a separate array "rule_violations" and include a "confidence" from 0 to 1 for each violation. Do not include a question_number.'
     : ''
 
   return (
     `This is a handwritten exam answer sheet with ${totalItems} questions. ` +
     typeInstruction +
     ' ' +
+    'Preserve the exact written letter case for EVERY answer. Never capitalize, lowercase, correct, or rewrite an answer to satisfy the rules. ' +
     'For each question, estimate a "confidence" number from 0 to 1 for how sure you are the reading is correct — you MUST include one for EVERY answer. ' +
     'Respond ONLY with a JSON object in this exact format, no extra text: ' +
     '{"answers":[{"question_number":1,"student_answer":"B","confidence":0.95}], "rule_violations":[{"violation":"erasure detected","confidence":0.8}]}. ' +

@@ -82,7 +82,7 @@ export default function AnswerReviewDialog({
                 )}
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">AI confidence:</p>
+                <p className="text-sm text-muted-foreground">Reading confidence (RF):</p>
                 <div className="mt-1 h-2 w-full rounded-full bg-muted">
                   <div
                     className={`h-full rounded-full ${(confidence ?? 0) < 0.7 ? 'bg-destructive' : 'bg-primary'}`}

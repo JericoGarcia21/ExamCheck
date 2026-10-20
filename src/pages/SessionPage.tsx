@@ -229,6 +229,7 @@ function SessionContent() {
   // re-creating its callbacks on every keystroke.
   const review = useAnswerReview({
     rows,
+    rules: session?.rules ?? '',
     details: paperResult?.details ?? [],
     updateDetail,
   })
@@ -303,6 +304,7 @@ function SessionContent() {
         imageBase64: b64,
         mimeType: 'image/jpeg',
         rows,
+        rules: session?.rules ?? '',
       })
       if (operation !== operationRef.current) return
       setResultStudent(capturedStudent)
@@ -511,7 +513,7 @@ function SessionContent() {
                         size="sm"
                         onClick={() => {
                           if (!savedAnswers?.length) { setEditError('Saved answers are unavailable. Please reload and retry.'); return }
-                          const restored = restoreSavedResult(rows, savedAnswers, editAnswers, savedResult!.score, savedResult!.calculatedScore)
+                          const restored = restoreSavedResult(rows, savedAnswers, editAnswers, savedResult!.score, savedResult!.calculatedScore, session?.rules ?? '')
                           setResultStudent(selectedStudent)
                           setPaperResult(restored.result)
                           setScoreOverride(restored.scoreOverride)

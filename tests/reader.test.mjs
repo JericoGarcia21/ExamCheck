@@ -69,6 +69,7 @@ test('reader uses the authorized stored key and supports fractional essay points
   const provider=calls.find(c=>c.url.includes('googleapis'))
   const prompt=JSON.parse(provider.init.body).contents[0].parts[0].text
   assert.match(prompt,/Stored rubric/);assert.match(prompt,/Stored rules/)
+  assert.match(prompt,/Preserve the exact written letter case for EVERY answer/)
   assert.doesNotMatch(prompt,/Injected rubric|Injected rules/)
 })
 test('malformed provider question IDs fail instead of producing a final grade',async(t)=>{

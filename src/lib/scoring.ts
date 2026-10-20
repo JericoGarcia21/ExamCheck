@@ -122,9 +122,23 @@ function clampPoints(value: number, max: number): number {
   return Math.max(0, Math.min(max, value))
 }
 
+/** Only explicit uppercase-only instructions affect automatic answer scoring. */
+export function requiresUppercase(rules: string): boolean {
+  return rules.split(/[\n.!;]+/).some((rule) =>
+    !/\b(no|not|optional|ignore|allow|allowed)\b/i.test(rule) &&
+    /\b(?:(?:upper[ -]?case|capital|block)\s*(?:letters?|answers?)?\s*only|only\s+(?:use\s+)?(?:upper[ -]?case|capital|block)(?:\s+letters?)?|all\s+(?:upper[ -]?case|capitals|caps)|(?:use|must be|write(?: answers)? in)\s+(?:upper[ -]?case|capital letters|block letters))\b/i.test(rule),
+  )
+}
+
+export function answersMatch(student: string, key: AnswerKeyItem, rules = ''): boolean {
+  if (requiresUppercase(rules) && student !== student.toUpperCase()) return false
+  return normalizeAnswer(student, key.question_type) === normalizeAnswer(key.correct_answer, key.question_type)
+}
+
 export function calculateScore(
   answers: StudentAnswer[],
   key: AnswerKeyItem[],
+  rules = '',
 ): ScoreResult {
   const answerMap = new Map(answers.map((a) => [a.question_number, a]))
   let score = 0
@@ -167,10 +181,9 @@ export function calculateScore(
       continue
     }
 
-    const isCorrect =
-      normalizeAnswer(a.student_answer, k.question_type) ===
-      normalizeAnswer(k.correct_answer, k.question_type)
-    const consideration = !isCorrect && k.question_type === 'identification'
+    const uppercaseViolation = requiresUppercase(rules) && a.student_answer !== a.student_answer.toUpperCase()
+    const isCorrect = answersMatch(a.student_answer, k, rules)
+    const consideration = !isCorrect && !uppercaseViolation && k.question_type === 'identification'
       ? considerationReason(a.student_answer, k.correct_answer)
       : undefined
 
@@ -192,6 +205,7 @@ export function calculateScore(
       points_awarded: points,
       max_points: maxPoints,
       consideration_reason: consideration,
+      feedback: uppercaseViolation ? 'Uppercase-only rule: the answer contains lowercase letters.' : undefined,
     })
   }
 

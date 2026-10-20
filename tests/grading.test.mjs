@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { calculateScore, considerationReason, normalizeCode } from '../src/lib/scoring.ts'
+import { answersMatch, calculateScore, considerationReason, normalizeCode, requiresUppercase } from '../src/lib/scoring.ts'
 import { parseAnswerKeyText } from '../src/lib/answerKey.ts'
 import { needsTeacherReview } from '../src/lib/confidence.ts'
 import { detectNameColumn, previewRoster, validateRosterFile } from '../src/lib/rosterImport.ts'
@@ -8,6 +8,33 @@ import { escapeCsvCell } from '../src/lib/csv.ts'
 import { validateRecognition, validateReadRequest } from '../supabase/functions/_shared/validation.ts'
 
 const key = [{ question_number: 1, correct_answer: 'B', question_type: 'multiple_choice', max_points: 1 }, { question_number: 2, correct_answer: 'True', question_type: 'true_false', max_points: 1 }]
+test('uppercase-only rules reject mixed/lowercase True/False without normalizing away violations', () => {
+  for (const rules of ['Uppercase only', 'Uppercase letters only', 'UPPER CASE ONLY', 'Only capital letters', 'Use uppercase', 'All caps', 'All uppercase', 'No erasures\nUppercase letters only']) {
+    assert.equal(requiresUppercase(rules), true, rules)
+    for (const [correct_answer, accepted, rejected] of [
+      ['True', ['TRUE', 'T'], ['True', 'true', 't', 'TrUe']],
+      ['False', ['FALSE', 'F'], ['False', 'false', 'f', 'FaLsE']],
+    ]) {
+      const item = { question_number: 1, correct_answer, question_type: 'true_false', max_points: 2 }
+      for (const student_answer of [...accepted, ...rejected]) {
+        const expected = accepted.includes(student_answer)
+        const result = calculateScore([{ question_number: 1, student_answer, confidence: 0.99 }], [item], rules)
+        assert.equal(result.score, expected ? 2 : 0, `${rules}: ${student_answer}`)
+        assert.equal(result.details[0].is_correct, expected)
+        assert.equal(result.details[0].student_answer, student_answer)
+        assert.equal(answersMatch(student_answer, item, rules), expected)
+        if (!expected) assert.match(result.details[0].feedback, /Uppercase-only/)
+      }
+    }
+  }
+})
+
+test('absent or negated uppercase rules preserve ordinary case-insensitive grading', () => {
+  for (const rules of ['', 'No erasures', 'Uppercase is optional', 'Do not use uppercase only', 'Lowercase allowed']) {
+    assert.equal(requiresUppercase(rules), false)
+    assert.equal(calculateScore([{question_number: 2, student_answer: 'True', confidence: 0.99}], [key[1]], rules).score, 1)
+  }
+})
 test('all correct, all wrong, partial, and missing answers retain correct totals', () => {
   for (const [answers, expected] of [[[ 'b', 't' ], 2], [['A','False'],0], [['B','False'],1], [[],0]]) {
     const result = calculateScore(answers.map((student_answer,i) => ({ question_number:i+1,student_answer,confidence:0.9 })), key)

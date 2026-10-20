@@ -49,6 +49,14 @@ test('legacy calculated-score fallback preserves an override including a zero fi
   assert.equal(restoreSavedResult(rows, answers, {}, null, null).scoreOverride, '')
 })
 
+test('saved answer edits enforce uppercase rules while preserving unchanged teacher decisions', () => {
+  const key = [{ question_number: 1, correct_answer: 'True', question_type: 'true_false', max_points: 1 }]
+  const saved = [{ ...answers[0], student_answer: 'TRUE', points_awarded: 1, is_correct: true }]
+  assert.equal(restoreSavedResult(key, saved, {1: 'True'}, 1, 1, 'Uppercase only').result.score, 0)
+  assert.equal(restoreSavedResult(key, saved, {1: 'true'}, 1, 1, 'Uppercase only').result.details[0].needs_review, true)
+  assert.equal(restoreSavedResult(key, saved, {}, 1, 1, 'Uppercase only').result.score, 1)
+})
+
 test('paper rules render as overall decisions without question penalty actions', () => {
   const noop = () => {}
   const props = { saving:false, studentName:'Student', result:{score:8,total:10,details:[]}, effectiveScore:8,
@@ -93,6 +101,27 @@ test('paper review previews the teacher final score and marks out-of-range input
   assert.match(invalid, /aria-invalid="true"/)
   assert.match(invalid, /Enter a number from 0 to 10/)
   assert.match(invalid, /<button[^>]*disabled=""[^>]*>Save final result<\/button>/)
+})
+
+test('checking result exposes answer comparison, rule feedback and accessible filters', () => {
+  const noop = () => {}
+  const detail = { question_number:1, student_answer:'True', correct_answer:'TRUE',
+    is_correct:false, confidence:0.99, points_awarded:0, max_points:1,
+    feedback:'Uppercase-only rule: the answer contains lowercase letters.' }
+  const markup = renderToStaticMarkup(createElement(PaperResultCard, {
+    saving:false, studentName:'Student with a long display name', result:{score:0,total:1,details:[detail]},
+    effectiveScore:0, effectiveDetails:[detail], ruleViolations:[], onSetViolationStatus:noop,
+    scoreOverride:'', onScoreOverrideChange:noop, reviewCount:0, onReview:noop, onSave:noop, onUpdateDetail:noop,
+  }))
+  assert.match(markup, /aria-label="Filter answers"/)
+  assert.match(markup, /aria-pressed="true"/)
+  assert.match(markup, /Answer breakdown/)
+  assert.match(markup, /Student answer/)
+  assert.match(markup, /Answer key: TRUE/)
+  assert.match(markup, /Uppercase-only rule/)
+  assert.match(markup, /No credit/)
+  assert.match(markup, /not whether the answer is correct/)
+  assert.match(markup, /Showing 1 of 1 answers/)
 })
 
 test('student picker exposes search label, selection and roster progress', () => {
