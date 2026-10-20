@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 let handler
 const originalDeno=globalThis.Deno
 before(async()=>{
-  globalThis.Deno={env:{get:(name)=>({GEMINI_API_KEY:'test-provider-secret',SUPABASE_URL:'https://backend.example.test',SUPABASE_ANON_KEY:'test-anon-key'}[name])},serve:(fn)=>{handler=fn}}
+  globalThis.Deno={env:{get:(name)=>({GEMINI_API_KEY:'test-provider-secret',SUPABASE_URL:'https://backend.example.test',SUPABASE_ANON_KEY:'test-anon-key',SUPABASE_SERVICE_ROLE_KEY:'test-service-key'}[name])},serve:(fn)=>{handler=fn}}
   await import('../supabase/functions/read-answers/dashboard.ts')
 })
 after(()=>{globalThis.Deno=originalDeno})
@@ -19,6 +19,7 @@ function mockBackend(t,options={}) {
     if(String(url).includes('/answer_keys?')) return Response.json([{question_number:1,question_type:'essay',max_points:10,rubric:'Stored rubric'},{question_number:2,question_type:'multiple_choice',max_points:1}])
     if(String(url).endsWith('/rpc/consume_reader_quota')) return Response.json(!options.quotaExceeded)
     if(String(url).endsWith('/rpc/teacher_enabled')) return Response.json(!options.paused,{status:options.accessUnavailable?503:200})
+    if(String(url).endsWith('/rpc/record_model_usage')) return new Response(null,{status:204})
     if(String(url).includes('generativelanguage.googleapis.com') && options.pauseOnRetry) { options.paused=true; return Response.json({error:'Retry'}, {status:503}) }
     if(String(url).includes('generativelanguage.googleapis.com')) return Response.json({candidates:[{content:{parts:[{text:JSON.stringify(options.recognition??{answers:[{question_number:1,student_answer:'Essay response',confidence:0.8,points:2.5},{question_number:2,student_answer:'B',confidence:0.9}],rule_violations:[]})}]}}]})
     throw new Error('Unexpected URL')

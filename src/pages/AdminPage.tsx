@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import QuickCheckSettings from '../components/QuickCheckSettings'
+import ModelUsagePanel from '../components/ModelUsagePanel'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAppAccess } from '../hooks/useAppAccess'
 import { getAdminAccounts, getAdminAnalytics, setAccountSuspended, setAppPaused } from '../services/adminService'
@@ -37,6 +38,7 @@ function AdminDashboard({ paused }: { paused: boolean }) {
       }}>{paused ? 'Resume app' : 'Pause app'}</button>
     </section>
     <QuickCheckSettings />
+    <ModelUsagePanel />
     {notice && <p role="status">{notice}</p>}
     {mutation.isError && <p role="alert" className="text-destructive">Change failed. {mutation.error.message}</p>}
     {analytics.isPending ? <p role="status">Loading analytics…</p> : analytics.isError ? <p role="alert">Analytics could not load. Use Refresh to retry.</p> : data && <>

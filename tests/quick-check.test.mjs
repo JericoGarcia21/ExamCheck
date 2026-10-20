@@ -18,7 +18,8 @@ function backend(t,options={}) {
   t.mock.method(globalThis,'fetch',async(url,init)=>{
     calls.push({url:String(url),init})
     if(String(url).includes('/rpc/consume_quick_check_quota')) return Response.json(options.admitted??true,{status:options.quotaStatus??200})
-    if(String(url).includes('googleapis.com')) return Response.json({candidates:[{content:{parts:[{text:JSON.stringify(options.output??{answers:[{question_number:1,student_answer:'True',confidence:0.99}],rule_violations:[]})}]}}]},{status:options.providerStatus??200})
+    if(String(url).includes('/rpc/record_model_usage')) return new Response(null,{status:options.telemetryStatus??204})
+    if(String(url).includes('googleapis.com')) return Response.json({usageMetadata:{promptTokenCount:12,candidatesTokenCount:5,totalTokenCount:17},candidates:[{content:{parts:[{text:JSON.stringify(options.output??{answers:[{question_number:1,student_answer:'True',confidence:0.99}],rule_violations:[]})}]}}]},{status:options.providerStatus??200})
     throw new Error('Unexpected API access')
   })
   return calls
@@ -28,11 +29,15 @@ test('guest reader accepts images without a login, returns verbatim readings, an
   const response=await handler(request())
   assert.equal(response.status,200)
   assert.equal((await response.json()).answers[0].student_answer,'True')
-  assert.equal(calls.length,2)
+  assert.equal(calls.length,3)
   assert.match(JSON.parse(calls[0].init.body).p_guest_hash,/^[a-f0-9]{64}$/)
   assert.equal(calls[0].init.body.includes('192.0.2.1'),false)
   assert.equal(calls[1].url.includes('test-provider-key'),false)
   assert.match(calls[1].init.body,/Preserve exact written letter case/)
+  const usage=JSON.parse(calls[2].init.body)
+  assert.equal(usage.p_source,'guest_sheet')
+  assert.equal(usage.p_total,17)
+  assert.equal(calls[2].init.body.includes('student_answer'),false)
 })
 test('invalid inputs and wrong origin never reach quota or provider',async t=>{
   const calls=backend(t)

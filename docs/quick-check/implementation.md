@@ -24,17 +24,19 @@ This implements D1 (photo plus paste/edit) and D2 (five default; admin editable)
 
 ## Deployment steps (not executed)
 
-1. Confirm existing migrations through `0010_session_copy_and_details.sql` are applied. Apply **only** the new `0011_quick_check.sql` on the intended Supabase project.
+1. Confirm existing migrations through `0010_session_copy_and_details.sql` are applied. Apply `0011_quick_check.sql`, then `0012_usage_analytics.sql` if not already applied. Do not rerun older migrations.
 2. Configure the `quick-check` function's server secrets:
    - `GEMINI_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (server only; never VITE variables).
    - `QUICK_CHECK_ORIGIN`: exact frontend origin, e.g. `https://your-app.example`, without trailing slash.
    - `QUICK_CHECK_HASH_SECRET`: a long randomly generated server secret for network HMACs; keep stable within a day.
    - `QUICK_CHECK_IP_HEADER`: the header your trusted deployment proxy **overwrites** with a stable client-network identity. Verify spoof resistance on the actual ingress. Do not enable guest processing with a caller-controlled header. A shared proxy identity will share the five-scan allowance across all guests.
-   - `QUICK_CHECK_GLOBAL_DAILY_LIMIT`: positive integer 1–10000; suggested initial cap **100 scans/day**, to be set by the owner according to budget. This bounds request count, not dollar cost; token/image costs still vary.
+   - The global daily cap is now stored in the database (default **100**) and editable in Admin → Model usage & guest limits. `QUICK_CHECK_GLOBAL_DAILY_LIMIT` is no longer read by the current endpoint. Existing older endpoint versions can still request a lower cap while rolling out. This limits scan count, not dollar cost.
    - `QUICK_CHECK_ENABLED`: leave unset/false during setup; set `true` only after admission and synthetic workflow checks on the target.
 3. Deploy the **new** function `quick-check`. Its config requires JWT verification **off**, since this is the public endpoint with its own quota admission. Keep JWT verification **on** for the existing `read-answers` function.
 4. For dashboard deployment, run `npm run bundle:reader`, then paste all of `supabase/functions/quick-check/dashboard.ts` into the **quick-check** function editor as `index.ts`. Do not paste this into `read-answers`. Both bundles are checked by `npm run verify`.
 5. Deploy the frontend. Open `/login` → **Quick Check — no login needed**, or `/quick-check` directly. Admin → **Quick Check guest allowance** changes the default-five setting immediately on the server. Settings refresh on the guest screen every 30 seconds.
+
+For model-token telemetry also redeploy `read-answers` from its own generated dashboard file with JWT verification **on**. Both functions use the server-only `SUPABASE_SERVICE_ROLE_KEY` to write metadata; no service key belongs in frontend configuration. See `../model-usage.md` for coverage and reporting limits.
 
 Production setup and header trust have not been verified; failure to configure required secrets deliberately returns unavailable rather than allowing unbounded paid scans. An unauthenticated public endpoint can still attract bots: even with correct per-network limits, distributed visitors can exhaust the global cap and deny guest availability. Add stronger admission if observed abuse warrants it; the owner must accept this availability trade-off before enabling public scans. CORS alone is not authentication.
 

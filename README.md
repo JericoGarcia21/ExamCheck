@@ -222,6 +222,8 @@ project's privacy rules. Only the extracted answers and scores are saved.
 
 ## Status
 
+Admin model usage now reports Quick Check totals, configurable global guest caps and provider-returned token metadata. Apply `0012_usage_analytics.sql` and redeploy both reader functions to start tracking. Live billing/provider-quota balances require a separate Google connection; official dashboard links are provided. See [usage coverage and rollout](docs/model-usage.md).
+
 Guest **Quick Check** is available in the source at `/quick-check`, linked from login. It supports answer-key photos/paste, sheet photos, review and CSV download without login. Default allowance is **5 scans per network per UTC day**, editable by admins. It requires migration `0011_quick_check.sql` and the new public `quick-check` Edge Function; see [setup and verification gaps](docs/quick-check/implementation.md). The authenticated `read-answers` function retains JWT verification.
 
 Feature phases 0–7 are implemented. QA fixes are covered by automated regression

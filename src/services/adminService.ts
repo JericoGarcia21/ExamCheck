@@ -14,3 +14,14 @@ export const getAdminAnalytics = () => rpc<AdminAnalytics>('admin_analytics')
 export const getAdminAccounts = (search: string, offset: number) => rpc<AdminAccount[]>('admin_accounts', { p_search: search, p_offset: offset })
 export const setAccountSuspended = (id: string, suspended: boolean) => rpc<void>('admin_set_suspended', { p_user_id: id, p_suspended: suspended })
 export const setAppPaused = (paused: boolean) => rpc<void>('admin_set_paused', { p_paused: paused })
+
+export interface ModelUsageRow {
+  source: 'signed_in'|'guest_key'|'guest_sheet'; model:string; attempts:number; reported_attempts:number; failed_attempts:number;
+  input_tokens:number|null;output_tokens:number|null;thinking_tokens:number|null;cached_tokens:number|null;total_tokens:number|null;last_recorded:string
+}
+export interface ModelUsageAnalytics {
+  daily_limit:number;global_limit:number;guest_today:number;guest_30_days:number;tracking_since:string|null;
+  models:ModelUsageRow[];daily:{day:string;guest_scans:number}[]
+}
+export const getModelUsage = () => rpc<ModelUsageAnalytics>('admin_model_usage')
+export const setGuestGlobalLimit = (limit:number) => rpc<void>('admin_set_quick_check_global_limit',{p_limit:limit})

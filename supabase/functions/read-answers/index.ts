@@ -1,4 +1,5 @@
 import { validateReadRequest, validateRecognition } from '../_shared/validation.ts'
+import { trackedModelFetch } from '../_shared/modelUsage.ts'
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? ''
 const GEMINI_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.8-flash']
@@ -174,7 +175,7 @@ Deno.serve(async (req) => {
         const accessResponse = await api('/rest/v1/rpc/teacher_enabled', { method: 'POST', body: '{}' })
         if (!accessResponse.ok) return fail('Could not verify app access. Please retry.', 503)
         if (await accessResponse.json() !== true) return fail('The app or your account is paused. Contact your administrator.', 403)
-        response = await fetch(
+        response = await trackedModelFetch('signed_in',model,
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
           {
             signal: requestDeadline,
