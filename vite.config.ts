@@ -39,6 +39,9 @@ export default defineConfig(({ command }) => ({
         ],
       },
       workbox: {
+        // After the user accepts an update, claim open windows so Workbox's
+        // controlling event can reload them onto the new precached build.
+        clientsClaim: true,
         navigateFallback: '/index.html',
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         // Never cache Supabase API / auth / Edge Function traffic.

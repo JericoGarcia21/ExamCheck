@@ -46,7 +46,11 @@ export default function StudentPicker({
                     ? 'bg-green-50 text-green-800'
                     : ''
               }`}
-              onClick={() => onSelect(s)}
+              onClick={(event) => {
+                // A second click must not clear an already opened paper.
+                // Keyboard activation has detail 0 and remains supported.
+                if (selectedId !== s.id && event.detail < 2) onSelect(s)
+              }}
             >
               <span className="min-w-0 break-words">{s.name}</span>
               <span className="shrink-0 text-xs font-medium">{selectedId === s.id ? 'Selected' : doneIds.has(s.id) ? 'Checked' : 'Not checked'}</span>

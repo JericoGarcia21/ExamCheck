@@ -135,6 +135,25 @@ test('student picker exposes search label, selection and roster progress', () =>
   assert.match(markup, /1 \/ 2 checked/)
 })
 
+test('reselecting a student or the second click of a double-click never resets checking', () => {
+  const selected=[]
+  const props={students:[{id:'one',name:'Student One'},{id:'two',name:'Student Two'}],search:'',onSearchChange:()=>{},selectedId:'one',doneIds:new Set(),onSelect:student=>selected.push(student.id)}
+  function buttons(element) {
+    if (!element || typeof element!=='object') return []
+    if (Array.isArray(element)) return element.flatMap(buttons)
+    return [...(element.type==='button'?[element]:[]),...buttons(element.props?.children)]
+  }
+  const [same,other]=buttons(StudentPicker(props))
+  same.props.onClick({detail:1})
+  same.props.onClick({detail:2})
+  assert.deepEqual(selected,[])
+  other.props.onClick({detail:1})
+  other.props.onClick({detail:2})
+  assert.deepEqual(selected,['two'])
+  other.props.onClick({detail:0})
+  assert.deepEqual(selected,['two','two']) // Keyboard selection of a different student is supported.
+})
+
 
 test('saved draft answer keys expose answer, type, points and rubric editing while confirmed keys are read-only', () => {
   const props = { rows, locked: false, editable: true, rules: null, onUpdate() {} }

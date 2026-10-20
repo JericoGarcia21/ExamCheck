@@ -463,7 +463,7 @@ function SessionContent() {
             selectedId={selectedStudent}
             doneIds={doneIds}
             onSelect={(s) => {
-              if (savingRef.current) return
+              if (savingRef.current || selectedStudent === s.id) return
               operationRef.current += 1
               captureBusyRef.current = false
               setPaperLoading(false)
