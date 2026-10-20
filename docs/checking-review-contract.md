@@ -16,7 +16,7 @@
 - Exact answers receive deterministic credit as before.
 - Conservative identification variants create a possible-match consideration with zero points. The teacher must select **Accept as correct** or **Keep wrong** before saving.
 - Supported considerations are separator/punctuation variants, acronym or parenthetical forms, and a two-or-more-word phrase with one additional qualifier.
-- Overall-paper rules are returned in the existing reader response. They never change an individual answer or score automatically. Each must be confirmed or dismissed; any penalty uses the explicit teacher final-score adjustment.
+- Explicit uppercase-only instructions are enforced on objective answers before normalization, including comma-separated rules such as "No erasures, uppercase letters only". Mixed/lowercase answers receive zero; the reader preserves written case. Other overall-paper rule checks require teacher confirmation or dismissal; any additional penalty uses the explicit teacher final-score adjustment.
 - No database migration or additional AI request is introduced.
 
 ## Verification evidence

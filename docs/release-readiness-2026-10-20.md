@@ -2,6 +2,8 @@
 
 Recommendation: **NO-GO for production**. One reproduced correctness defect and required acceptance/operational gaps remain. No exceptions have been accepted and no deployment is authorized.
 
+Follow-up: the combined-rule defect below was subsequently fixed by evaluating comma- and conjunction-separated instructions independently. A regression first failed on the original candidate, then passed with the fix; the full suite now has 59 passing tests. The checking/review contract was also corrected. This report and its manifest describe the original assessed candidate, not the follow-up revision. Remaining live acceptance, configuration and recovery gaps still prevent a production go recommendation.
+
 ## Candidate and scope
 
 Assessed at approximately 19:30 Asia/Manila on 2026-10-20, Windows, Node v24.14.1. Candidate is the local working tree based on `e879d97807480ec2e452420b9f99b4d5640b7b14`, not that commit alone. Exact product-source/config/test inputs are recorded in `release-candidate-2026-10-20.sha256`. The manifest excludes environment files and unrelated engineering-kit changes. Documentation is not part of the deployable artifact.

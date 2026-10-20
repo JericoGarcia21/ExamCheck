@@ -35,6 +35,29 @@ test('absent or negated uppercase rules preserve ordinary case-insensitive gradi
     assert.equal(calculateScore([{question_number: 2, student_answer: 'True', confidence: 0.99}], [key[1]], rules).score, 1)
   }
 })
+
+test('combined paper rules enforce uppercase independently of unrelated prohibitions', () => {
+  for (const rules of [
+    'No erasures, uppercase letters only',
+    'Uppercase letters only, no erasures',
+    'No erasures and uppercase letters only',
+    'No erasures but use uppercase',
+    'No erasures; uppercase letters only',
+    'No erasures. Uppercase letters only',
+  ]) {
+    for (const [student_answer, correct_answer, expected] of [
+      ['True', 'TRUE', 0], ['true', 'TRUE', 0], ['TRUE', 'TRUE', 1],
+      ['False', 'FALSE', 0], ['false', 'FALSE', 0], ['FALSE', 'FALSE', 1],
+    ]) {
+      const result = calculateScore([{question_number:1, student_answer, confidence:0.99}],
+        [{question_number:1, correct_answer, question_type:'true_false'}], rules)
+      assert.equal(result.score, expected, `${rules}: ${student_answer}`)
+    }
+  }
+  for (const rules of ['No erasures, do not use uppercase only', 'No erasures and uppercase is optional', 'Do not use uppercase only, no erasures']) {
+    assert.equal(requiresUppercase(rules), false, rules)
+  }
+})
 test('all correct, all wrong, partial, and missing answers retain correct totals', () => {
   for (const [answers, expected] of [[[ 'b', 't' ], 2], [['A','False'],0], [['B','False'],1], [[],0]]) {
     const result = calculateScore(answers.map((student_answer,i) => ({ question_number:i+1,student_answer,confidence:0.9 })), key)

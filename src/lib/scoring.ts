@@ -124,7 +124,8 @@ function clampPoints(value: number, max: number): number {
 
 /** Only explicit uppercase-only instructions affect automatic answer scoring. */
 export function requiresUppercase(rules: string): boolean {
-  return rules.split(/[\n.!;]+/).some((rule) =>
+  // Evaluate separate instructions so "no erasures" cannot negate "uppercase only".
+  return rules.split(/[\n,.!;]+|\b(?:and|but)\b/i).some((rule) =>
     !/\b(no|not|optional|ignore|allow|allowed)\b/i.test(rule) &&
     /\b(?:(?:upper[ -]?case|capital|block)\s*(?:letters?|answers?)?\s*only|only\s+(?:use\s+)?(?:upper[ -]?case|capital|block)(?:\s+letters?)?|all\s+(?:upper[ -]?case|capitals|caps)|(?:use|must be|write(?: answers)? in)\s+(?:upper[ -]?case|capital letters|block letters))\b/i.test(rule),
   )
