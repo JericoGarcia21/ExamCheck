@@ -88,7 +88,7 @@ export default function AnswerKeyPreview({ rows, locked, editable, rules, onUpda
         {locked && (
           <div className="mt-3 space-y-1">
             <p className="text-sm text-green-700">✓ Locked. Ready to check student papers.</p>
-            {rules && <p className="text-xs text-muted-foreground">Rules: {rules.replace(/\n/g, ' · ')}</p>}
+            {rules && <p className="text-xs text-muted-foreground">Overall paper rules: {rules.replace(/\n/g, ' · ')}</p>}
           </div>
         )}
       </CardContent>

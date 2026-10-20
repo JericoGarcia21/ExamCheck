@@ -13,9 +13,8 @@ interface PaperResultCardProps {
   result: ScoreResult
   effectiveScore: number
   effectiveDetails: ScoredAnswer[]
-  appliedViolationNumbers: Set<number>
   ruleViolations: RuleViolation[]
-  onToggleViolation: (index: number) => void
+  onSetViolationStatus: (index: number, status: RuleViolation['status']) => void
   scoreOverride: string
   onScoreOverrideChange: (value: string) => void
   reviewCount: number
@@ -30,9 +29,8 @@ export default function PaperResultCard({
   result,
   effectiveScore,
   effectiveDetails,
-  appliedViolationNumbers,
   ruleViolations,
-  onToggleViolation,
+  onSetViolationStatus,
   scoreOverride,
   onScoreOverrideChange,
   reviewCount,
@@ -50,11 +48,16 @@ export default function PaperResultCard({
     return Math.round(avg * 100)
   })()
   const lowCount = effectiveDetails.filter((d) => displayConfidence(d) < 0.7).length
+  const considerations = effectiveDetails.filter((detail) =>
+    Boolean(detail.consideration_reason) && needsTeacherReview(detail),
+  )
+  const pendingRuleCount = ruleViolations.filter((violation) => violation.status === 'pending').length
+  const attentionCount = reviewCount + considerations.length + pendingRuleCount
 
   return (
     <div className="paper-review space-y-5 rounded-xl border bg-card p-4 lg:p-5" aria-label="Paper review">
       <div className="paper-review-heading">
-        <div className="min-w-0"><p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Paper review</p><h3 className="mt-1 break-words text-xl font-semibold">{studentName}</h3><p className="mt-1 text-sm text-muted-foreground">{reviewCount > 0 ? `${reviewCount} answers need your attention before saving.` : 'All answers reviewed. Ready to save.'}</p></div>
+        <div className="min-w-0"><p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Paper review</p><h3 className="mt-1 break-words text-xl font-semibold">{studentName}</h3><p className="mt-1 text-sm text-muted-foreground">{attentionCount > 0 ? `${attentionCount} item${attentionCount === 1 ? '' : 's'} need your attention before saving.` : 'All answers and overall rules reviewed. Ready to save.'}</p></div>
         <div className="paper-score-summary"><span className="text-xs font-medium text-muted-foreground">Final score</span><strong>{finalScore}<span> / {result.total}</span></strong><span className="text-sm text-muted-foreground">{percent}{override !== null && overrideValid ? ' · Teacher adjusted' : ' · System score'}</span></div>
       </div>
 
@@ -95,31 +98,56 @@ export default function PaperResultCard({
         </div>
       </div>
 
+        {considerations.length > 0 && (
+          <section className="rounded-xl border border-amber-500/40 bg-amber-50/50 p-3 text-sm" aria-labelledby="answer-considerations-heading">
+            <p id="answer-considerations-heading" className="font-medium">Possible answer matches — teacher decision required</p>
+            <p className="mt-1 text-xs text-muted-foreground">These answers remain wrong until you accept them. Reading confidence does not determine correctness.</p>
+            <ul className="mt-2 space-y-3">
+              {considerations.map((detail) => (
+                <li key={detail.question_number} className="rounded-lg border bg-card p-3">
+                  <p className="font-medium">Question {detail.question_number}</p>
+                  <p className="mt-1 break-words"><span className="text-muted-foreground">Student:</span> {detail.student_answer}</p>
+                  <p className="break-words"><span className="text-muted-foreground">Answer key:</span> {detail.correct_answer}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{detail.consideration_reason}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button size="sm" onClick={() => onUpdateDetail(detail.question_number, {
+                      is_correct: true,
+                      points_awarded: detail.max_points,
+                      needs_review: false,
+                      review_status: 'edited',
+                      consideration_reason: undefined,
+                    })}>Accept as correct</Button>
+                    <Button size="sm" variant="outline" onClick={() => onUpdateDetail(detail.question_number, {
+                      is_correct: false,
+                      points_awarded: 0,
+                      needs_review: false,
+                      review_status: 'accepted',
+                      consideration_reason: undefined,
+                    })}>Keep wrong</Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         {ruleViolations.length > 0 && (
           <div className="rounded-xl border p-3 text-xs">
-            <p className="font-medium">Rule checks — review each one. Nothing is marked wrong automatically.</p>
+            <p className="font-medium">Overall paper rules — review each one</p>
+            <p className="mt-1 text-muted-foreground">Rules apply to the whole paper, never an individual question. Confirming a violation does not change the score automatically; use the teacher final score for any penalty.</p>
             <ul className="mt-1 space-y-1">
               {ruleViolations.map((v, i) => (
                 <li key={i} className="flex flex-wrap items-center gap-2 py-2">
                   <span className="flex-1">
-                    {v.question_number !== null ? `Q${v.question_number}: ` : ''}
                     {v.violation}
                     {v.confidence !== null && (
                       <span className="ml-1 text-muted-foreground">({Math.round(v.confidence * 100)}%)</span>
                     )}
                   </span>
-                  {v.question_number === null ? (
-                    <span className="text-muted-foreground">Advisory — no question identified</span>
-                  ) : <Button
-                    size="sm"
-                    variant={v.applied ? 'default' : 'outline'}
-                    className="min-h-11 px-3 text-xs"
-                    aria-pressed={v.applied}
-                    aria-label={`${v.applied ? 'Remove penalty from' : 'Mark wrong for'} question ${v.question_number}: ${v.violation}`}
-                    onClick={() => onToggleViolation(i)}
-                  >
-                    {v.applied ? 'Marked wrong ✓' : 'Mark wrong'}
-                  </Button>}
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" variant={v.status === 'confirmed' ? 'default' : 'outline'} className="min-h-11 px-3 text-xs" aria-pressed={v.status === 'confirmed'} onClick={() => onSetViolationStatus(i, 'confirmed')}>Confirm violation</Button>
+                    <Button size="sm" variant={v.status === 'dismissed' ? 'secondary' : 'outline'} className="min-h-11 px-3 text-xs" aria-pressed={v.status === 'dismissed'} onClick={() => onSetViolationStatus(i, 'dismissed')}>Dismiss</Button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -140,22 +168,20 @@ export default function PaperResultCard({
             const conf = displayConfidence(d)
             const confidencePct = Math.round(conf * 100)
             const low = conf < 0.7
-            const forced = appliedViolationNumbers.has(d.question_number)
             return (
               <li
                 key={d.question_number}
                 className={`answer-review-row ${
-                  low || d.needs_review || forced ? 'border-l-2 border-destructive pl-2' : ''
+                  low || d.needs_review ? 'border-l-2 border-destructive pl-2' : ''
                 }`}
               >
                 <span className="answer-review-number text-muted-foreground"><span className="sr-only">Question </span>{d.question_number}.</span>
                 <span className="answer-review-text">
                   <span className="whitespace-pre-wrap">{d.student_answer || 'No answer detected'}</span>
-                  {d.is_correct && !forced && <span className="ml-2 text-xs font-medium text-primary">Correct</span>}
+                  {d.is_correct && <span className="ml-2 text-xs font-medium text-primary">Correct</span>}
                   {!d.is_correct && !d.needs_review && (
                     <span className="mt-1 block whitespace-pre-wrap text-xs text-destructive">Answer key: {d.correct_answer}</span>
                   )}
-                  {forced && <span className="ml-1 text-destructive">(rule)</span>}
                   {needsTeacherReview(d) && (
                     <Badge className="ml-1" variant="destructive">
                       review
@@ -202,7 +228,7 @@ export default function PaperResultCard({
               Review {reviewCount} answer{reviewCount === 1 ? '' : 's'} needing attention
             </Button>
           )}
-          <Button className="min-h-11 w-full" disabled={saving || reviewCount > 0 || !overrideValid} onClick={onSave}>
+          <Button className="min-h-11 w-full" disabled={saving || attentionCount > 0 || !overrideValid} onClick={onSave}>
             {saving ? 'Saving…' : 'Save final result'}
           </Button>
         </div>

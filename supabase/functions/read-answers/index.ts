@@ -88,9 +88,9 @@ function buildPrompt(totalItems: number, keys: KeyItem[], rules: string): string
   }
 
   const rulesPrompt = rules
-    ? ' Also check the paper against these rules and list any violations you are CONFIDENT about: "' +
+    ? ' Also check the WHOLE PAPER against these overall rules and list any violations you are CONFIDENT about: "' +
       rules +
-      '". Put them in a separate array "rule_violations". Only report a violation when you can clearly see it AND you can confidently identify its question_number; otherwise set question_number to null. Include a "confidence" from 0 to 1 for each violation.'
+      '". These rules apply to the paper as a whole, never to an individual question or section. Put them in a separate array "rule_violations" and include a "confidence" from 0 to 1 for each violation. Do not include a question_number.'
     : ''
 
   return (
@@ -99,7 +99,7 @@ function buildPrompt(totalItems: number, keys: KeyItem[], rules: string): string
     ' ' +
     'For each question, estimate a "confidence" number from 0 to 1 for how sure you are the reading is correct — you MUST include one for EVERY answer. ' +
     'Respond ONLY with a JSON object in this exact format, no extra text: ' +
-    '{"answers":[{"question_number":1,"student_answer":"B","confidence":0.95}], "rule_violations":[{"question_number":1,"violation":"erasure detected","confidence":0.8}]}. ' +
+    '{"answers":[{"question_number":1,"student_answer":"B","confidence":0.95}], "rule_violations":[{"violation":"erasure detected","confidence":0.8}]}. ' +
     'If an answer is unreadable, use an empty string and confidence 0.0.' +
     essayInstruction +
     rubricBlock +

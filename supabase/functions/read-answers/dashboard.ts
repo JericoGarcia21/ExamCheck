@@ -8,7 +8,7 @@ export interface ValidatedAnswer {
   points?: number
   feedback?: string
 }
-export interface ValidatedViolation { question_number: number | null; violation: string; confidence: number | null }
+export interface ValidatedViolation { violation: string; confidence: number | null }
 const record = (value: unknown): Record<string, unknown> => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Expected an object.')
   return value as Record<string, unknown>
@@ -45,11 +45,14 @@ export function validateRecognition(value: unknown, questionNumbers: number[]) {
   if (!Array.isArray(violations) || violations.length > 300) throw new Error('Invalid rule checks.')
   const rule_violations: ValidatedViolation[] = violations.map((raw: unknown) => {
     const v = record(raw)
-    if (v.question_number !== null && (typeof v.question_number !== 'number' || !expected.has(v.question_number))) throw new Error('Invalid rule question.')
+    // Legacy providers may still include question_number. Rules are paper-wide,
+    // so it is validated when present and deliberately omitted from the result.
+    if (v.question_number !== undefined && v.question_number !== null &&
+      (typeof v.question_number !== 'number' || !expected.has(v.question_number))) throw new Error('Invalid rule question.')
     if (typeof v.violation !== 'string' || !v.violation.trim() || v.violation.length > 1000) throw new Error('Invalid violation.')
     const confidence = v.confidence ?? null
     if (confidence !== null && (typeof confidence !== 'number' || !Number.isFinite(confidence) || confidence<0 || confidence>1)) throw new Error('Invalid rule confidence.')
-    return { question_number: v.question_number as number | null, violation: v.violation, confidence: confidence as number | null }
+    return { violation: v.violation, confidence: confidence as number | null }
   })
   return { answers, rule_violations }
 }
@@ -142,9 +145,9 @@ function buildPrompt(totalItems: number, keys: KeyItem[], rules: string): string
   }
 
   const rulesPrompt = rules
-    ? ' Also check the paper against these rules and list any violations you are CONFIDENT about: "' +
+    ? ' Also check the WHOLE PAPER against these overall rules and list any violations you are CONFIDENT about: "' +
       rules +
-      '". Put them in a separate array "rule_violations". Only report a violation when you can clearly see it AND you can confidently identify its question_number; otherwise set question_number to null. Include a "confidence" from 0 to 1 for each violation.'
+      '". These rules apply to the paper as a whole, never to an individual question or section. Put them in a separate array "rule_violations" and include a "confidence" from 0 to 1 for each violation. Do not include a question_number.'
     : ''
 
   return (
@@ -153,7 +156,7 @@ function buildPrompt(totalItems: number, keys: KeyItem[], rules: string): string
     ' ' +
     'For each question, estimate a "confidence" number from 0 to 1 for how sure you are the reading is correct — you MUST include one for EVERY answer. ' +
     'Respond ONLY with a JSON object in this exact format, no extra text: ' +
-    '{"answers":[{"question_number":1,"student_answer":"B","confidence":0.95}], "rule_violations":[{"question_number":1,"violation":"erasure detected","confidence":0.8}]}. ' +
+    '{"answers":[{"question_number":1,"student_answer":"B","confidence":0.95}], "rule_violations":[{"violation":"erasure detected","confidence":0.8}]}. ' +
     'If an answer is unreadable, use an empty string and confidence 0.0.' +
     essayInstruction +
     rubricBlock +

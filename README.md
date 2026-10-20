@@ -52,8 +52,9 @@ Teacher
   declare each part's type.
 - **Deterministic scoring.** The AI only reads answers. Scoring, normalization,
   and pass/fail are plain code — never the AI.
-- **The teacher decides.** Low-confidence readings, coding mismatches, essay
-  scores, and rule violations (e.g. "erasure detected") are surfaced for review.
+- **The teacher decides.** Low-confidence readings, possible identification-answer
+  matches, coding mismatches, essay scores, and overall-paper rule violations
+  (e.g. "erasure detected") are surfaced for review.
   Nothing uncertain is silently marked final.
 
 ---
@@ -67,7 +68,7 @@ Teacher
 | **Answer key** | Paste a key, auto-detect or declare question types, edit, validate, confirm & lock |
 | **Checking** | Pick a student, capture/upload the paper, AI reads answers, score computed instantly |
 | **Review** | Confidence per answer, uncertain-answer review, essay rubric grading, teacher score override |
-| **Rule checks** | Optional rules ("no erasures") flagged by the AI — advisory and dismissible, never auto-failed |
+| **Rule checks** | Optional whole-paper rules ("no erasures") flagged by the AI — confirmable or dismissible, never assigned to one question or auto-failed |
 | **Results** | Full class roster (checked & unchecked), average/highest/lowest/pass rate, per-student breakdown |
 | **Export** | Excel, CSV, and PDF (browser print) |
 | **PWA** | Installable on phone/tablet/desktop, offline app shell, teacher-triggered updates |

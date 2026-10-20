@@ -60,11 +60,13 @@ export default function AnswerKeyEditor({
           placeholder={'# Multiple Choice\nB\nC\nA\nD\n# Coding\nclass Person {}\nNO ERROR\n# Essay\nExplain polymorphism.'}
         />
         <Textarea
+          aria-label="Overall paper rules"
           value={rules}
           onChange={(e) => onRulesChange(e.target.value)}
           rows={3}
           placeholder={'Example rules:\n- No erasures\n- Uppercase letters only\n- No tampering'}
         />
+        <p className="text-xs text-muted-foreground">These rules are checked against the whole paper, not an individual question or section.</p>
         <Button variant="outline" onClick={onSaveRules}>
           Save rules
         </Button>

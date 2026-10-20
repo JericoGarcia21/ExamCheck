@@ -36,6 +36,61 @@ export interface ScoredAnswer {
   points_awarded: number
   max_points: number
   feedback?: string
+  /** A conservative possible-equivalence hint that only a teacher can resolve. */
+  consideration_reason?: string
+}
+
+function words(value: string): string[] {
+  return value
+    .normalize('NFKC')
+    .toLocaleLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+}
+
+function isContiguousSlice(shorter: string[], longer: string[]): boolean {
+  if (shorter.length === 0 || shorter.length > longer.length) return false
+  return longer.some((_, start) =>
+    start + shorter.length <= longer.length &&
+    shorter.every((word, offset) => word === longer[start + offset]),
+  )
+}
+
+/**
+ * Detect only explainable identification-answer variants. This never awards
+ * credit; it creates a teacher-review consideration instead.
+ */
+export function considerationReason(studentAnswer: string, correctAnswer: string): string | undefined {
+  const studentWords = words(studentAnswer)
+  const keyWords = words(correctAnswer)
+  if (!studentWords.length || !keyWords.length) return undefined
+
+  const studentCompact = studentWords.join('')
+  const keyCompact = keyWords.join('')
+  if (studentCompact === keyCompact) return 'The answers differ only by spaces, underscores, hyphens, or punctuation.'
+
+  const acronym = (items: string[]) => items.map((word) => word[0]).join('')
+  const withoutParentheses = (value: string) => words(value.replace(/\([^)]*\)/g, ''))
+  const parentheticalValues = (value: string) =>
+    [...value.matchAll(/\(([^)]+)\)/g)].map((match) => words(match[1]).join('')).filter(Boolean)
+  const acronymMatch =
+    (studentCompact.length >= 3 && studentWords.length === 1 && studentCompact === acronym(withoutParentheses(correctAnswer))) ||
+    (keyCompact.length >= 3 && keyWords.length === 1 && keyCompact === acronym(withoutParentheses(studentAnswer)))
+  const parentheticalMatch = parentheticalValues(correctAnswer).includes(studentCompact) ||
+    parentheticalValues(studentAnswer).includes(keyCompact)
+  if (acronymMatch || parentheticalMatch) {
+    return 'One answer appears to be an acronym or parenthetical form of the other.'
+  }
+
+  const [shorter, longer] = studentWords.length <= keyWords.length
+    ? [studentWords, keyWords]
+    : [keyWords, studentWords]
+  if (shorter.length >= 2 && longer.length - shorter.length === 1 && isContiguousSlice(shorter, longer)) {
+    return 'One answer contains the same phrase with one additional qualifier.'
+  }
+  return undefined
 }
 
 export interface ScoreResult {
@@ -115,12 +170,15 @@ export function calculateScore(
     const isCorrect =
       normalizeAnswer(a.student_answer, k.question_type) ===
       normalizeAnswer(k.correct_answer, k.question_type)
+    const consideration = !isCorrect && k.question_type === 'identification'
+      ? considerationReason(a.student_answer, k.correct_answer)
+      : undefined
 
     // Coding/debugging mismatches are never auto-failed: formatting differences are
     // common, so they are flagged for the teacher to decide.
     const invalidFormat = (k.question_type === 'multiple_choice' && !/^[A-Z]$/i.test(a.student_answer.trim())) ||
       (k.question_type === 'true_false' && !/^(true|false|t|f)$/i.test(a.student_answer.trim()))
-    const needsReview = invalidFormat || (!isCorrect && k.question_type === 'coding') ||
+    const needsReview = Boolean(consideration) || invalidFormat || (!isCorrect && k.question_type === 'coding') ||
       needsTeacherReview({ student_answer: a.student_answer, confidence: a.confidence })
     const points = isCorrect ? maxPoints : 0
     score += points
@@ -133,6 +191,7 @@ export function calculateScore(
       needs_review: needsReview,
       points_awarded: points,
       max_points: maxPoints,
+      consideration_reason: consideration,
     })
   }
 

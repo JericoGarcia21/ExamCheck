@@ -48,7 +48,7 @@ export function useAnswerReview({ rows, details, updateDetail }: UseAnswerReview
 
   const open = useCallback(() => {
     const list = detailsRef.current
-      .filter(needsTeacherReview)
+      .filter((detail) => !detail.consideration_reason && needsTeacherReview(detail))
       .map((d) => d.question_number)
     if (list.length === 0) return
     setQueue(list)

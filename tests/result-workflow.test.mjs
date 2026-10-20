@@ -49,24 +49,42 @@ test('legacy calculated-score fallback preserves an override including a zero fi
   assert.equal(restoreSavedResult(rows, answers, {}, null, null).scoreOverride, '')
 })
 
-test('unassigned rule violations render as advisory while assigned rules retain a penalty action', () => {
+test('paper rules render as overall decisions without question penalty actions', () => {
   const noop = () => {}
   const props = { saving:false, studentName:'Student', result:{score:8,total:10,details:[]}, effectiveScore:8,
-    effectiveDetails:[], appliedViolationNumbers:new Set(), onToggleViolation:noop, scoreOverride:'',
+    effectiveDetails:[], onSetViolationStatus:noop, scoreOverride:'',
     onScoreOverrideChange:noop, reviewCount:0, onReview:noop, onSave:noop, onUpdateDetail:noop }
-  const render = question_number => renderToStaticMarkup(createElement(PaperResultCard, {
-    ...props, ruleViolations:[{question_number, violation:'Erasure', confidence:0.8, applied:false}],
+  const markup = renderToStaticMarkup(createElement(PaperResultCard, {
+    ...props, ruleViolations:[{violation:'Erasure', confidence:0.8, status:'pending'}],
   }))
-  const advisory = render(null)
-  assert.match(advisory, /Advisory — no question identified/)
-  assert.doesNotMatch(advisory, /Mark wrong/)
-  assert.match(render(1), /Mark wrong/)
+  assert.match(markup, /Overall paper rules/)
+  assert.match(markup, /Confirm violation/)
+  assert.match(markup, /Dismiss/)
+  assert.doesNotMatch(markup, /Mark wrong/)
+  assert.match(markup, /<button[^>]*disabled=""[^>]*>Save final result<\/button>/)
+})
+
+test('possible matches require an explicit teacher decision before saving', () => {
+  const noop = () => {}
+  const detail = { question_number:46, student_answer:'workflow dispatch', correct_answer:'workflow_dispatch',
+    is_correct:false, confidence:0.95, needs_review:true, points_awarded:0, max_points:1,
+    consideration_reason:'The answers differ only by separators.' }
+  const markup = renderToStaticMarkup(createElement(PaperResultCard, {
+    saving:false, studentName:'Student', result:{score:0,total:1,details:[detail]}, effectiveScore:0,
+    effectiveDetails:[detail], ruleViolations:[], onSetViolationStatus:noop, scoreOverride:'',
+    onScoreOverrideChange:noop, reviewCount:0, onReview:noop, onSave:noop, onUpdateDetail:noop,
+  }))
+  assert.match(markup, /Possible answer matches/)
+  assert.match(markup, /Accept as correct/)
+  assert.match(markup, /Keep wrong/)
+  assert.match(markup, /workflow_dispatch/)
+  assert.match(markup, /<button[^>]*disabled=""[^>]*>Save final result<\/button>/)
 })
 
 test('paper review previews the teacher final score and marks out-of-range input invalid', () => {
   const noop = () => {}
   const props = { saving:false, studentName:'Student', result:{score:8,total:10,details:[]}, effectiveScore:8,
-    effectiveDetails:[], ruleViolations:[], appliedViolationNumbers:new Set(), onToggleViolation:noop,
+    effectiveDetails:[], ruleViolations:[], onSetViolationStatus:noop,
     onScoreOverrideChange:noop, reviewCount:0, onReview:noop, onSave:noop, onUpdateDetail:noop }
   const adjusted = renderToStaticMarkup(createElement(PaperResultCard, { ...props, scoreOverride:'9' }))
   assert.match(adjusted, /90%/)

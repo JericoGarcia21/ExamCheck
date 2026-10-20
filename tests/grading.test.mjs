@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { calculateScore, normalizeCode } from '../src/lib/scoring.ts'
+import { calculateScore, considerationReason, normalizeCode } from '../src/lib/scoring.ts'
 import { parseAnswerKeyText } from '../src/lib/answerKey.ts'
 import { needsTeacherReview } from '../src/lib/confidence.ts'
 import { detectNameColumn, previewRoster, validateRosterFile } from '../src/lib/rosterImport.ts'
@@ -20,6 +20,25 @@ test('code grouping and case remain significant', () => {
   assert.equal(result.score,0); assert.equal(result.details[0].needs_review,true)
   assert.notEqual(normalizeCode('Value'),normalizeCode('value'))
   assert.equal(normalizeCode(' x\r\ny '),'x\ny')
+})
+test('identification variants become teacher considerations without automatic credit', () => {
+  const variants = [
+    ['workflow dispatch', 'workflow_dispatch'],
+    ['IaaS', 'Infrastructure as a Service (IaaS)'],
+    ['Hosted Runner', 'GitHub-Hosted Runner'],
+  ]
+  for (const [student_answer, correct_answer] of variants) {
+    const detail = calculateScore(
+      [{ question_number: 1, student_answer, confidence: 0.95 }],
+      [{ question_number: 1, correct_answer, question_type: 'identification' }],
+    ).details[0]
+    assert.equal(detail.is_correct, false)
+    assert.equal(detail.points_awarded, 0)
+    assert.equal(detail.needs_review, true)
+    assert.ok(detail.consideration_reason)
+  }
+  assert.equal(considerationReason('Runner', 'GitHub-Hosted Runner'), undefined)
+  assert.equal(considerationReason('cat', 'concatenate'), undefined)
 })
 test('numeric answers and restarted sections are preserved in reading order', () => {
   assert.deepEqual(parseAnswerKeyText('42\n3.14\n2026').map(r=>r.correct_answer),['42','3.14','2026'])
@@ -74,6 +93,14 @@ test('AI response rejects malformed question IDs, answers, confidence, and point
   for(const patch of [{question_number:3},{question_number:'1'},{student_answer:42},{confidence:1.2},{points:Infinity}]) assert.throws(()=>validateRecognition({answers:[{...valid.answers[0],...patch}]},[1]))
   assert.throws(()=>validateRecognition({answers:[valid.answers[0],valid.answers[0]]},[1,2]))
   assert.throws(()=>validateRecognition({answers:[{question_number:1,student_answer:''}]},[1]))
+  assert.deepEqual(
+    validateRecognition({ ...valid, rule_violations:[{violation:'Erasure',confidence:0.8}] },[1]).rule_violations,
+    [{violation:'Erasure',confidence:0.8}],
+  )
+  assert.deepEqual(
+    validateRecognition({ ...valid, rule_violations:[{question_number:1,violation:'Legacy erasure',confidence:0.8}] },[1]).rule_violations,
+    [{violation:'Legacy erasure',confidence:0.8}],
+  )
 })
 test('reader request validates session, bounded bytes and matching image signature', () => {
   const good={sessionId:'00000000-0000-0000-0000-000000000001',mimeType:'image/jpeg',imageBase64:Buffer.from([255,216,255,0,0,0]).toString('base64')}

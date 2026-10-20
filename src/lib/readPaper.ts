@@ -4,10 +4,9 @@ import { calculateScore, type ScoreResult } from './scoring'
 import type { KeyRow } from './answerKey'
 
 export interface RuleViolation {
-  question_number: number | null
   violation: string
   confidence: number | null
-  applied: boolean
+  status: 'pending' | 'confirmed' | 'dismissed'
 }
 
 export interface ReadPaperResult {
@@ -20,8 +19,8 @@ export interface ReadPaperResult {
  * Sends a captured paper to the read-answers Edge Function and returns the
  * deterministically scored result plus the AI-detected rule violations.
  *
- * Violations start un-applied; the teacher opts in per violation before any
- * answer is marked wrong.
+ * Rules apply to the whole paper. They start pending and never change a
+ * question score automatically; the teacher confirms or dismisses each one.
  */
 export async function readPaperAnswers(params: {
   sessionId: string
@@ -45,7 +44,11 @@ export async function readPaperAnswers(params: {
 
   const parsed = validateRecognition(data, rows.map((r) => r.question_number))
   const result = calculateScore(parsed.answers, rows)
-  const violations: RuleViolation[] = parsed.rule_violations.map((v) => ({ ...v, applied: false }))
+  const violations: RuleViolation[] = parsed.rule_violations.map((v) => ({
+    violation: v.violation,
+    confidence: v.confidence,
+    status: 'pending',
+  }))
   return { result, violations }
 }
 

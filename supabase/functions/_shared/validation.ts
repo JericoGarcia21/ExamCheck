@@ -5,7 +5,7 @@ export interface ValidatedAnswer {
   points?: number
   feedback?: string
 }
-export interface ValidatedViolation { question_number: number | null; violation: string; confidence: number | null }
+export interface ValidatedViolation { violation: string; confidence: number | null }
 const record = (value: unknown): Record<string, unknown> => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Expected an object.')
   return value as Record<string, unknown>
@@ -42,11 +42,14 @@ export function validateRecognition(value: unknown, questionNumbers: number[]) {
   if (!Array.isArray(violations) || violations.length > 300) throw new Error('Invalid rule checks.')
   const rule_violations: ValidatedViolation[] = violations.map((raw: unknown) => {
     const v = record(raw)
-    if (v.question_number !== null && (typeof v.question_number !== 'number' || !expected.has(v.question_number))) throw new Error('Invalid rule question.')
+    // Legacy providers may still include question_number. Rules are paper-wide,
+    // so it is validated when present and deliberately omitted from the result.
+    if (v.question_number !== undefined && v.question_number !== null &&
+      (typeof v.question_number !== 'number' || !expected.has(v.question_number))) throw new Error('Invalid rule question.')
     if (typeof v.violation !== 'string' || !v.violation.trim() || v.violation.length > 1000) throw new Error('Invalid violation.')
     const confidence = v.confidence ?? null
     if (confidence !== null && (typeof confidence !== 'number' || !Number.isFinite(confidence) || confidence<0 || confidence>1)) throw new Error('Invalid rule confidence.')
-    return { question_number: v.question_number as number | null, violation: v.violation, confidence: confidence as number | null }
+    return { violation: v.violation, confidence: confidence as number | null }
   })
   return { answers, rule_violations }
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import CameraCapture, { type CameraCaptureHandle } from '../components/CameraCapture'
@@ -166,26 +166,7 @@ function SessionContent() {
     }
   }
 
-  // A violation only affects the score when the teacher applies it.
-  const appliedViolationNumbers = useMemo(
-    () =>
-      new Set(
-        ruleViolations
-          .filter((v) => v.applied && v.question_number !== null)
-          .map((v) => v.question_number as number),
-      ),
-    [ruleViolations],
-  )
-
-  const effectiveDetails = useMemo(
-    () =>
-      (paperResult?.details ?? []).map((d) =>
-        appliedViolationNumbers.has(d.question_number)
-          ? { ...d, is_correct: false, points_awarded: 0 }
-          : d,
-      ),
-    [paperResult, appliedViolationNumbers],
-  )
+  const effectiveDetails = paperResult?.details ?? []
 
   const effectiveScore = sumPoints(effectiveDetails)
 
@@ -255,7 +236,7 @@ function SessionContent() {
     paperResult?.details.find((d) => d.question_number === review.question) ?? null
 
   const reviewCount = paperResult
-    ? paperResult.details.filter(needsTeacherReview).length
+    ? paperResult.details.filter((detail) => !detail.consideration_reason && needsTeacherReview(detail)).length
     : 0
 
   function handleCheck() {
@@ -340,14 +321,20 @@ function SessionContent() {
     }
   }
 
-  function toggleViolation(index: number) {
-    setRuleViolations((prev) => prev.map((v, i) => (i === index && v.question_number !== null ? { ...v, applied: !v.applied } : v)))
+  function setViolationStatus(index: number, status: RuleViolation['status']) {
+    setRuleViolations((prev) => prev.map((violation, current) =>
+      current === index ? { ...violation, status } : violation,
+    ))
   }
 
   async function handleSaveResult() {
     if (!paperResult || !selectedStudent || selectedStudent !== resultStudent || savingRef.current) return
     if (effectiveDetails.some(needsTeacherReview)) {
       setPaperError('Review every uncertain answer before saving the final grade.')
+      return
+    }
+    if (ruleViolations.some((violation) => violation.status === 'pending')) {
+      setPaperError('Confirm or dismiss every overall paper rule before saving the final grade.')
       return
     }
     savingRef.current = true
@@ -577,9 +564,8 @@ function SessionContent() {
                       result={paperResult}
                       effectiveScore={effectiveScore}
                       effectiveDetails={effectiveDetails}
-                      appliedViolationNumbers={appliedViolationNumbers}
                       ruleViolations={ruleViolations}
-                      onToggleViolation={toggleViolation}
+                      onSetViolationStatus={setViolationStatus}
                       scoreOverride={scoreOverride}
                       onScoreOverrideChange={setScoreOverride}
                       reviewCount={reviewCount}
