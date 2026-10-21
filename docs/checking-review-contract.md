@@ -14,22 +14,22 @@
 ## Review behavior
 
 - Exact answers receive deterministic credit as before.
-- Conservative identification variants create a possible-match consideration with zero points. The teacher must select **Accept as correct** or **Keep wrong** before saving.
+- Conservative identification variants create an advisory possible-match hint with zero points. Only low reading confidence requires teacher review.
 - Supported considerations are separator/punctuation variants, acronym or parenthetical forms, and a two-or-more-word phrase with one additional qualifier.
-- Explicit uppercase-only instructions are enforced on objective answers before normalization, including comma-separated rules such as "No erasures, uppercase letters only". Mixed/lowercase answers receive zero; the reader preserves written case. Other overall-paper rule checks require teacher confirmation or dismissal; any additional penalty uses the explicit teacher final-score adjustment.
+- Every configured rule is checked against the whole paper across every question and answer type. Uppercase is not a special scoring rule: like erasures, tampering, and other instructions, a detected violation requires teacher confirmation or dismissal. Rules never silently change an individual answer score; the teacher uses the explicit final-score adjustment for any penalty.
 - No database migration or additional AI request is introduced.
 
 ### Screenshot regression fixes (2026-10-21)
 
-- Reordered complete parenthetical forms, such as `IaaS (Infrastructure as a Service)` versus `Infrastructure as a Service (IaaS)`, require a teacher decision.
-- A deployment strategy with the trailing word `Deployment` omitted, such as `Recreate`, is a possible match requiring verification against the question.
-- Possible `I / l / 1` and `O / 0` reading confusions require review even at high reader confidence. Readings are preserved and no credit is awarded automatically. Coding comparisons retain their existing semantics.
-- Identification considerations remain available when an uppercase-only violation also exists. The consideration explains that accepting overrides that item's uppercase penalty; automatic scoring still enforces the rule.
+- Reordered complete parenthetical forms, such as `IaaS (Infrastructure as a Service)` versus `Infrastructure as a Service (IaaS)`, retain an advisory possible-match hint.
+- A deployment strategy with the trailing word `Deployment` omitted, such as `Recreate`, is an advisory possible match to verify against the question.
+- Possible `I / l / 1` and `O / 0` reading confusions retain advisory hints; only low reader confidence requires review. Readings are preserved and no credit is awarded automatically. Coding comparisons retain their existing semantics.
+- Identification hints remain independent of paper-wide rules. Uppercase-only violations use the same paper-wide confirmation and final-score adjustment as other rules.
 - Different concepts such as `Continuous Monitoring` and `Performance Monitoring` are not treated as formatting variants.
 
 ## Verification evidence
 
 - `npm run verify`: passed on 2026-10-20.
-- 54 tests passed, including consideration detection, false-positive boundaries, paper-wide rule rendering, authorization/RLS, quota, rollback, and atomic-save coverage.
+- The current verification result is recorded in the implementation handoff; live provider behavior still requires acceptance testing with representative papers.
 - Lint, source and bundled Edge Function checks, TypeScript compilation, production build, and PWA generation passed.
 - Live authenticated mobile camera and Gemini acceptance remain unverified locally.

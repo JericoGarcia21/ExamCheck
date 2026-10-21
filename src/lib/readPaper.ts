@@ -19,15 +19,14 @@ export interface ReadPaperResult {
  * Sends a captured paper to the read-answers Edge Function and returns the
  * deterministically scored result plus the AI-detected rule violations.
  *
- * Uppercase-only instructions are enforced by the scorer. Other paper-rule
- * violations start pending for the teacher to confirm or dismiss.
+ * Every configured rule applies to the whole paper. Detected violations start
+ * pending for the teacher to confirm or dismiss and do not silently alter a score.
  */
 export async function readPaperAnswers(params: {
   sessionId: string
   imageBase64: string
   mimeType: string
   rows: KeyRow[]
-  rules?: string
 }): Promise<ReadPaperResult> {
   const { sessionId, imageBase64, mimeType, rows } = params
   if (rows.length === 0) {
@@ -44,7 +43,7 @@ export async function readPaperAnswers(params: {
   if (data?.error) throw new Error(data.error)
 
   const parsed = validateRecognition(data, rows.map((r) => r.question_number))
-  const result = calculateScore(parsed.answers, rows, params.rules)
+  const result = calculateScore(parsed.answers, rows)
   const violations: RuleViolation[] = parsed.rule_violations.map((v) => ({
     violation: v.violation,
     confidence: v.confidence,

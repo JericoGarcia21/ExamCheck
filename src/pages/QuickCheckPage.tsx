@@ -35,7 +35,7 @@ export default function QuickCheckPage() {
   useEffect(()=>()=>{operation.current++;active.current=false},[])
   const details=result?.details ?? []
   function updateDetail(n: number,patch: Partial<ScoredAnswer>) { setResult(old=>old ? {...old,details:old.details.map(d=>d.question_number===n ? {...d,...patch}:d)} : old) }
-  const review=useAnswerReview({rows,rules,details,updateDetail})
+  const review=useAnswerReview({rows,details,updateDetail})
   const current=details.find(d=>d.question_number===review.question)
   const reviewCount=details.filter(d=>!d.consideration_reason && needsTeacherReview(d)).length
   const unavailable=settings.isPending || settings.isError || settings.data?.paused || settings.data?.daily_limit===0
@@ -58,7 +58,7 @@ export default function QuickCheckPage() {
         setSheetPreview(`data:${image.mimeType};base64,${image.base64}`)
         const parsed=await readQuickSheet(image.base64,image.mimeType,rows,rules)
         if (id!==operation.current) return
-        setResult(calculateScore(parsed.answers,rows,rules))
+        setResult(calculateScore(parsed.answers,rows))
         setViolations(parsed.rule_violations.map(v=>({...v,status:'pending'})))
       }
     } catch(e) { if(id===operation.current) setError(e instanceof Error ? e.message : 'Could not read the image.') }
@@ -91,7 +91,7 @@ export default function QuickCheckPage() {
         <label className="block text-sm">Answer type <select value={kind} disabled={!!busy} onChange={e=>setKind(e.target.value as AnswerKind|'any')} className="ml-2 rounded-md border p-2"><option value="any">Detect from answers</option>{ANSWER_KINDS.map(k=><option key={k.value} value={k.value}>{k.label}</option>)}</select></label>
         <Button variant="outline" disabled={!!busy || !text.trim()} onClick={()=>{setError('');try{setRows(validateQuickKey(parseAnswerKeyText(text,kind)))}catch(e){setError(e instanceof Error?e.message:'Invalid key.')}}}>Preview pasted key</Button>
         {rows.length>0 && <ol className="max-h-96 space-y-3 overflow-y-auto rounded-lg border p-3" aria-label="Review answer key">{rows.map((row,i)=><li key={row.question_number} className="space-y-2 border-b pb-3 last:border-0"><label className="block text-sm">Question {row.question_number}<Textarea value={row.correct_answer} disabled={!!busy} rows={2} onChange={e=>setRows(old=>old.map((r,n)=>n===i?{...r,correct_answer:e.target.value}:r))} /></label><div className="flex flex-wrap gap-3"><label className="text-xs">Type<select className="ml-2 rounded border p-2" value={row.question_type} disabled={!!busy} onChange={e=>setRows(old=>old.map((r,n)=>n===i?{...r,question_type:e.target.value as AnswerKind}:r))}>{ANSWER_KINDS.map(k=><option key={k.value} value={k.value}>{k.label}</option>)}</select></label><label className="text-xs">Points<input className="ml-2 w-20 rounded border p-2" type="number" min={0.01} max={100} step="any" value={row.max_points} disabled={!!busy} onChange={e=>setRows(old=>old.map((r,n)=>n===i?{...r,max_points:Number(e.target.value)}:r))} /></label></div>{row.question_type==='essay' && <label className="block text-xs">Rubric<Textarea value={row.rubric??''} disabled={!!busy} onChange={e=>setRows(old=>old.map((r,n)=>n===i?{...r,rubric:e.target.value}:r))} /></label>}</li>)}</ol>}
-        <label className="block text-sm font-medium">Rules (optional)<Textarea className="mt-2" value={rules} maxLength={3000} disabled={!!busy} onChange={e=>setRules(e.target.value)} placeholder="Uppercase letters only" /></label>
+        <label className="block text-sm font-medium">Overall paper rules (optional)<Textarea className="mt-2" value={rules} maxLength={3000} disabled={!!busy} onChange={e=>setRules(e.target.value)} placeholder="Uppercase letters only" /><span className="mt-1 block text-xs font-normal text-muted-foreground">Every rule applies to the whole paper across all answer types. Detected violations require your review.</span></label>
         <Button disabled={!!busy || !rows.length} onClick={()=>{try{setRows(validateQuickKey(rows));setConfirmed(true);clearResult();setError('')}catch(e){setError(e instanceof Error?e.message:'Invalid key.')}}}>Confirm answer key</Button>
       </>}
     </section>

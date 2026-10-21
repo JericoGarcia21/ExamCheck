@@ -49,12 +49,12 @@ test('legacy calculated-score fallback preserves an override including a zero fi
   assert.equal(restoreSavedResult(rows, answers, {}, null, null).scoreOverride, '')
 })
 
-test('saved answer edits enforce uppercase rules while preserving unchanged teacher decisions', () => {
+test('saved answer edits use answer-key scoring without hidden paper-rule penalties', () => {
   const key = [{ question_number: 1, correct_answer: 'True', question_type: 'true_false', max_points: 1 }]
   const saved = [{ ...answers[0], student_answer: 'TRUE', points_awarded: 1, is_correct: true }]
-  assert.equal(restoreSavedResult(key, saved, {1: 'True'}, 1, 1, 'Uppercase only').result.score, 0)
-  assert.equal(restoreSavedResult(key, saved, {1: 'true'}, 1, 1, 'Uppercase only').result.details[0].needs_review, true)
-  assert.equal(restoreSavedResult(key, saved, {}, 1, 1, 'Uppercase only').result.score, 1)
+  assert.equal(restoreSavedResult(key, saved, {1: 'True'}, 1, 1).result.score, 1)
+  assert.equal(restoreSavedResult(key, saved, {1: 'true'}, 1, 1).result.details[0].needs_review, true)
+  assert.equal(restoreSavedResult(key, saved, {}, 1, 1).result.score, 1)
 })
 
 test('paper rules render as overall decisions without question penalty actions', () => {
@@ -63,16 +63,18 @@ test('paper rules render as overall decisions without question penalty actions',
     effectiveDetails:[], onSetViolationStatus:noop, scoreOverride:'',
     onScoreOverrideChange:noop, reviewCount:0, onReview:noop, onSave:noop, onUpdateDetail:noop }
   const markup = renderToStaticMarkup(createElement(PaperResultCard, {
-    ...props, ruleViolations:[{violation:'Erasure', confidence:0.8, status:'pending'}],
+    ...props, ruleViolations:[{violation:'Uppercase rule violated in an essay answer', confidence:0.8, status:'pending'}],
   }))
   assert.match(markup, /Overall paper rules/)
+  assert.match(markup, /across all answer types/)
+  assert.match(markup, /Uppercase rule violated in an essay answer/)
   assert.match(markup, /Confirm violation/)
   assert.match(markup, /Dismiss/)
   assert.doesNotMatch(markup, /Mark wrong/)
   assert.match(markup, /<button[^>]*disabled=""[^>]*>Save final result<\/button>/)
 })
 
-test('possible matches require an explicit teacher decision before saving', () => {
+test('high-confidence possible matches remain wrong without requiring review', () => {
   const noop = () => {}
   const detail = { question_number:46, student_answer:'workflow dispatch', correct_answer:'workflow_dispatch',
     is_correct:false, confidence:0.95, needs_review:true, points_awarded:0, max_points:1,
@@ -82,11 +84,12 @@ test('possible matches require an explicit teacher decision before saving', () =
     effectiveDetails:[detail], ruleViolations:[], onSetViolationStatus:noop, scoreOverride:'',
     onScoreOverrideChange:noop, reviewCount:0, onReview:noop, onSave:noop, onUpdateDetail:noop,
   }))
-  assert.match(markup, /Possible answer matches/)
-  assert.match(markup, /Accept as correct/)
-  assert.match(markup, /Keep wrong/)
+  assert.doesNotMatch(markup, /Possible answer matches/)
+  assert.doesNotMatch(markup, /Needs review<\/span>/)
   assert.match(markup, /workflow_dispatch/)
-  assert.match(markup, /<button[^>]*disabled=""[^>]*>Save final result<\/button>/)
+  assert.match(markup, /No credit/)
+  assert.match(markup, />Save final result<\/button>/)
+  assert.doesNotMatch(markup, /<button[^>]*disabled=""[^>]*>Save final result<\/button>/)
 })
 
 test('paper review previews the teacher final score and marks out-of-range input invalid', () => {
@@ -103,14 +106,13 @@ test('paper review previews the teacher final score and marks out-of-range input
   assert.match(invalid, /<button[^>]*disabled=""[^>]*>Save final result<\/button>/)
 })
 
-test('checking result exposes answer comparison, rule feedback and accessible filters', () => {
+test('checking result exposes answer comparison and accessible filters', () => {
   const noop = () => {}
   const detail = { question_number:1, student_answer:'True', correct_answer:'TRUE',
-    is_correct:false, confidence:0.99, points_awarded:0, max_points:1,
-    feedback:'Uppercase-only rule: the answer contains lowercase letters.' }
+    is_correct:true, confidence:0.99, points_awarded:1, max_points:1 }
   const markup = renderToStaticMarkup(createElement(PaperResultCard, {
-    saving:false, studentName:'Student with a long display name', result:{score:0,total:1,details:[detail]},
-    effectiveScore:0, effectiveDetails:[detail], ruleViolations:[], onSetViolationStatus:noop,
+    saving:false, studentName:'Student with a long display name', result:{score:1,total:1,details:[detail]},
+    effectiveScore:1, effectiveDetails:[detail], ruleViolations:[], onSetViolationStatus:noop,
     scoreOverride:'', onScoreOverrideChange:noop, reviewCount:0, onReview:noop, onSave:noop, onUpdateDetail:noop,
   }))
   assert.match(markup, /aria-label="Filter answers"/)
@@ -118,8 +120,7 @@ test('checking result exposes answer comparison, rule feedback and accessible fi
   assert.match(markup, /Answer breakdown/)
   assert.match(markup, /Student answer/)
   assert.match(markup, /Answer key: TRUE/)
-  assert.match(markup, /Uppercase-only rule/)
-  assert.match(markup, /No credit/)
+  assert.match(markup, /Full credit/)
   assert.match(markup, /not whether the answer is correct/)
   assert.match(markup, /Showing 1 of 1 answers/)
 })

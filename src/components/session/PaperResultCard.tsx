@@ -146,7 +146,7 @@ export default function PaperResultCard({
         {ruleViolations.length > 0 && (
           <div className="rounded-xl border p-3 text-xs">
             <p className="font-medium">Overall paper rules — review each one</p>
-            <p className="mt-1 text-muted-foreground">Uppercase-only rules are already applied to answer scores. These overall paper checks require teacher review. Confirming a violation does not change the score automatically; use the teacher final score for any additional penalty.</p>
+            <p className="mt-1 text-muted-foreground">Every configured rule applies to the whole paper across all answer types. Confirm or dismiss each detected violation. Confirming one does not change the score automatically; use the teacher final score for any penalty.</p>
             <ul className="mt-1 space-y-1">
               {ruleViolations.map((v, i) => (
                 <li key={i} className="flex flex-wrap items-center gap-2 py-2">

@@ -12,7 +12,6 @@ export function needsTeacherReview(d: {
   review_status?: string | null
 }): boolean {
   if (d.review_status === 'accepted' || d.review_status === 'edited') return false
-  return d.needs_review === true || !d.student_answer?.trim() ||
-    typeof d.confidence !== 'number' || !Number.isFinite(d.confidence) ||
+  return typeof d.confidence !== 'number' || !Number.isFinite(d.confidence) ||
     d.confidence < REVIEW_CONFIDENCE_THRESHOLD
 }

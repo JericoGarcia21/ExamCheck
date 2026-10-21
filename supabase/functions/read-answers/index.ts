@@ -89,9 +89,9 @@ function buildPrompt(totalItems: number, keys: KeyItem[], rules: string): string
   }
 
   const rulesPrompt = rules
-    ? ' Also check the WHOLE PAPER against these overall rules and list any violations you are CONFIDENT about: "' +
+    ? ' Also check the WHOLE PAPER against each of these overall rules and list any violations you are CONFIDENT about: "' +
       rules +
-      '". Check uppercase-only instructions strictly against the actual written letter case, including True/False answers. The application enforces uppercase-only answer scoring separately. Report overall paper violations in a separate array "rule_violations" and include a "confidence" from 0 to 1 for each violation. Do not include a question_number.'
+      '". Every configured rule applies across the entire paper regardless of question or answer type. Evaluate each rule independently, including uppercase instructions against the actual written case of every answer. Report each detected rule violation in the separate "rule_violations" array with a "confidence" from 0 to 1. Do not include a question_number and do not change answer scores.'
     : ''
 
   return (

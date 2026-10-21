@@ -34,6 +34,8 @@ test('guest reader accepts images without a login, returns verbatim readings, an
   assert.equal(calls[0].init.body.includes('192.0.2.1'),false)
   assert.equal(calls[1].url.includes('test-provider-key'),false)
   assert.match(calls[1].init.body,/Preserve exact written letter case/)
+  assert.match(calls[1].init.body,/every configured rule independently across the whole paper regardless of question or answer type/)
+  assert.match(calls[1].init.body,/do not assign it to a question or change answer scores/)
   const usage=JSON.parse(calls[2].init.body)
   assert.equal(usage.p_source,'guest_sheet')
   assert.equal(usage.p_total,17)

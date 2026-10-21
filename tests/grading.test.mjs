@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { answersMatch, calculateScore, considerationReason, normalizeCode, requiresUppercase } from '../src/lib/scoring.ts'
+import { answersMatch, calculateScore, considerationReason, normalizeCode } from '../src/lib/scoring.ts'
 import { parseAnswerKeyText } from '../src/lib/answerKey.ts'
 import { needsTeacherReview } from '../src/lib/confidence.ts'
 import { detectNameColumn, previewRoster, validateRosterFile } from '../src/lib/rosterImport.ts'
@@ -8,55 +8,22 @@ import { escapeCsvCell } from '../src/lib/csv.ts'
 import { validateRecognition, validateReadRequest } from '../supabase/functions/_shared/validation.ts'
 
 const key = [{ question_number: 1, correct_answer: 'B', question_type: 'multiple_choice', max_points: 1 }, { question_number: 2, correct_answer: 'True', question_type: 'true_false', max_points: 1 }]
-test('uppercase-only rules reject mixed/lowercase True/False without normalizing away violations', () => {
-  for (const rules of ['Uppercase only', 'Uppercase letters only', 'UPPER CASE ONLY', 'Only capital letters', 'Use uppercase', 'All caps', 'All uppercase', 'No erasures\nUppercase letters only']) {
-    assert.equal(requiresUppercase(rules), true, rules)
-    for (const [correct_answer, accepted, rejected] of [
-      ['True', ['TRUE', 'T'], ['True', 'true', 't', 'TrUe']],
-      ['False', ['FALSE', 'F'], ['False', 'false', 'f', 'FaLsE']],
-    ]) {
-      const item = { question_number: 1, correct_answer, question_type: 'true_false', max_points: 2 }
-      for (const student_answer of [...accepted, ...rejected]) {
-        const expected = accepted.includes(student_answer)
-        const result = calculateScore([{ question_number: 1, student_answer, confidence: 0.99 }], [item], rules)
-        assert.equal(result.score, expected ? 2 : 0, `${rules}: ${student_answer}`)
-        assert.equal(result.details[0].is_correct, expected)
-        assert.equal(result.details[0].student_answer, student_answer)
-        assert.equal(answersMatch(student_answer, item, rules), expected)
-        if (!expected) assert.match(result.details[0].feedback, /Uppercase-only/)
-      }
-    }
+test('paper rules never mutate per-answer scoring for any answer type', () => {
+  const cases = [
+    ['multiple_choice', 'b', 'B', undefined, 1],
+    ['true_false', 'True', 'TRUE', undefined, 1],
+    ['identification', 'Manila', 'MANILA', undefined, 1],
+    ['coding', 'VALUE', 'value', undefined, 0],
+    ['essay', 'Mixed Case response', 'Rubric', 3, 3],
+  ]
+  for (const [question_type, student_answer, correct_answer, points, expected] of cases) {
+    const answer = { question_number: 1, student_answer, confidence: 0.99, ...(points === undefined ? {} : { points }) }
+    const item = { question_number: 1, correct_answer, question_type, max_points: question_type === 'essay' ? 5 : 1 }
+    const result = calculateScore([answer], [item])
+    assert.equal(result.score, expected, question_type)
+    assert.equal(result.details[0].student_answer, student_answer)
   }
-})
-
-test('absent or negated uppercase rules preserve ordinary case-insensitive grading', () => {
-  for (const rules of ['', 'No erasures', 'Uppercase is optional', 'Do not use uppercase only', 'Lowercase allowed']) {
-    assert.equal(requiresUppercase(rules), false)
-    assert.equal(calculateScore([{question_number: 2, student_answer: 'True', confidence: 0.99}], [key[1]], rules).score, 1)
-  }
-})
-
-test('combined paper rules enforce uppercase independently of unrelated prohibitions', () => {
-  for (const rules of [
-    'No erasures, uppercase letters only',
-    'Uppercase letters only, no erasures',
-    'No erasures and uppercase letters only',
-    'No erasures but use uppercase',
-    'No erasures; uppercase letters only',
-    'No erasures. Uppercase letters only',
-  ]) {
-    for (const [student_answer, correct_answer, expected] of [
-      ['True', 'TRUE', 0], ['true', 'TRUE', 0], ['TRUE', 'TRUE', 1],
-      ['False', 'FALSE', 0], ['false', 'FALSE', 0], ['FALSE', 'FALSE', 1],
-    ]) {
-      const result = calculateScore([{question_number:1, student_answer, confidence:0.99}],
-        [{question_number:1, correct_answer, question_type:'true_false'}], rules)
-      assert.equal(result.score, expected, `${rules}: ${student_answer}`)
-    }
-  }
-  for (const rules of ['No erasures, do not use uppercase only', 'No erasures and uppercase is optional', 'Do not use uppercase only, no erasures']) {
-    assert.equal(requiresUppercase(rules), false, rules)
-  }
+  assert.equal(answersMatch('True', { question_number: 1, correct_answer: 'TRUE', question_type: 'true_false' }), true)
 })
 test('all correct, all wrong, partial, and missing answers retain correct totals', () => {
   for (const [answers, expected] of [[[ 'b', 't' ], 2], [['A','False'],0], [['B','False'],1], [[],0]]) {
@@ -67,11 +34,11 @@ test('all correct, all wrong, partial, and missing answers retain correct totals
 })
 test('code grouping and case remain significant', () => {
   const result = calculateScore([{ question_number:1,student_answer:'return (a + b) * c;',confidence:0.99 }], [{question_number:1,correct_answer:'return a + b * c;',question_type:'coding'}])
-  assert.equal(result.score,0); assert.equal(result.details[0].needs_review,true)
+  assert.equal(result.score,0); assert.equal(result.details[0].needs_review,false)
   assert.notEqual(normalizeCode('Value'),normalizeCode('value'))
   assert.equal(normalizeCode(' x\r\ny '),'x\ny')
 })
-test('identification variants become teacher considerations without automatic credit', () => {
+test('confident identification variants stay wrong without requiring review', () => {
   const variants = [
     ['workflow dispatch', 'workflow_dispatch'],
     ['IaaS', 'Infrastructure as a Service (IaaS)'],
@@ -84,13 +51,13 @@ test('identification variants become teacher considerations without automatic cr
     ).details[0]
     assert.equal(detail.is_correct, false)
     assert.equal(detail.points_awarded, 0)
-    assert.equal(detail.needs_review, true)
+    assert.equal(detail.needs_review, false)
     assert.ok(detail.consideration_reason)
   }
   assert.equal(considerationReason('Runner', 'GitHub-Hosted Runner'), undefined)
   assert.equal(considerationReason('cat', 'concatenate'), undefined)
 })
-test('screenshot variants require consideration even with uppercase-only rules', () => {
+test('screenshot variants retain advisory considerations without requiring review', () => {
   for (const rules of ['', 'Uppercase only']) {
     for (const [student_answer, correct_answer] of [
       ['Workflow - dispatch', 'workflow_dispatch'],
@@ -101,10 +68,10 @@ test('screenshot variants require consideration even with uppercase-only rules',
       const detail = calculateScore([{question_number:1, student_answer, confidence:0.95}],
         [{question_number:1, correct_answer, question_type:'identification'}], rules).details[0]
       assert.equal(detail.points_awarded, 0)
-      assert.equal(detail.needs_review, true, student_answer)
+      assert.equal(detail.needs_review, false, student_answer)
       assert.ok(detail.consideration_reason, student_answer)
       assert.equal(detail.student_answer, student_answer)
-      if (rules) assert.match(detail.consideration_reason, /uppercase-only rule/)
+
     }
   }
   for (const [student, key] of [
@@ -114,13 +81,13 @@ test('screenshot variants require consideration even with uppercase-only rules',
   ]) assert.equal(considerationReason(student, key), undefined)
 })
 
-test('ambiguous glyphs require review without rewriting readings or awarding credit', () => {
+test('ambiguous glyphs retain advisory hints without rewriting readings or awarding credit', () => {
   for (const question_type of ['multiple_choice', 'identification']) {
     for (const [student_answer, correct_answer] of [['1','I'], ['I','1'], ['0','O'], ['l','I']]) {
       const detail = calculateScore([{question_number:1, student_answer, confidence:0.99}],
         [{question_number:1, correct_answer, question_type}]).details[0]
       assert.equal(detail.points_awarded, 0)
-      assert.equal(detail.needs_review, true)
+      assert.equal(detail.needs_review, false)
       assert.equal(detail.student_answer, student_answer)
       assert.match(detail.consideration_reason, /handwriting confusion/)
     }
@@ -159,10 +126,11 @@ test('teacher decisions resolve review without rewriting AI confidence', () => {
   assert.equal(needsTeacherReview({student_answer:'B',confidence:0.1}),true)
   assert.equal(needsTeacherReview({student_answer:'B'}),true)
   assert.equal(needsTeacherReview({student_answer:'B',confidence:0.9}),false)
+  assert.equal(needsTeacherReview({student_answer:'A',confidence:0.9,needs_review:true}),false)
 })
-test('fractional essay scores are retained and always require teacher review', () => {
+test('fractional essay scores are retained and high-confidence readings do not require review', () => {
   const result=calculateScore([{question_number:1,student_answer:'Text',points:2.5,confidence:0.99}],[{question_number:1,correct_answer:'Rubric',question_type:'essay',max_points:10}])
-  assert.equal(result.score,2.5);assert.equal(needsTeacherReview(result.details[0]),true)
+  assert.equal(result.score,2.5);assert.equal(needsTeacherReview(result.details[0]),false)
 })
 test('roster maps name column, skips headers/duplicates/invalid rows, supports Unicode', () => {
   const rows=[['Student ID','Name'],['ID1','José Cruz'],['ID2','Existing Student'],['ID3','José Cruz'],['ID4',123],['ID5','']]
@@ -214,7 +182,18 @@ test('SheetJS workbook round-trip preserves the selected roster column', async (
 test('invalid multiple-choice and true/false readings cannot receive automatic credit',()=>{
   const result=calculateScore([{question_number:1,student_answer:'B1',confidence:0.99},{question_number:2,student_answer:'true?',confidence:0.99}],key)
   assert.equal(result.score,0)
-  assert.equal(result.details.every(needsTeacherReview),true)
+  assert.equal(result.details.every(detail => !needsTeacherReview(detail)),true)
+})
+
+test('only low reading confidence sends correct or wrong answers to review', () => {
+  const result=calculateScore([
+    {question_number:1,student_answer:'A',confidence:0.9},
+    {question_number:2,student_answer:'False',confidence:0.69},
+  ],key)
+  assert.equal(result.details[0].is_correct,false)
+  assert.equal(needsTeacherReview(result.details[0]),false)
+  assert.equal(result.details[1].is_correct,false)
+  assert.equal(needsTeacherReview(result.details[1]),true)
 })
 
 test('answer-key tables preserve answers and sequential numbering across restarted sections', () => {
