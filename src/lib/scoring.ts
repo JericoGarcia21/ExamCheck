@@ -163,7 +163,7 @@ export function calculateScore(
         correct_answer: k.correct_answer,
         is_correct: points >= maxPoints,
         confidence: a.confidence,
-        needs_review: true,
+        needs_review: needsTeacherReview({ student_answer: a.student_answer, confidence: a.confidence }),
         points_awarded: points,
         max_points: maxPoints,
         feedback: a.feedback,
@@ -176,12 +176,9 @@ export function calculateScore(
       ? considerationReason(a.student_answer, k.correct_answer)
       : undefined
 
-    // Coding/debugging mismatches are never auto-failed: formatting differences are
-    // common, so they are flagged for the teacher to decide.
-    const invalidFormat = (k.question_type === 'multiple_choice' && !/^[A-Z]$/i.test(a.student_answer.trim())) ||
-      (k.question_type === 'true_false' && !/^(true|false|t|f)$/i.test(a.student_answer.trim()))
-    const needsReview = Boolean(consideration) || invalidFormat || (!isCorrect && k.question_type === 'coding') ||
-      needsTeacherReview({ student_answer: a.student_answer, confidence: a.confidence })
+    // Correctness and reading confidence are separate: a confidently read wrong
+    // answer receives no credit, but does not require teacher review.
+    const needsReview = needsTeacherReview({ student_answer: a.student_answer, confidence: a.confidence })
     const points = isCorrect ? maxPoints : 0
     score += points
     details.push({

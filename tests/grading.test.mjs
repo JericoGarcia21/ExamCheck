@@ -34,11 +34,11 @@ test('all correct, all wrong, partial, and missing answers retain correct totals
 })
 test('code grouping and case remain significant', () => {
   const result = calculateScore([{ question_number:1,student_answer:'return (a + b) * c;',confidence:0.99 }], [{question_number:1,correct_answer:'return a + b * c;',question_type:'coding'}])
-  assert.equal(result.score,0); assert.equal(result.details[0].needs_review,true)
+  assert.equal(result.score,0); assert.equal(result.details[0].needs_review,false)
   assert.notEqual(normalizeCode('Value'),normalizeCode('value'))
   assert.equal(normalizeCode(' x\r\ny '),'x\ny')
 })
-test('identification variants become teacher considerations without automatic credit', () => {
+test('confident identification variants stay wrong without requiring review', () => {
   const variants = [
     ['workflow dispatch', 'workflow_dispatch'],
     ['IaaS', 'Infrastructure as a Service (IaaS)'],
@@ -51,7 +51,7 @@ test('identification variants become teacher considerations without automatic cr
     ).details[0]
     assert.equal(detail.is_correct, false)
     assert.equal(detail.points_awarded, 0)
-    assert.equal(detail.needs_review, true)
+    assert.equal(detail.needs_review, false)
     assert.ok(detail.consideration_reason)
   }
   assert.equal(considerationReason('Runner', 'GitHub-Hosted Runner'), undefined)
@@ -85,10 +85,11 @@ test('teacher decisions resolve review without rewriting AI confidence', () => {
   assert.equal(needsTeacherReview({student_answer:'B',confidence:0.1}),true)
   assert.equal(needsTeacherReview({student_answer:'B'}),true)
   assert.equal(needsTeacherReview({student_answer:'B',confidence:0.9}),false)
+  assert.equal(needsTeacherReview({student_answer:'A',confidence:0.9,needs_review:true}),false)
 })
-test('fractional essay scores are retained and always require teacher review', () => {
+test('fractional essay scores are retained and high-confidence readings do not require review', () => {
   const result=calculateScore([{question_number:1,student_answer:'Text',points:2.5,confidence:0.99}],[{question_number:1,correct_answer:'Rubric',question_type:'essay',max_points:10}])
-  assert.equal(result.score,2.5);assert.equal(needsTeacherReview(result.details[0]),true)
+  assert.equal(result.score,2.5);assert.equal(needsTeacherReview(result.details[0]),false)
 })
 test('roster maps name column, skips headers/duplicates/invalid rows, supports Unicode', () => {
   const rows=[['Student ID','Name'],['ID1','José Cruz'],['ID2','Existing Student'],['ID3','José Cruz'],['ID4',123],['ID5','']]
@@ -140,7 +141,18 @@ test('SheetJS workbook round-trip preserves the selected roster column', async (
 test('invalid multiple-choice and true/false readings cannot receive automatic credit',()=>{
   const result=calculateScore([{question_number:1,student_answer:'B1',confidence:0.99},{question_number:2,student_answer:'true?',confidence:0.99}],key)
   assert.equal(result.score,0)
-  assert.equal(result.details.every(needsTeacherReview),true)
+  assert.equal(result.details.every(detail => !needsTeacherReview(detail)),true)
+})
+
+test('only low reading confidence sends correct or wrong answers to review', () => {
+  const result=calculateScore([
+    {question_number:1,student_answer:'A',confidence:0.9},
+    {question_number:2,student_answer:'False',confidence:0.69},
+  ],key)
+  assert.equal(result.details[0].is_correct,false)
+  assert.equal(needsTeacherReview(result.details[0]),false)
+  assert.equal(result.details[1].is_correct,false)
+  assert.equal(needsTeacherReview(result.details[1]),true)
 })
 
 test('answer-key tables preserve answers and sequential numbering across restarted sections', () => {

@@ -74,7 +74,7 @@ test('paper rules render as overall decisions without question penalty actions',
   assert.match(markup, /<button[^>]*disabled=""[^>]*>Save final result<\/button>/)
 })
 
-test('possible matches require an explicit teacher decision before saving', () => {
+test('high-confidence possible matches remain wrong without requiring review', () => {
   const noop = () => {}
   const detail = { question_number:46, student_answer:'workflow dispatch', correct_answer:'workflow_dispatch',
     is_correct:false, confidence:0.95, needs_review:true, points_awarded:0, max_points:1,
@@ -84,11 +84,12 @@ test('possible matches require an explicit teacher decision before saving', () =
     effectiveDetails:[detail], ruleViolations:[], onSetViolationStatus:noop, scoreOverride:'',
     onScoreOverrideChange:noop, reviewCount:0, onReview:noop, onSave:noop, onUpdateDetail:noop,
   }))
-  assert.match(markup, /Possible answer matches/)
-  assert.match(markup, /Accept as correct/)
-  assert.match(markup, /Keep wrong/)
+  assert.doesNotMatch(markup, /Possible answer matches/)
+  assert.doesNotMatch(markup, /Needs review<\/span>/)
   assert.match(markup, /workflow_dispatch/)
-  assert.match(markup, /<button[^>]*disabled=""[^>]*>Save final result<\/button>/)
+  assert.match(markup, /No credit/)
+  assert.match(markup, />Save final result<\/button>/)
+  assert.doesNotMatch(markup, /<button[^>]*disabled=""[^>]*>Save final result<\/button>/)
 })
 
 test('paper review previews the teacher final score and marks out-of-range input invalid', () => {
