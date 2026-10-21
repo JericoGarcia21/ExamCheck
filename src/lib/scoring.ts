@@ -71,6 +71,18 @@ export function considerationReason(studentAnswer: string, correctAnswer: string
   const keyCompact = keyWords.join('')
   if (studentCompact === keyCompact) return 'The answers differ only by spaces, underscores, hyphens, or punctuation.'
 
+  // Compare complete parenthetical forms without treating arbitrary word order as equivalent.
+  const parentheticalParts = (value: string) => {
+    const parts = [value.replace(/\([^)]*\)/g, ''), ...[...value.matchAll(/\(([^)]+)\)/g)].map((match) => match[1])]
+    return parts.map((part) => words(part).join('')).filter(Boolean).sort()
+  }
+  const studentParts = parentheticalParts(studentAnswer)
+  const keyParts = parentheticalParts(correctAnswer)
+  if (studentParts.length > 1 && studentParts.length === keyParts.length &&
+    studentParts.every((part, index) => part === keyParts[index])) {
+    return 'The answers contain the same term and parenthetical expansion in a different order.'
+  }
+
   const acronym = (items: string[]) => items.map((word) => word[0]).join('')
   const withoutParentheses = (value: string) => words(value.replace(/\([^)]*\)/g, ''))
   const parentheticalValues = (value: string) =>
@@ -89,6 +101,21 @@ export function considerationReason(studentAnswer: string, correctAnswer: string
     : [keyWords, studentWords]
   if (shorter.length >= 2 && longer.length - shorter.length === 1 && isContiguousSlice(shorter, longer)) {
     return 'One answer contains the same phrase with one additional qualifier.'
+  }
+  if (shorter.length === 1 && longer.length === 2 && longer[1] === 'deployment' && shorter[0] === longer[0]) {
+    return 'The answer names the same deployment strategy but omits the word deployment; verify against the question.'
+  }
+  return undefined
+}
+
+function readingAmbiguity(student: string, expected: string): string | undefined {
+  const compact = (value: string) => value.normalize('NFKC').trim().toUpperCase()
+  const actual = compact(student)
+  const key = compact(expected)
+  if (!actual || actual === key) return undefined
+  const shape = (value: string) => value.replace(/[I1L]/g, '1').replace(/[O0]/g, '0')
+  if (shape(actual) === shape(key)) {
+    return 'Possible handwriting confusion (I / l / 1 or O / 0). Compare with the paper before deciding; the reading has not been changed.'
   }
   return undefined
 }
@@ -184,9 +211,14 @@ export function calculateScore(
 
     const uppercaseViolation = requiresUppercase(rules) && a.student_answer !== a.student_answer.toUpperCase()
     const isCorrect = answersMatch(a.student_answer, k, rules)
-    const consideration = !isCorrect && !uppercaseViolation && k.question_type === 'identification'
-      ? considerationReason(a.student_answer, k.correct_answer)
-      : undefined
+    let consideration: string | undefined
+    if (!isCorrect && k.question_type !== 'coding') {
+      consideration = readingAmbiguity(a.student_answer, k.correct_answer) ??
+        (k.question_type === 'identification' ? considerationReason(a.student_answer, k.correct_answer) : undefined)
+      if (consideration && uppercaseViolation) {
+        consideration += ' The written answer also violates the uppercase-only rule; accepting overrides that penalty for this item.'
+      }
+    }
 
     // Coding/debugging mismatches are never auto-failed: formatting differences are
     // common, so they are flagged for the teacher to decide.

@@ -19,6 +19,14 @@
 - Explicit uppercase-only instructions are enforced on objective answers before normalization, including comma-separated rules such as "No erasures, uppercase letters only". Mixed/lowercase answers receive zero; the reader preserves written case. Other overall-paper rule checks require teacher confirmation or dismissal; any additional penalty uses the explicit teacher final-score adjustment.
 - No database migration or additional AI request is introduced.
 
+### Screenshot regression fixes (2026-10-21)
+
+- Reordered complete parenthetical forms, such as `IaaS (Infrastructure as a Service)` versus `Infrastructure as a Service (IaaS)`, require a teacher decision.
+- A deployment strategy with the trailing word `Deployment` omitted, such as `Recreate`, is a possible match requiring verification against the question.
+- Possible `I / l / 1` and `O / 0` reading confusions require review even at high reader confidence. Readings are preserved and no credit is awarded automatically. Coding comparisons retain their existing semantics.
+- Identification considerations remain available when an uppercase-only violation also exists. The consideration explains that accepting overrides that item's uppercase penalty; automatic scoring still enforces the rule.
+- Different concepts such as `Continuous Monitoring` and `Performance Monitoring` are not treated as formatting variants.
+
 ## Verification evidence
 
 - `npm run verify`: passed on 2026-10-20.

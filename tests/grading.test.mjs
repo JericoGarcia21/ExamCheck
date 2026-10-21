@@ -90,6 +90,47 @@ test('identification variants become teacher considerations without automatic cr
   assert.equal(considerationReason('Runner', 'GitHub-Hosted Runner'), undefined)
   assert.equal(considerationReason('cat', 'concatenate'), undefined)
 })
+test('screenshot variants require consideration even with uppercase-only rules', () => {
+  for (const rules of ['', 'Uppercase only']) {
+    for (const [student_answer, correct_answer] of [
+      ['Workflow - dispatch', 'workflow_dispatch'],
+      ['GitHub - hosted runner', 'GitHub-Hosted Runner'],
+      ['IaaS (Infrastructure as a Service)', 'Infrastructure as a Service (IaaS)'],
+      ['Recreate', 'Recreate Deployment'],
+    ]) {
+      const detail = calculateScore([{question_number:1, student_answer, confidence:0.95}],
+        [{question_number:1, correct_answer, question_type:'identification'}], rules).details[0]
+      assert.equal(detail.points_awarded, 0)
+      assert.equal(detail.needs_review, true, student_answer)
+      assert.ok(detail.consideration_reason, student_answer)
+      assert.equal(detail.student_answer, student_answer)
+      if (rules) assert.match(detail.consideration_reason, /uppercase-only rule/)
+    }
+  }
+  for (const [student, key] of [
+    ['Continuous Monitoring', 'Performance Monitoring'],
+    ['C', 'U'], ['AA', 'A'], ['Runner', 'GitHub-Hosted Runner'],
+    ['Service (wrong expansion)', 'wrong expansion (different)'],
+  ]) assert.equal(considerationReason(student, key), undefined)
+})
+
+test('ambiguous glyphs require review without rewriting readings or awarding credit', () => {
+  for (const question_type of ['multiple_choice', 'identification']) {
+    for (const [student_answer, correct_answer] of [['1','I'], ['I','1'], ['0','O'], ['l','I']]) {
+      const detail = calculateScore([{question_number:1, student_answer, confidence:0.99}],
+        [{question_number:1, correct_answer, question_type}]).details[0]
+      assert.equal(detail.points_awarded, 0)
+      assert.equal(detail.needs_review, true)
+      assert.equal(detail.student_answer, student_answer)
+      assert.match(detail.consideration_reason, /handwriting confusion/)
+    }
+  }
+  const code = calculateScore([{question_number:1, student_answer:'1', confidence:0.99}],
+    [{question_number:1, correct_answer:'I', question_type:'coding'}]).details[0]
+  assert.equal(code.consideration_reason, undefined)
+  assert.equal(code.points_awarded, 0)
+})
+
 test('numeric answers and restarted sections are preserved in reading order', () => {
   assert.deepEqual(parseAnswerKeyText('42\n3.14\n2026').map(r=>r.correct_answer),['42','3.14','2026'])
   assert.deepEqual(parseAnswerKeyText('1. A\n2. B\n1. True\n2. False').map(r=>r.question_number),[1,2,3,4])
