@@ -16,12 +16,12 @@
 - Exact answers receive deterministic credit as before.
 - Conservative identification variants create a possible-match consideration with zero points. The teacher must select **Accept as correct** or **Keep wrong** before saving.
 - Supported considerations are separator/punctuation variants, acronym or parenthetical forms, and a two-or-more-word phrase with one additional qualifier.
-- Explicit uppercase-only instructions are enforced on objective answers before normalization, including comma-separated rules such as "No erasures, uppercase letters only". Mixed/lowercase answers receive zero; the reader preserves written case. Other overall-paper rule checks require teacher confirmation or dismissal; any additional penalty uses the explicit teacher final-score adjustment.
+- Every configured rule is checked against the whole paper across every question and answer type. Uppercase is not a special scoring rule: like erasures, tampering, and other instructions, a detected violation requires teacher confirmation or dismissal. Rules never silently change an individual answer score; the teacher uses the explicit final-score adjustment for any penalty.
 - No database migration or additional AI request is introduced.
 
 ## Verification evidence
 
 - `npm run verify`: passed on 2026-10-20.
-- 54 tests passed, including consideration detection, false-positive boundaries, paper-wide rule rendering, authorization/RLS, quota, rollback, and atomic-save coverage.
+- The current verification result is recorded in the implementation handoff; live provider behavior still requires acceptance testing with representative papers.
 - Lint, source and bundled Edge Function checks, TypeScript compilation, production build, and PWA generation passed.
 - Live authenticated mobile camera and Gemini acceptance remain unverified locally.

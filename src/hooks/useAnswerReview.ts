@@ -7,7 +7,6 @@ export type ReviewMode = 'none' | 'view' | 'edit'
 
 interface UseAnswerReviewParams {
   rows: KeyRow[]
-  rules?: string
   /** Current in-memory details, so edits always apply to fresh state. */
   details: ScoredAnswer[]
   updateDetail: (questionNumber: number, patch: Partial<ScoredAnswer>) => void
@@ -17,7 +16,7 @@ interface UseAnswerReviewParams {
  * Owns the uncertain/essay review flow: which questions are queued, the current
  * position, the editable fields, and applying the teacher's decision.
  */
-export function useAnswerReview({ rows, rules = '', details, updateDetail }: UseAnswerReviewParams) {
+export function useAnswerReview({ rows, details, updateDetail }: UseAnswerReviewParams) {
   const [mode, setMode] = useState<ReviewMode>('none')
   const [question, setQuestion] = useState<number | null>(null)
   const [studentAnswer, setStudentAnswer] = useState('')
@@ -76,7 +75,7 @@ export function useAnswerReview({ rows, rules = '', details, updateDetail }: Use
         patch.is_correct = pts >= current.max_points
         patch.feedback = feedback.trim() || undefined
       } else if (keyItem) {
-        const scored = calculateScore([{question_number: question, student_answer: ans, confidence: current.confidence}], [keyItem], rules).details[0]
+        const scored = calculateScore([{question_number: question, student_answer: ans, confidence: current.confidence}], [keyItem]).details[0]
         patch.is_correct = scored.is_correct
         patch.points_awarded = scored.points_awarded
         patch.feedback = scored.feedback
@@ -94,7 +93,7 @@ export function useAnswerReview({ rows, rules = '', details, updateDetail }: Use
     setMode('none')
     setQuestion(null)
     setQueue([])
-  }, [question, mode, studentAnswer, points, feedback, updateDetail, index, queue, openAt, rules])
+  }, [question, mode, studentAnswer, points, feedback, updateDetail, index, queue, openAt])
 
   const close = useCallback(() => setMode('none'), [])
 

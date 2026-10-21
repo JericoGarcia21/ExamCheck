@@ -13,7 +13,7 @@ This implements D1 (photo plus paste/edit) and D2 (five default; admin editable)
 ## Architecture and contract
 
 - `src/pages/QuickCheckPage.tsx` owns temporary state and operation IDs. Active-operation guard prevents repeated submissions; unmount invalidates replies. Busy inputs/reset are disabled. Failed reads retain the confirmed key and require explicit retry.
-- Reuses `CameraCapture`, image conversion, answer-key parser, deterministic scorer, confidence/review hook, review dialog and `PaperResultCard`. RF labels and strict uppercase rules apply. Results are advisory until reviewed. Every answer also has an Edit reading action in this guest flow.
+- Reuses `CameraCapture`, image conversion, answer-key parser, deterministic scorer, confidence/review hook, review dialog and `PaperResultCard`. Every configured rule is checked across the whole paper regardless of answer type and uses the same teacher review flow. Results are advisory until reviewed. Every answer also has an Edit reading action in this guest flow.
 - `POST /functions/v1/quick-check`: body `{mode:'key'|'sheet', imageBase64, mimeType, keys?, rules?}`. Sheet keys contain sequential question numbers, answer/type/max points and optional rubric. No account/session ID is used to fetch resources.
 - Key response `{keys:[...]}` requires confirmation. Sheet response uses the existing validated recognition contract `{answers,rule_violations}`. Output schemas/IDs/points are validated before use.
 - Request body bounded to 7,500,000 bytes; image validation reuses existing 5 MiB/JPEG/PNG/WebP checks; 1–300 questions, 3000 characters per key answer/rubric/rules, maximum 100 points per item. Client images retain 40-megapixel source limit and 1920px conversion.

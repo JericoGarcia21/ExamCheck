@@ -9,13 +9,12 @@ export function restoreSavedResult(
   edits: Record<number, string>,
   savedScore: number | null,
   calculatedScore: number | null,
-  rules = '',
 ) {
   const scored = calculateScore(answers.map(a => ({
     question_number: a.question_number,
     student_answer: edits[a.question_number] ?? a.student_answer ?? '',
     confidence: a.confidence ?? undefined,
-  })), rows, rules)
+  })), rows)
   const details = scored.details.map(d => {
     const saved = answers.find(a => a.question_number === d.question_number)
     return saved && (saved.student_answer ?? '') === d.student_answer
